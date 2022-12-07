@@ -1,0 +1,10 @@
+<resources>
+    <string name="add_label">Add</string>
+    <string name="add_new_device_label">Add new device</string>
+    <string name="app_name">Esp monitoring</string>
+    <string name="device_id_label">ID</string>
+    <string name="device_id_label_with_format">ID: %d</string>
+    <string name="device_name_label">Name</string>
+    <string name="unknown_error_message">Unknown error</string>
+    <string name="update_photos_label">Update</string>
+</resources>
