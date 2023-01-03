@@ -94,7 +94,7 @@ fun LazyListScope.devicesScreenContent(
         }
         is DevicesScreenUiState.Error -> {
             item {
-                Text(text = uiState.message ?: stringResource(R.string.unknown_error_message))
+                Text(text = stringResource(uiState.messageId))
             }
         }
     }
@@ -117,7 +117,7 @@ fun LazyGridScope.devicesScreenContent(
         }
         is DevicesScreenUiState.Error -> {
             item {
-                Text(text = uiState.message ?: stringResource(R.string.unknown_error_message))
+                Text(text = stringResource(uiState.messageId))
             }
         }
     }

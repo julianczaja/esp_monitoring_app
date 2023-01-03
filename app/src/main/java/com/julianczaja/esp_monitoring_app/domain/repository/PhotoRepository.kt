@@ -8,9 +8,9 @@ interface PhotoRepository {
 
     fun getAllPhotosLocal(deviceId: Long): Flow<List<Photo>>
 
-    suspend fun getAllPhotosRemote(
+    suspend fun updateAllPhotosRemote(
         deviceId: Long,
         from: Long? = null,
         to: Long? = null,
-    ): List<Photo>
+    ): Result<List<Photo>>
 }

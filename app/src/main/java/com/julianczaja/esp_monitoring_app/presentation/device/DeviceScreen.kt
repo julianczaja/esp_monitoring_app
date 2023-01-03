@@ -44,8 +44,7 @@ fun DeviceScreenContent(
     Column(
         verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .fillMaxSize()
+        modifier = Modifier.fillMaxSize()
     ) {
         when (uiState) {
             DeviceScreenUiState.Loading -> {
@@ -58,27 +57,36 @@ fun DeviceScreenContent(
             } else {
                 Text(
                     text = "There are no photos taken by this device :(",
-                    style = MaterialTheme.typography.labelMedium
+                    style = MaterialTheme.typography.headlineSmall,
                 )
             }
             is DeviceScreenUiState.Error -> {
                 Box(Modifier.fillMaxSize()) {
                     Text(
-                        text = uiState.message ?: stringResource(id = R.string.unknown_error_message),
-                        color = MaterialTheme.colorScheme.error
+                        text = stringResource(uiState.messageId),
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.headlineSmall,
+                        modifier = Modifier.align(Alignment.Center)
                     )
                 }
             }
         }
-        Button(
-            onClick = updatePhotos,
-            modifier = Modifier
-                .height(IntrinsicSize.Min)
-                .width(200.dp)
-                .padding(MaterialTheme.spacing.medium)
-        ) {
-            Text(text = stringResource(R.string.update_photos_label))
-        }
+        UpdateButton(updatePhotos)
+    }
+}
+
+@Composable
+private fun UpdateButton(
+    onClick: () -> Unit,
+) {
+    Button(
+        onClick = onClick,
+        modifier = Modifier
+            .height(IntrinsicSize.Min)
+            .width(200.dp)
+            .padding(MaterialTheme.spacing.medium)
+    ) {
+        Text(text = stringResource(R.string.update_photos_label))
     }
 }
 

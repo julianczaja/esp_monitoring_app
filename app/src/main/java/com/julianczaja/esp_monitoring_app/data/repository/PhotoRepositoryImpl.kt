@@ -18,16 +18,18 @@ class PhotoRepositoryImpl @Inject constructor(
     override fun getAllPhotosLocal(deviceId: Long): Flow<List<Photo>> =
         photoDao.getAll(deviceId).map { photos -> photos.map { it.toPhoto() } }
 
-    override suspend fun getAllPhotosRemote(
+    override suspend fun updateAllPhotosRemote(
         deviceId: Long,
         from: Long?,
         to: Long?,
-    ): List<Photo> {
+    ): Result<List<Photo>> {
         val newPhotos = api.getDevicePhotos(deviceId, from, to)
-
-        photoDao.deleteAll(deviceId) // TODO: from/to
-        photoDao.insertAll(newPhotos.map { it.toPhotoEntity() })
-
+        newPhotos.onSuccess { photos ->
+            photoDao.withTransaction {
+                photoDao.deleteAll(deviceId)
+                photoDao.insertAll(photos.map { it.toPhotoEntity() })
+            }
+        }
         return newPhotos
     }
 }

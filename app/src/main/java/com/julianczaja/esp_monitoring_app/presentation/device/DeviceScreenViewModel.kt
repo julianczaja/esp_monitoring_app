@@ -1,10 +1,12 @@
 package com.julianczaja.esp_monitoring_app.presentation.device
 
+import androidx.annotation.StringRes
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.julianczaja.esp_monitoring_app.DeviceArgs
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
+import com.julianczaja.esp_monitoring_app.domain.model.getErrorMessageId
 import com.julianczaja.esp_monitoring_app.domain.repository.PhotoRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -20,6 +22,8 @@ class DeviceScreenViewModel @Inject constructor(
 
     private val deviceArgs: DeviceArgs = DeviceArgs(savedStateHandle)
 
+    private val apiError = MutableStateFlow<Int?>(null)
+
     val deviceUiState: StateFlow<DeviceScreenUiState> = deviceUiState()
         .stateIn(
             scope = viewModelScope,
@@ -27,19 +31,28 @@ class DeviceScreenViewModel @Inject constructor(
             initialValue = DeviceScreenUiState.Loading
         )
 
-    private fun deviceUiState(): Flow<DeviceScreenUiState> = photoRepository.getAllPhotosLocal(deviceArgs.deviceId)
+    private fun deviceUiState(): Flow<DeviceScreenUiState> = combine(photosStream(), apiError) { photos, apiErr ->
+        return@combine if (apiErr != null) {
+            DeviceScreenUiState.Error(apiErr)
+        } else {
+            photos
+        }
+    }
+
+    private fun photosStream() = photoRepository.getAllPhotosLocal(deviceArgs.deviceId)
         .onStart { DeviceScreenUiState.Loading }
-        .catch { DeviceScreenUiState.Error(it.message) }
+        .catch { DeviceScreenUiState.Error(it.getErrorMessageId()) }
         .map { DeviceScreenUiState.Success(photos = it) }
 
     fun updatePhotos() = viewModelScope.launch(Dispatchers.IO) {
-        // TODO: Check if it's not in progress already
-        photoRepository.getAllPhotosRemote(deviceArgs.deviceId)
+        photoRepository.updateAllPhotosRemote(deviceArgs.deviceId) // TODO: Check if it's not in progress already
+            .onFailure { apiError.emit(it.getErrorMessageId()) }
+            .onSuccess { apiError.emit(null) }
     }
 }
 
 sealed interface DeviceScreenUiState {
     data class Success(val photos: List<Photo>) : DeviceScreenUiState
     object Loading : DeviceScreenUiState
-    data class Error(val message: String?) : DeviceScreenUiState
+    data class Error(@StringRes val messageId: Int) : DeviceScreenUiState
 }

@@ -10,6 +10,7 @@ import com.julianczaja.esp_monitoring_app.data.local.database.dao.PhotoDao
 import com.julianczaja.esp_monitoring_app.data.remote.RetrofitEspMonitoringApi
 import com.julianczaja.esp_monitoring_app.data.repository.DeviceRepositoryImpl
 import com.julianczaja.esp_monitoring_app.data.repository.PhotoRepositoryImpl
+import com.julianczaja.esp_monitoring_app.domain.model.ResultCallAdapterFactory
 import com.julianczaja.esp_monitoring_app.domain.repository.DeviceRepository
 import com.julianczaja.esp_monitoring_app.domain.repository.PhotoRepository
 import dagger.Module
@@ -48,6 +49,7 @@ object AppModule {
                 }
             }
             .build())
+        .addCallAdapterFactory(ResultCallAdapterFactory())
         .addConverterFactory(
             @OptIn(ExperimentalSerializationApi::class)
             networkJson.asConverterFactory("application/json".toMediaType())
