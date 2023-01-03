@@ -19,8 +19,8 @@ import androidx.navigation.compose.rememberNavController
 import com.julianczaja.esp_monitoring_app.EspMonitoringNavHost
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.navigateToAddNewDeviceDialog
-import com.julianczaja.esp_monitoring_app.rememberEspMonitoringAppState
 import com.julianczaja.esp_monitoring_app.presentation.theme.AppTheme
+import com.julianczaja.esp_monitoring_app.rememberEspMonitoringAppState
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -82,7 +82,7 @@ class MainActivity : ComponentActivity() {
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .windowInsetsPadding(WindowInsets.safeDrawing)
+                                .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
                         ) {
                             EspMonitoringNavHost(
                                 navController = appState.navController,
