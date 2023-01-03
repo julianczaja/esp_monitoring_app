@@ -12,6 +12,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import javax.inject.Inject
 
 @HiltViewModel
@@ -48,7 +49,7 @@ class DeviceScreenViewModel @Inject constructor(
     private fun photosStream() = photoRepository.getAllPhotosLocal(deviceArgs.deviceId)
         .onStart { DevicePhotosUiState.Loading }
         .catch { DevicePhotosUiState.Error(it.getErrorMessageId()) }
-        .map { DevicePhotosUiState.Success(photos = it) }
+        .map { photos -> DevicePhotosUiState.Success(dateGroupedPhotos = photos.groupBy { it.dateTime.toLocalDate() }) }
 
     fun updatePhotos() = viewModelScope.launch(Dispatchers.IO) {
         isRefreshing.update { true }
@@ -70,7 +71,7 @@ data class DeviceScreenUiState(
 )
 
 sealed interface DevicePhotosUiState {
-    data class Success(val photos: List<Photo>) : DevicePhotosUiState
+    data class Success(val dateGroupedPhotos: Map<LocalDate, List<Photo>>) : DevicePhotosUiState
     object Loading : DevicePhotosUiState
     data class Error(@StringRes val messageId: Int) : DevicePhotosUiState
 }

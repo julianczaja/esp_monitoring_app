@@ -8,12 +8,14 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import java.time.LocalDateTime
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatterBuilder
 import java.time.temporal.ChronoField
 import java.util.*
 
-private val prettyFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm:ss")
+private val localDateTimePrettyFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm:ss")
+private val localTimePrettyFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
 
 private val defaultFormatter: DateTimeFormatter = DateTimeFormatterBuilder()
     .appendValue(ChronoField.YEAR_OF_ERA, 4)
@@ -29,7 +31,9 @@ fun String.toDefaultFormatLocalDateTime(): LocalDateTime = LocalDateTime.parse(t
 
 fun LocalDateTime.toDefaultFormatString(): String = defaultFormatter.format(this)
 
-fun LocalDateTime.toPrettyString(): String = this.format(prettyFormatter)
+fun LocalDateTime.toPrettyString(): String = this.format(localDateTimePrettyFormatter)
+
+fun LocalTime.toPrettyString(): String = this.format(localTimePrettyFormatter)
 
 @OptIn(ExperimentalSerializationApi::class)
 @Serializer(forClass = LocalDateTime::class)

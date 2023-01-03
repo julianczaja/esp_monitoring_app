@@ -2,13 +2,16 @@ package com.julianczaja.esp_monitoring_app.presentation.device
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.TabRow
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
@@ -20,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
@@ -29,10 +33,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.accompanist.pager.*
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.components.PhotoCoilImage
+import com.julianczaja.esp_monitoring_app.components.header
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 import com.julianczaja.esp_monitoring_app.toPrettyString
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 
 
 const val DEFAULT_PHOTO_HEIGHT = 150
@@ -108,7 +114,7 @@ fun DeviceScreen(
 
 @OptIn(ExperimentalMaterialApi::class, ExperimentalPagerApi::class)
 @Composable
-fun PagerScope.DevicePhotosScreenContent(
+private fun PagerScope.DevicePhotosScreenContent(
     uiState: DeviceScreenUiState,
     updatePhotos: () -> Unit,
 ) {
@@ -120,30 +126,70 @@ fun PagerScope.DevicePhotosScreenContent(
             .pullRefresh(pullRefreshState)
     ) {
         when (uiState.devicePhotosUiState) {
-            DevicePhotosUiState.Loading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            is DevicePhotosUiState.Success -> if (uiState.devicePhotosUiState.photos.isNotEmpty()) {
-                PhotosLazyGrid(photos = uiState.devicePhotosUiState.photos)
+            DevicePhotosUiState.Loading -> DevicePhotosLoadingScreen()
+            is DevicePhotosUiState.Error -> DevicePhotosErrorScreen(uiState.devicePhotosUiState.messageId)
+            is DevicePhotosUiState.Success -> if (uiState.devicePhotosUiState.dateGroupedPhotos.isEmpty()) {
+                DevicePhotosEmptyScreen()
             } else {
-                Text(
-                    text = stringResource(R.string.no_photos),
-                    style = MaterialTheme.typography.headlineSmall,
-                )
+                PhotosLazyGrid(uiState.devicePhotosUiState.dateGroupedPhotos)
             }
-            is DevicePhotosUiState.Error -> Text(
-                text = stringResource(uiState.devicePhotosUiState.messageId),
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.align(Alignment.Center)
-            )
         }
         PullRefreshIndicator(uiState.isRefreshing, pullRefreshState, Modifier.align(Alignment.TopCenter))
     }
 }
 
 @Composable
-private fun BoxScope.PhotosLazyGrid(
-    modifier: Modifier = Modifier,
-    photos: List<Photo>,
+private fun DevicePhotosErrorScreen(@StringRes errorMessageId: Int) {
+    Column(
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+    ) {
+        Text(
+            text = stringResource(errorMessageId),
+            color = MaterialTheme.colorScheme.error,
+            style = MaterialTheme.typography.headlineSmall,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
+private fun DevicePhotosEmptyScreen() {
+    Column(
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+    ) {
+        Text(
+            text = stringResource(R.string.no_photos),
+            style = MaterialTheme.typography.headlineSmall,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
+private fun DevicePhotosLoadingScreen() {
+    Column(
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+    ) {
+        CircularProgressIndicator()
+    }
+}
+
+
+@Composable
+private fun PhotosLazyGrid(
+    dateGroupedPhotos: Map<LocalDate, List<Photo>>,
     minSize: Dp = DEFAULT_PHOTO_HEIGHT.dp,
 ) {
     LazyVerticalGrid(
@@ -151,28 +197,33 @@ private fun BoxScope.PhotosLazyGrid(
         contentPadding = PaddingValues(MaterialTheme.spacing.medium),
         horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium, Alignment.CenterHorizontally),
         verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium, Alignment.Top),
-        modifier = modifier
+        modifier = Modifier.fillMaxSize()
     ) {
-        items(items = photos, key = { it.dateTime }) {
-            Box {
-                PhotoCoilImage(
-                    url = it.url,
-                    height = minSize,
-                    onClick = {
-                        // TODO
-                    }
-                )
-                Box(
-                    modifier = Modifier
-                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.75f))
-                        .fillMaxWidth()
-                        .align(Alignment.BottomCenter)
+        dateGroupedPhotos.onEachIndexed { index, (localDate, photos) ->
+            header {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium, Alignment.CenterHorizontally),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
+                    Icon(
+                        imageVector = Icons.Default.DateRange,
+                        contentDescription = null
+                    )
                     Text(
-                        text = it.dateTime.toPrettyString(),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.align(Alignment.Center)
+                        text = localDate.toString(),
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
+            }
+            items(photos, key = { it.dateTime }) { photo ->
+                DevicePhoto(photo, minSize)
+            }
+            if (index < dateGroupedPhotos.size - 1) {
+                header {
+                    Divider(
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(MaterialTheme.spacing.small)
                     )
                 }
             }
@@ -180,10 +231,37 @@ private fun BoxScope.PhotosLazyGrid(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun LazyGridItemScope.DevicePhoto(photo: Photo, minSize: Dp) {
+    Box(Modifier.animateItemPlacement()) {
+        PhotoCoilImage(
+            url = photo.url,
+            height = minSize,
+            onClick = {
+                // TODO
+            }
+        )
+        Box(
+            modifier = Modifier
+                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.75f))
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+        ) {
+            Text(
+                text = photo.dateTime.toLocalTime().toPrettyString(),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.align(Alignment.Center)
+            )
+        }
+    }
+}
+
 
 @OptIn(ExperimentalPagerApi::class)
 @Composable
-fun PagerScope.DeviceSavedScreenContent() {
+private fun PagerScope.DeviceSavedScreenContent() {
     Box(modifier = Modifier.fillMaxSize()) {
         Text(text = "Saved", modifier = Modifier.align(Alignment.Center))
     }
@@ -191,7 +269,7 @@ fun PagerScope.DeviceSavedScreenContent() {
 
 @OptIn(ExperimentalPagerApi::class)
 @Composable
-fun PagerScope.DeviceSettingsScreenContent() {
+private fun PagerScope.DeviceSettingsScreenContent() {
     Box(modifier = Modifier.fillMaxSize()) {
         Text(text = "Settings", modifier = Modifier.align(Alignment.Center))
     }
