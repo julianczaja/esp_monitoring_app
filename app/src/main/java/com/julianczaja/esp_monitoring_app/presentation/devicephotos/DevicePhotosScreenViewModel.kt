@@ -1,4 +1,4 @@
-package com.julianczaja.esp_monitoring_app.presentation.device
+package com.julianczaja.esp_monitoring_app.presentation.devicephotos
 
 import androidx.annotation.StringRes
 import androidx.lifecycle.SavedStateHandle
@@ -16,7 +16,7 @@ import java.time.LocalDate
 import javax.inject.Inject
 
 @HiltViewModel
-class DeviceScreenViewModel @Inject constructor(
+class DevicePhotosScreenViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val photoRepository: PhotoRepository,
 ) : ViewModel() {
@@ -27,29 +27,30 @@ class DeviceScreenViewModel @Inject constructor(
 
     private val isRefreshing = MutableStateFlow(false)
 
-    val deviceUiState: StateFlow<DeviceScreenUiState> = deviceUiState()
+    val devicePhotosUiState: StateFlow<DevicePhotosScreenUiState> = devicePhotosUiState()
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = DeviceScreenUiState(DevicePhotosUiState.Loading, true)
+            initialValue = DevicePhotosScreenUiState(DevicePhotosState.Loading, true)
         )
 
     init {
         updatePhotos()
     }
 
-    private fun deviceUiState(): Flow<DeviceScreenUiState> = combine(photosStream(), apiError, isRefreshing) { photos, apiErr, refreshing ->
-        return@combine if (apiErr != null) {
-            DeviceScreenUiState(DevicePhotosUiState.Error(apiErr), refreshing)
-        } else {
-            DeviceScreenUiState(photos, refreshing)
+    private fun devicePhotosUiState(): Flow<DevicePhotosScreenUiState> =
+        combine(photosStream(), apiError, isRefreshing) { photos, apiErr, refreshing ->
+            return@combine if (apiErr != null) {
+                DevicePhotosScreenUiState(DevicePhotosState.Error(apiErr), refreshing)
+            } else {
+                DevicePhotosScreenUiState(photos, refreshing)
+            }
         }
-    }
 
     private fun photosStream() = photoRepository.getAllPhotosLocal(deviceArgs.deviceId)
-        .onStart { DevicePhotosUiState.Loading }
-        .catch { DevicePhotosUiState.Error(it.getErrorMessageId()) }
-        .map { photos -> DevicePhotosUiState.Success(dateGroupedPhotos = photos.groupBy { it.dateTime.toLocalDate() }) }
+        .onStart { DevicePhotosState.Loading }
+        .catch { DevicePhotosState.Error(it.getErrorMessageId()) }
+        .map { photos -> DevicePhotosState.Success(dateGroupedPhotos = photos.groupBy { it.dateTime.toLocalDate() }) }
 
     fun updatePhotos() = viewModelScope.launch(Dispatchers.IO) {
         isRefreshing.update { true }
@@ -65,13 +66,13 @@ class DeviceScreenViewModel @Inject constructor(
     }
 }
 
-data class DeviceScreenUiState(
-    val devicePhotosUiState: DevicePhotosUiState,
+data class DevicePhotosScreenUiState(
+    val devicePhotosUiState: DevicePhotosState,
     val isRefreshing: Boolean,
 )
 
-sealed interface DevicePhotosUiState {
-    data class Success(val dateGroupedPhotos: Map<LocalDate, List<Photo>>) : DevicePhotosUiState
-    object Loading : DevicePhotosUiState
-    data class Error(@StringRes val messageId: Int) : DevicePhotosUiState
+sealed interface DevicePhotosState {
+    data class Success(val dateGroupedPhotos: Map<LocalDate, List<Photo>>) : DevicePhotosState
+    object Loading : DevicePhotosState
+    data class Error(@StringRes val messageId: Int) : DevicePhotosState
 }

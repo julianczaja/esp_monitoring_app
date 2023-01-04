@@ -13,4 +13,5 @@
     <string name="settings_tab_label">Settings</string>
     <string name="unknown_error_message">Unknown error</string>
     <string name="update_photos_label">Update</string>
+    <string name="work_in_progress">\uD83D\uDD25 Work in progress \uD83D\uDD25</string>
 </resources>
