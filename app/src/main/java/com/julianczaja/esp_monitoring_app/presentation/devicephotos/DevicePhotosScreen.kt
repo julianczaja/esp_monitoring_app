@@ -32,11 +32,11 @@ import com.julianczaja.esp_monitoring_app.components.DefaultProgressIndicator
 import com.julianczaja.esp_monitoring_app.components.ErrorText
 import com.julianczaja.esp_monitoring_app.components.PhotoCoilImage
 import com.julianczaja.esp_monitoring_app.components.header
+import com.julianczaja.esp_monitoring_app.data.utils.toPrettyString
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.presentation.AppBackground
 import com.julianczaja.esp_monitoring_app.presentation.theme.AppTheme
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
-import com.julianczaja.esp_monitoring_app.toPrettyString
 import java.time.LocalDate
 import java.time.LocalDateTime
 

@@ -34,8 +34,8 @@ import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.calculateCurrentOffsetForPage
 import com.google.accompanist.pager.rememberPagerState
 import com.julianczaja.esp_monitoring_app.components.DefaultProgressIndicator
+import com.julianczaja.esp_monitoring_app.data.utils.toPrettyString
 import com.julianczaja.esp_monitoring_app.presentation.theme.shape
-import com.julianczaja.esp_monitoring_app.toPrettyString
 import kotlin.math.absoluteValue
 
 

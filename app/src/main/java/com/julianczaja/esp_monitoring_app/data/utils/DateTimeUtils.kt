@@ -1,4 +1,4 @@
-package com.julianczaja.esp_monitoring_app
+package com.julianczaja.esp_monitoring_app.data.utils
 
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer

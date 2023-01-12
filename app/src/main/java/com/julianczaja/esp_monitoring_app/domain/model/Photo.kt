@@ -1,8 +1,8 @@
 package com.julianczaja.esp_monitoring_app.domain.model
 
-import com.julianczaja.esp_monitoring_app.LocalDateTimeAsStringSerializer
 import com.julianczaja.esp_monitoring_app.data.local.database.entity.PhotoEntity
-import com.julianczaja.esp_monitoring_app.toDefaultFormatString
+import com.julianczaja.esp_monitoring_app.data.utils.LocalDateTimeAsStringSerializer
+import com.julianczaja.esp_monitoring_app.data.utils.toDefaultFormatString
 import kotlinx.serialization.Serializable
 import java.time.LocalDateTime
 

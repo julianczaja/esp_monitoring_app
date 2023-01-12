@@ -4,8 +4,8 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
+import com.julianczaja.esp_monitoring_app.data.utils.toDefaultFormatLocalDateTime
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
-import com.julianczaja.esp_monitoring_app.toDefaultFormatLocalDateTime
 
 @Entity(
     tableName = "photo",
