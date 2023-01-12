@@ -16,6 +16,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -36,11 +37,19 @@ fun DevicesScreen(
     viewModel: DevicesScreenViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.devicesUiState.collectAsStateWithLifecycle()
+    DevicesScreenContent(uiState, navigateToDevice)
+}
+
+@Composable
+fun DevicesScreenContent(
+    uiState: DevicesScreenUiState,
+    onDeviceClicked: (Long) -> Unit,
+) {
     val configuration = LocalConfiguration.current
 
     when (configuration.orientation) {
-        Configuration.ORIENTATION_LANDSCAPE -> DevicesScreenLandscape(uiState, navigateToDevice)
-        else -> DevicesScreenPortrait(uiState, navigateToDevice)
+        Configuration.ORIENTATION_LANDSCAPE -> DevicesScreenLandscape(uiState, onDeviceClicked)
+        else -> DevicesScreenPortrait(uiState, onDeviceClicked)
     }
 }
 
@@ -77,14 +86,14 @@ private fun DevicesScreenLandscape(
     }
 }
 
-fun LazyListScope.devicesScreenContent(
+private fun LazyListScope.devicesScreenContent(
     uiState: DevicesScreenUiState,
     onDeviceClicked: (Long) -> Unit,
 ) {
     when (uiState) {
         DevicesScreenUiState.Loading -> {
             item {
-                CircularProgressIndicator()
+                CircularProgressIndicator(modifier = Modifier.testTag("CircularProgressIndicator"))
             }
         }
         is DevicesScreenUiState.Success -> {
@@ -94,13 +103,13 @@ fun LazyListScope.devicesScreenContent(
         }
         is DevicesScreenUiState.Error -> {
             item {
-                Text(text = stringResource(uiState.messageId))
+                Text(text = stringResource(uiState.messageId), modifier = Modifier.testTag("ErrorText"))
             }
         }
     }
 }
 
-fun LazyGridScope.devicesScreenContent(
+private fun LazyGridScope.devicesScreenContent(
     uiState: DevicesScreenUiState,
     onDeviceClicked: (Long) -> Unit,
 ) {
@@ -133,7 +142,8 @@ private fun DeviceItem(
     Card(
         modifier = modifier
             .clickable(onClick = { onClicked(device.id) })
-            .defaultMinSize(minHeight = minHeight),
+            .defaultMinSize(minHeight = minHeight)
+            .testTag("DeviceItemCard"),
     ) {
         Column(
             verticalArrangement = Arrangement.Center,
