@@ -17,7 +17,7 @@ import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.pagerTabIndicatorOffset
 import com.google.accompanist.pager.rememberPagerState
 import com.julianczaja.esp_monitoring_app.R
-import com.julianczaja.esp_monitoring_app.presentation.deviceconfiguration.DeviceSettingsScreen
+import com.julianczaja.esp_monitoring_app.presentation.devicesettings.DeviceSettingsScreen
 import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DevicePhotosScreen
 import com.julianczaja.esp_monitoring_app.presentation.devicesavedphotos.DeviceSavedScreen
 import kotlinx.coroutines.launch

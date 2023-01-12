@@ -5,6 +5,7 @@ import okhttp3.Request
 import okhttp3.internal.http2.ConnectionShutdownException
 import okio.Timeout
 import retrofit2.*
+import timber.log.Timber
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 import java.net.ConnectException
@@ -70,6 +71,7 @@ class ResultCall<R>(private val delegate: Call<R>) : Call<Result<R>> {
             }
 
             override fun onFailure(call: Call<R>, throwable: Throwable) {
+                Timber.e("Network failure: $throwable")
                 val error = when (throwable) {
                     is ConnectException,
                     is SocketTimeoutException,

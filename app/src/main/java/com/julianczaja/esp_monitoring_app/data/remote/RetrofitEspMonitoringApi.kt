@@ -1,9 +1,9 @@
 package com.julianczaja.esp_monitoring_app.data.remote
 
+import com.julianczaja.esp_monitoring_app.domain.model.DeviceSettings
+import com.julianczaja.esp_monitoring_app.domain.model.DeviceSettingsDto
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
-import retrofit2.http.GET
-import retrofit2.http.Path
-import retrofit2.http.Query
+import retrofit2.http.*
 
 interface RetrofitEspMonitoringApi {
 
@@ -13,4 +13,15 @@ interface RetrofitEspMonitoringApi {
         @Query("from") from: Long? = null,
         @Query("to") to: Long? = null,
     ): Result<List<Photo>>
+
+    @GET(value = "/settings/{deviceId}")
+    suspend fun getCurrentDeviceSettings(
+        @Path("deviceId") deviceId: Long,
+    ): Result<DeviceSettingsDto>
+
+    @POST(value = "/settings/{deviceId}")
+    suspend fun setCurrentDeviceSettings(
+        @Path("deviceId") deviceId: Long,
+        @Body deviceSettings: DeviceSettings,
+    ): Result<Unit>
 }
