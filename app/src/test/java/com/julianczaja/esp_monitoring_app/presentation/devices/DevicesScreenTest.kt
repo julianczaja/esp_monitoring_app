@@ -50,7 +50,7 @@ class DevicesScreenTest {
             .onAllNodesWithTag("ErrorText")
             .assertCountEquals(0)
         composeTestRule
-            .onAllNodesWithTag("CircularProgressIndicator")
+            .onAllNodesWithTag("DefaultProgressIndicator")
             .assertCountEquals(0)
     }
 
@@ -63,7 +63,7 @@ class DevicesScreenTest {
             )
         }
         composeTestRule
-            .onNodeWithTag("CircularProgressIndicator")
+            .onNodeWithTag("DefaultProgressIndicator")
             .assertIsDisplayed()
 
         composeTestRule
@@ -85,7 +85,7 @@ class DevicesScreenTest {
             .assertTextEquals(composeTestRule.activity.getString(R.string.unknown_error_message))
 
         composeTestRule
-            .onAllNodesWithTag("CircularProgressIndicator")
+            .onAllNodesWithTag("DefaultProgressIndicator")
             .assertCountEquals(0)
     }
 }

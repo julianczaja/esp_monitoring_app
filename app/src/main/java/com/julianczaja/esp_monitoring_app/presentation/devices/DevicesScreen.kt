@@ -24,6 +24,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.ExperimentalLifecycleComposeApi
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.julianczaja.esp_monitoring_app.R
+import com.julianczaja.esp_monitoring_app.components.DefaultProgressIndicator
+import com.julianczaja.esp_monitoring_app.components.ErrorText
 import com.julianczaja.esp_monitoring_app.domain.model.Device
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 
@@ -93,7 +95,7 @@ private fun LazyListScope.devicesScreenContent(
     when (uiState) {
         DevicesScreenUiState.Loading -> {
             item {
-                CircularProgressIndicator(modifier = Modifier.testTag("CircularProgressIndicator"))
+                DefaultProgressIndicator()
             }
         }
         is DevicesScreenUiState.Success -> {
@@ -103,7 +105,7 @@ private fun LazyListScope.devicesScreenContent(
         }
         is DevicesScreenUiState.Error -> {
             item {
-                Text(text = stringResource(uiState.messageId), modifier = Modifier.testTag("ErrorText"))
+                ErrorText(text = stringResource(uiState.messageId))
             }
         }
     }
@@ -116,7 +118,7 @@ private fun LazyGridScope.devicesScreenContent(
     when (uiState) {
         DevicesScreenUiState.Loading -> {
             item {
-                CircularProgressIndicator()
+                DefaultProgressIndicator()
             }
         }
         is DevicesScreenUiState.Success -> {

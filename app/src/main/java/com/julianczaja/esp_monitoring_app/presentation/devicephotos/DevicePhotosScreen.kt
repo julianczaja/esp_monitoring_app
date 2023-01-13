@@ -31,6 +31,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.PagerScope
 import com.julianczaja.esp_monitoring_app.R
+import com.julianczaja.esp_monitoring_app.components.DefaultProgressIndicator
+import com.julianczaja.esp_monitoring_app.components.ErrorText
 import com.julianczaja.esp_monitoring_app.components.PhotoCoilImage
 import com.julianczaja.esp_monitoring_app.components.header
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
@@ -86,12 +88,7 @@ private fun DevicePhotosErrorScreen(@StringRes errorMessageId: Int) {
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
     ) {
-        Text(
-            text = stringResource(errorMessageId),
-            color = MaterialTheme.colorScheme.error,
-            style = MaterialTheme.typography.headlineSmall,
-            textAlign = TextAlign.Center
-        )
+        ErrorText(text = stringResource(errorMessageId))
     }
 }
 
@@ -121,7 +118,7 @@ private fun DevicePhotosLoadingScreen() {
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
     ) {
-        CircularProgressIndicator()
+        DefaultProgressIndicator()
     }
 }
 
