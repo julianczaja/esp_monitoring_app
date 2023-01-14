@@ -16,13 +16,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.ExperimentalLifecycleComposeApi
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 
 
-@OptIn(ExperimentalLifecycleComposeApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddNewDeviceDialog(
     onDismiss: () -> Unit,

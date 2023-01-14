@@ -21,7 +21,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.ExperimentalLifecycleComposeApi
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.components.DefaultProgressIndicator
@@ -32,7 +31,6 @@ import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 
 const val DEFAULT_DEVICE_ITEM_MIN_HEIGHT = 150
 
-@OptIn(ExperimentalLifecycleComposeApi::class)
 @Composable
 fun DevicesScreen(
     navigateToDevice: (Long) -> Unit,

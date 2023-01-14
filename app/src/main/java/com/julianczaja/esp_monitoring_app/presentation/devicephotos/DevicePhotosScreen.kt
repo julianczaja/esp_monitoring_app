@@ -26,7 +26,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.ExperimentalLifecycleComposeApi
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.PagerScope
@@ -43,7 +42,7 @@ import java.time.LocalDate
 
 const val DEFAULT_PHOTO_HEIGHT = 150
 
-@OptIn(ExperimentalLifecycleComposeApi::class, ExperimentalPagerApi::class)
+@OptIn(ExperimentalPagerApi::class)
 @Composable
 fun PagerScope.DevicePhotosScreen(
     viewModel: DevicePhotosScreenViewModel = hiltViewModel(),
