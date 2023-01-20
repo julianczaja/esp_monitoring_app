@@ -8,6 +8,7 @@ import androidx.navigation.compose.dialog
 import com.julianczaja.esp_monitoring_app.presentation.adddevice.AddNewDeviceDialog
 import com.julianczaja.esp_monitoring_app.presentation.device.DeviceScreen
 import com.julianczaja.esp_monitoring_app.presentation.devices.DevicesScreen
+import com.julianczaja.esp_monitoring_app.presentation.removedevice.RemoveDeviceDialog
 
 
 // Devices
@@ -19,9 +20,10 @@ fun NavController.navigateToDevices(navOptions: NavOptions? = null) {
 
 fun NavGraphBuilder.devicesScreen(
     navigateToDevice: (Long) -> Unit,
+    navigateToRemoveDevice: (Long) -> Unit,
 ) {
     composable(route = devicesNavigationRoute) {
-        DevicesScreen(navigateToDevice)
+        DevicesScreen(navigateToDevice, navigateToRemoveDevice)
     }
 }
 
@@ -40,13 +42,29 @@ fun NavGraphBuilder.addNewDeviceDialog(
     }
 }
 
+// Remove device
+const val removeDeviceDialogNavigationRoute = "remove_device_route"
+
+fun NavController.navigateToRemoveDeviceDialog(deviceId: Long, navOptions: NavOptions? = null) {
+    val encoded = Uri.encode(deviceId.toString())
+    this.navigate(
+        "$removeDeviceDialogNavigationRoute/$encoded", navOptions
+    )
+}
+
+fun NavGraphBuilder.removeDeviceDialog(
+    onDismiss: () -> Unit,
+) {
+    dialog(
+        route = "$removeDeviceDialogNavigationRoute/{${DeviceIdArgs.KEY}}",
+        arguments = listOf(navArgument(DeviceIdArgs.KEY) { type = DeviceIdArgs.NAV_TYPE })
+    ) {
+        RemoveDeviceDialog(onDismiss)
+    }
+}
+
 // Device
 const val deviceNavigationRoute = "device_route"
-internal const val deviceIdArg = "deviceId"
-
-data class DeviceArgs(val deviceId: Long) {
-    constructor(savedStateHandle: SavedStateHandle) : this(savedStateHandle.get<Long>(deviceIdArg) ?: -1L)
-}
 
 fun NavController.navigateToDevice(deviceId: Long, navOptions: NavOptions? = null) {
     val encoded = Uri.encode(deviceId.toString())
@@ -55,9 +73,19 @@ fun NavController.navigateToDevice(deviceId: Long, navOptions: NavOptions? = nul
 
 fun NavGraphBuilder.deviceScreen() {
     composable(
-        route = "$deviceNavigationRoute/{$deviceIdArg}",
-        arguments = listOf(navArgument(deviceIdArg) { type = NavType.LongType })
+        route = "$deviceNavigationRoute/{${DeviceIdArgs.KEY}}",
+        arguments = listOf(navArgument(DeviceIdArgs.KEY) { type = DeviceIdArgs.NAV_TYPE })
     ) {
         DeviceScreen()
     }
+}
+
+// Args
+data class DeviceIdArgs(val deviceId: Long) {
+    companion object {
+        const val KEY = "deviceId"
+        val NAV_TYPE = NavType.LongType
+    }
+
+    constructor(savedStateHandle: SavedStateHandle) : this(savedStateHandle.get<Long>(KEY) ?: -1L)
 }

@@ -13,10 +13,12 @@ import java.net.SocketTimeoutException
 
 class NoInternetConnectionException : Exception()
 class GenericInternetException : Exception()
+class InternalAppException : Exception()
 
 fun Throwable.getErrorMessageId(): Int = when (this) {
     is NoInternetConnectionException -> R.string.no_internet_connection_error_message
     is GenericInternetException -> R.string.generic_internet_error_message
+    is InternalAppException -> R.string.internal_app_error_message
     else -> R.string.unknown_error_message
 }
 

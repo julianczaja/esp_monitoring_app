@@ -11,6 +11,9 @@ abstract class DeviceDao : EntityDao<DeviceEntity>() {
     @Query("SELECT * FROM device")
     abstract fun getAll(): Flow<List<DeviceEntity>>
 
+    @Query("SELECT * FROM device where id = :deviceId")
+    abstract fun getById(deviceId: Long): DeviceEntity?
+
     @Query("SELECT EXISTS(SELECT * FROM device where id = :deviceId)")
     abstract suspend fun hasDeviceWithId(deviceId: Long): Boolean
 

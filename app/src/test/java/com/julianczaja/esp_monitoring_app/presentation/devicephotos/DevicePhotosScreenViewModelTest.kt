@@ -3,8 +3,8 @@ package com.julianczaja.esp_monitoring_app.presentation.devicephotos
 import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
+import com.julianczaja.esp_monitoring_app.DeviceIdArgs
 import com.julianczaja.esp_monitoring_app.data.repository.FakePhotoRepositoryImpl
-import com.julianczaja.esp_monitoring_app.deviceIdArg
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.presentation.devices.MainDispatcherRule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -31,7 +31,7 @@ class DevicePhotosScreenViewModelTest {
 
     @Before
     fun setup() {
-        savedStateHandle = SavedStateHandle().apply { set(deviceIdArg, deviceId) }
+        savedStateHandle = SavedStateHandle().apply { set(DeviceIdArgs.KEY, deviceId) }
         photoRepository = FakePhotoRepositoryImpl()
         viewModel = DevicePhotosScreenViewModel(savedStateHandle, photoRepository)
     }

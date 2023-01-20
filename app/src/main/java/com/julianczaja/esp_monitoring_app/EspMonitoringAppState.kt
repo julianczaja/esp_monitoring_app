@@ -27,7 +27,7 @@ class EspMonitoringAppState(
         @Composable get() = navController.currentBackStackEntryAsState().value?.destination
 
     val shouldShowNavigationIcon: Boolean
-        @Composable get() = currentDestination?.route == "$deviceNavigationRoute/{$deviceIdArg}" // FIXME
+        @Composable get() = currentDestination?.route == "$deviceNavigationRoute/{${DeviceIdArgs.KEY}}"
 
     val shouldShowFab: Boolean
         @Composable get() = currentDestination?.route == devicesNavigationRoute

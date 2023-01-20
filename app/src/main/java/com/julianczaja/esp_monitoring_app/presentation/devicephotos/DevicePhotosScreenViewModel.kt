@@ -4,7 +4,7 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.julianczaja.esp_monitoring_app.DeviceArgs
+import com.julianczaja.esp_monitoring_app.DeviceIdArgs
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.domain.model.getErrorMessageId
 import com.julianczaja.esp_monitoring_app.domain.repository.PhotoRepository
@@ -21,7 +21,7 @@ class DevicePhotosScreenViewModel @Inject constructor(
     private val photoRepository: PhotoRepository,
 ) : ViewModel() {
 
-    private val deviceArgs: DeviceArgs = DeviceArgs(savedStateHandle)
+    private val deviceIdArgs: DeviceIdArgs = DeviceIdArgs(savedStateHandle)
 
     private val apiError = MutableStateFlow<Int?>(null)
 
@@ -43,7 +43,7 @@ class DevicePhotosScreenViewModel @Inject constructor(
         }
     }
 
-    private fun photosStream() = photoRepository.getAllPhotosLocal(deviceArgs.deviceId)
+    private fun photosStream() = photoRepository.getAllPhotosLocal(deviceIdArgs.deviceId)
         .map<List<Photo>, DevicePhotosState> { photos -> DevicePhotosState.Success(groupPhotosByDayDesc(photos)) }
         .catch { emit(DevicePhotosState.Error(it.getErrorMessageId())) }
         .onStart { emit(DevicePhotosState.Loading) }
@@ -51,7 +51,7 @@ class DevicePhotosScreenViewModel @Inject constructor(
 
     fun updatePhotos() = viewModelScope.launch(Dispatchers.IO) {
         isRefreshing.update { true }
-        photoRepository.updateAllPhotosRemote(deviceArgs.deviceId) // TODO: Check if it's not in progress already
+        photoRepository.updateAllPhotosRemote(deviceIdArgs.deviceId) // TODO: Check if it's not in progress already
             .onFailure {
                 apiError.emit(it.getErrorMessageId())
                 isRefreshing.update { false }

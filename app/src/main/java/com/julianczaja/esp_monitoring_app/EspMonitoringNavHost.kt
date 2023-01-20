@@ -18,10 +18,14 @@ fun EspMonitoringNavHost(
         startDestination = startDestination
     ) {
         devicesScreen(
-            navigateToDevice = navController::navigateToDevice
+            navigateToDevice = navController::navigateToDevice,
+            navigateToRemoveDevice = navController::navigateToRemoveDeviceDialog
         )
         deviceScreen()
         addNewDeviceDialog(
+            onDismiss = onBackClick
+        )
+        removeDeviceDialog(
             onDismiss = onBackClick
         )
     }
