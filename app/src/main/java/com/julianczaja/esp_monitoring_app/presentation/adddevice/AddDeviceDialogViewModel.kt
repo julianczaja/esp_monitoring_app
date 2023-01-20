@@ -2,6 +2,7 @@ package com.julianczaja.esp_monitoring_app.presentation.adddevice
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.domain.model.Device
 import com.julianczaja.esp_monitoring_app.domain.repository.DeviceRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -26,12 +27,12 @@ class AddDeviceDialogViewModel @Inject constructor(
     val eventFlow = MutableSharedFlow<Event>()
 
     private val _name = MutableStateFlow("")
-    private val _nameError = MutableStateFlow<String?>(null)
+    private val _nameError = MutableStateFlow<Int?>(null)
     val name = _name.asStateFlow()
     val nameError = _nameError.asStateFlow()
 
     private val _id = MutableStateFlow("")
-    private val _idError = MutableStateFlow<String?>(null)
+    private val _idError = MutableStateFlow<Int?>(null)
     val id = _id.asStateFlow()
     val idError = _idError.asStateFlow()
 
@@ -39,7 +40,7 @@ class AddDeviceDialogViewModel @Inject constructor(
         _name.update { newVal }
 
         if (newVal.isEmpty()) {
-            _nameError.update { "Wrong device name" }
+            _nameError.update { R.string.add_device_error_wrong_name }
         } else {
             _nameError.update { null }
         }
@@ -52,7 +53,7 @@ class AddDeviceDialogViewModel @Inject constructor(
             newId.toLong()
             _idError.update { null }
         } catch (e: NumberFormatException) {
-            _idError.update { "Wrong device ID" }
+            _idError.update { R.string.add_device_error_wrong_id }
         }
     }
 
@@ -68,18 +69,18 @@ class AddDeviceDialogViewModel @Inject constructor(
     }
 
     private fun createDevice(): Device? {
-        if (nameError.value.isNullOrEmpty() && idError.value.isNullOrEmpty()) {
+        if (nameError.value == null && idError.value == null) {
             try {
                 val deviceId = id.value.toLong()
                 val deviceWithGivenIdAlreadyExists = runBlocking { deviceRepository.doesDeviceWithGivenIdAlreadyExist(deviceId) }
                 if (deviceWithGivenIdAlreadyExists) {
-                    _idError.update { "Device with this ID already exists" }
+                    _idError.update { R.string.add_device_error_id_exists }
                     return null
                 }
 
                 val deviceWithGivenNameAlreadyExists = runBlocking { deviceRepository.doesDeviceWithGivenNameAlreadyExist(name.value) }
                 if (deviceWithGivenNameAlreadyExists) {
-                    _nameError.update { "Device with this name already exists" }
+                    _nameError.update { R.string.add_device_error_name_exists }
                     return null
                 }
                 return Device(deviceId, name.value)
