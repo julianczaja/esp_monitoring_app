@@ -48,6 +48,19 @@ class DevicePhotosScreenViewModel @Inject constructor(
         .catch { emit(DevicePhotosState.Error(it.getErrorMessageId())) }
         .onStart { emit(DevicePhotosState.Loading) }
 
+    fun removePhoto(photo: Photo) = viewModelScope.launch(Dispatchers.IO) {
+        isRefreshing.update { true }
+        photoRepository.removePhotoRemote(photo.fileName)
+            .onFailure {
+                apiError.emit(it.getErrorMessageId())
+                isRefreshing.update { false }
+            }
+            .onSuccess {
+                apiError.emit(null)
+                isRefreshing.update { false }
+                updatePhotos()
+            }
+    }
 
     fun updatePhotos() = viewModelScope.launch(Dispatchers.IO) {
         isRefreshing.update { true }

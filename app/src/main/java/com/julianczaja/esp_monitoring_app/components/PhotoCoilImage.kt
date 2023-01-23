@@ -1,6 +1,8 @@
 package com.julianczaja.esp_monitoring_app.components
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -18,6 +20,7 @@ import coil.request.ImageRequest
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PhotoCoilImage(
     modifier: Modifier = Modifier,
@@ -25,6 +28,7 @@ fun PhotoCoilImage(
     height: Dp,
     cornerSize: Dp = MaterialTheme.spacing.medium,
     onClick: () -> Unit,
+    onLongClick: () -> Unit,
 ) {
     val context = LocalContext.current
 
@@ -44,5 +48,9 @@ fun PhotoCoilImage(
             .height(height)
             .clip(RoundedCornerShape(cornerSize))
             .clickable(onClick = onClick)
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick
+            )
     )
 }

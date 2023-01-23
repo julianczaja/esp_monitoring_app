@@ -11,11 +11,13 @@ data class Photo(
     val deviceId: Long,
     @Serializable(with = LocalDateTimeAsStringSerializer::class)
     val dateTime: LocalDateTime,
+    val fileName: String,
     val url: String,
 )
 
 fun Photo.toPhotoEntity() = PhotoEntity(
     deviceId = deviceId,
     dateTime = dateTime.toDefaultFormatString(),
+    fileName = fileName,
     url = url
 )

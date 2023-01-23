@@ -13,4 +13,8 @@ interface PhotoRepository {
         from: Long? = null,
         to: Long? = null,
     ): Result<List<Photo>>
+
+    suspend fun removePhotoRemote(
+        fileName: String
+    ): Result<Unit>
 }

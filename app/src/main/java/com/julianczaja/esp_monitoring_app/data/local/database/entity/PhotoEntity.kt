@@ -24,7 +24,9 @@ data class PhotoEntity(
     override val id: Long = 0,
     @ColumnInfo(index = true) val deviceId: Long,
     val dateTime: String,
+    @ColumnInfo(defaultValue = "unknownFileName")
+    val fileName: String,
     val url: String,
 ) : BaseEntity
 
-fun PhotoEntity.toPhoto() = Photo(deviceId, dateTime.toDefaultFormatLocalDateTime(), url)
+fun PhotoEntity.toPhoto() = Photo(deviceId, dateTime.toDefaultFormatLocalDateTime(), fileName, url)

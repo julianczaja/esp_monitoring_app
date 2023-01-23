@@ -14,12 +14,18 @@ class FakePhotoRepositoryImpl : PhotoRepository {
 
     fun emitAllPhotosLocalData(data: List<Photo>) = _allPhotosLocalFlow.tryEmit(data)
 
-    fun setUpdateAllPhotosRemoteReturnData(data: Result<List<Photo>>) { _updateAllPhotosRemoteData = data }
+    fun setUpdateAllPhotosRemoteReturnData(data: Result<List<Photo>>) {
+        _updateAllPhotosRemoteData = data
+    }
 
     override fun getAllPhotosLocal(deviceId: Long) = _allPhotosLocalFlow
 
     override suspend fun updateAllPhotosRemote(deviceId: Long, from: Long?, to: Long?): Result<List<Photo>> {
         delay(1000L)
         return _updateAllPhotosRemoteData
+    }
+
+    override suspend fun removePhotoRemote(fileName: String): Result<Unit> {
+        return Result.success(Unit)
     }
 }

@@ -47,7 +47,7 @@ class DevicePhotosScreenViewModelTest {
 
     @Test
     fun `UI State is success when local photos returned`() = runTest {
-        val fakePhoto = Photo(deviceId, LocalDateTime.of(2022, 1, 1, 1, 1, 1), "url")
+        val fakePhoto = Photo(deviceId, LocalDateTime.of(2022, 1, 1, 1, 1, 1), "fileName", "url")
         var uiState: DevicePhotosScreenUiState
 
         viewModel.devicePhotosUiState.test {

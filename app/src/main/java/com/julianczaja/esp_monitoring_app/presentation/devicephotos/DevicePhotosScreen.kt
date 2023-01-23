@@ -1,15 +1,12 @@
 package com.julianczaja.esp_monitoring_app.presentation.devicephotos
 
 import androidx.annotation.StringRes
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyGridItemScope
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
@@ -49,7 +46,12 @@ fun PagerScope.DevicePhotosScreen(
 ) {
     val uiState by viewModel.devicePhotosUiState.collectAsStateWithLifecycle()
 
-    DevicePhotosScreenContent(uiState, viewModel::updatePhotos)
+    DevicePhotosScreenContent(
+        uiState = uiState,
+        updatePhotos = viewModel::updatePhotos,
+        onPhotoClick = {}, // TODO: Implement photos full screen preview
+        onPhotoLongClick = viewModel::removePhoto // TODO: Open confirmation dialog or implement items selection
+    )
 }
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -57,6 +59,8 @@ fun PagerScope.DevicePhotosScreen(
 private fun DevicePhotosScreenContent(
     uiState: DevicePhotosScreenUiState,
     updatePhotos: () -> Unit,
+    onPhotoClick: (Photo) -> Unit,
+    onPhotoLongClick: (Photo) -> Unit,
 ) {
     val pullRefreshState = rememberPullRefreshState(uiState.isRefreshing, updatePhotos)
 
@@ -71,7 +75,11 @@ private fun DevicePhotosScreenContent(
             is DevicePhotosState.Success -> if (uiState.devicePhotosUiState.dateGroupedPhotos.isEmpty()) {
                 DevicePhotosEmptyScreen()
             } else {
-                DevicePhotosLazyGrid(uiState.devicePhotosUiState.dateGroupedPhotos)
+                DevicePhotosLazyGrid(
+                    dateGroupedPhotos = uiState.devicePhotosUiState.dateGroupedPhotos,
+                    onPhotoClick = onPhotoClick,
+                    onPhotoLongClick = onPhotoLongClick
+                )
             }
         }
         PullRefreshIndicator(uiState.isRefreshing, pullRefreshState, Modifier.align(Alignment.TopCenter))
@@ -126,6 +134,8 @@ private fun DevicePhotosLoadingScreen() {
 private fun DevicePhotosLazyGrid(
     dateGroupedPhotos: Map<LocalDate, List<Photo>>,
     minSize: Dp = DEFAULT_PHOTO_HEIGHT.dp,
+    onPhotoClick: (Photo) -> Unit,
+    onPhotoLongClick: (Photo) -> Unit,
 ) {
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize),
@@ -152,7 +162,12 @@ private fun DevicePhotosLazyGrid(
                 }
             }
             items(photos, key = { it.dateTime }) { photo ->
-                DevicePhoto(photo, minSize)
+                DevicePhoto(
+                    photo = photo,
+                    minSize = minSize,
+                    onClick = onPhotoClick,
+                    onLongClick = onPhotoLongClick
+                )
             }
             if (index < dateGroupedPhotos.size - 1) {
                 header {
@@ -168,14 +183,21 @@ private fun DevicePhotosLazyGrid(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun LazyGridItemScope.DevicePhoto(photo: Photo, minSize: Dp) {
-    Box(Modifier.animateItemPlacement()) {
+private fun LazyGridItemScope.DevicePhoto(
+    photo: Photo,
+    minSize: Dp,
+    onClick: (Photo) -> Unit,
+    onLongClick: (Photo) -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .animateItemPlacement()
+    ) {
         PhotoCoilImage(
             url = photo.url,
             height = minSize,
-            onClick = {
-                // TODO
-            }
+            onClick = { onClick(photo) },
+            onLongClick = { onLongClick(photo) }
         )
         Box(
             modifier = Modifier

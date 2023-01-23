@@ -32,4 +32,6 @@ class PhotoRepositoryImpl @Inject constructor(
         }
         return newPhotos
     }
+
+    override suspend fun removePhotoRemote(fileName: String) = api.removePhoto(fileName)
 }
