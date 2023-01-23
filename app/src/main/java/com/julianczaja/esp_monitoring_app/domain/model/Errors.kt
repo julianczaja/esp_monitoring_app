@@ -1,22 +1,27 @@
 package com.julianczaja.esp_monitoring_app.domain.model
 
 import com.julianczaja.esp_monitoring_app.R
+import kotlinx.serialization.SerializationException
 import okhttp3.Request
 import okhttp3.internal.http2.ConnectionShutdownException
 import okio.Timeout
 import retrofit2.*
+import timber.log.Timber
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 import java.net.ConnectException
 import java.net.SocketTimeoutException
+import java.time.format.DateTimeParseException
 
 
 class NoInternetConnectionException : Exception()
 class GenericInternetException : Exception()
+class GenericServerException : Exception()
 class InternalAppException : Exception()
 
 fun Throwable.getErrorMessageId(): Int = when (this) {
     is NoInternetConnectionException -> R.string.no_internet_connection_error_message
+    is GenericServerException -> R.string.generic_server_error_message
     is GenericInternetException -> R.string.generic_internet_error_message
     is InternalAppException -> R.string.internal_app_error_message
     else -> R.string.unknown_error_message
@@ -59,7 +64,10 @@ class ResultCall<R>(private val delegate: Call<R>) : Call<Result<R>> {
 
             private fun Response<R>.toResult(): Result<R> {
                 if (!isSuccessful) {
-                    return Result.failure(GenericInternetException())
+                    return when (this.code()) {
+                        500 -> Result.failure(GenericServerException())
+                        else -> Result.failure(GenericInternetException())
+                    }
                 }
                 body()?.let { body -> return Result.success(body) }
 
@@ -72,11 +80,15 @@ class ResultCall<R>(private val delegate: Call<R>) : Call<Result<R>> {
             }
 
             override fun onFailure(call: Call<R>, throwable: Throwable) {
+                Timber.e("Result CallAdapter error: $throwable")
                 val error = when (throwable) {
                     is ConnectException,
                     is SocketTimeoutException,
                     is ConnectionShutdownException,
                     -> NoInternetConnectionException()
+                    is SerializationException,
+                    is DateTimeParseException,
+                    -> InternalAppException()
                     else -> GenericInternetException()
                 }
                 callback.onResponse(this@ResultCall, Response.success(Result.failure(error)))

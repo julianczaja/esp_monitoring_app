@@ -10,7 +10,8 @@
     <string name="device_id_label">ID</string>
     <string name="device_id_label_with_format">ID: %d</string>
     <string name="device_name_label">Name</string>
-    <string name="generic_internet_error_message">No internet connection</string>
+    <string name="generic_internet_error_message">Internet error</string>
+    <string name="generic_server_error_message">Server error</string>
     <string name="internal_app_error_message">Something went wrong</string>
     <string name="no_internet_connection_error_message">No internet connection</string>
     <string name="no_photos">There are no photos taken by this device :(</string>
