@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -32,9 +33,12 @@ import com.julianczaja.esp_monitoring_app.components.ErrorText
 import com.julianczaja.esp_monitoring_app.components.PhotoCoilImage
 import com.julianczaja.esp_monitoring_app.components.header
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
+import com.julianczaja.esp_monitoring_app.presentation.AppBackground
+import com.julianczaja.esp_monitoring_app.presentation.theme.AppTheme
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 import com.julianczaja.esp_monitoring_app.toPrettyString
 import java.time.LocalDate
+import java.time.LocalDateTime
 
 
 const val DEFAULT_PHOTO_HEIGHT = 150
@@ -212,6 +216,69 @@ private fun LazyGridItemScope.DevicePhoto(
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.align(Alignment.Center)
+            )
+        }
+    }
+}
+
+@Preview(showSystemUi = true)
+@Composable
+private fun DevicePhotosStateSuccessPreview() {
+    AppTheme {
+        AppBackground {
+            val dateGroupedPhotos = mapOf(
+                LocalDate.of(2023, 1, 1) to listOf(
+                    Photo(123L, LocalDateTime.of(2023, 1, 1, 10, 10), "fileName 1", "1600x1200", "url"),
+                    Photo(123L, LocalDateTime.of(2023, 1, 1, 10, 11), "fileName 2", "1600x1200", "url"),
+                    Photo(123L, LocalDateTime.of(2023, 1, 1, 10, 12), "fileName 3", "1600x1200", "url"),
+                ),
+                LocalDate.of(2023, 1, 2) to listOf(
+                    Photo(123L, LocalDateTime.of(2023, 1, 2, 10, 13), "fileName 4", "1600x1200", "url"),
+                    Photo(123L, LocalDateTime.of(2023, 1, 2, 10, 14), "fileName 5", "1600x1200", "url"),
+                )
+            )
+            DevicePhotosScreenContent(
+                DevicePhotosScreenUiState(DevicePhotosState.Success(dateGroupedPhotos), false),
+                {}, {}, {}
+            )
+        }
+    }
+}
+
+@Preview(showSystemUi = true)
+@Composable
+private fun DevicePhotosStateSuccessNoItemsPreview() {
+    AppTheme {
+        AppBackground {
+            DevicePhotosScreenContent(
+                DevicePhotosScreenUiState(DevicePhotosState.Success(emptyMap()), false),
+                {}, {}, {}
+            )
+        }
+    }
+}
+
+@Preview(showSystemUi = true)
+@Composable
+private fun DevicePhotosStateLoadingPreview() {
+    AppTheme {
+        AppBackground {
+            DevicePhotosScreenContent(
+                DevicePhotosScreenUiState(DevicePhotosState.Loading, false),
+                {}, {}, {}
+            )
+        }
+    }
+}
+
+@Preview(showSystemUi = true)
+@Composable
+private fun DevicePhotosStateErrorPreview() {
+    AppTheme {
+        AppBackground {
+            DevicePhotosScreenContent(
+                DevicePhotosScreenUiState(DevicePhotosState.Error(R.string.internal_app_error_message), false),
+                {}, {}, {}
             )
         }
     }
