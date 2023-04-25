@@ -16,6 +16,10 @@ class FakeDeviceRepositoryImpl : DeviceRepository {
     override suspend fun getDeviceById(id: Long): Device? =
         _allDevicesDataFlow.replayCache.firstOrNull()?.find { it.id == id }
 
+    override fun getDeviceByIdFlow(id: Long): Flow<Device?> {
+        TODO("Not yet implemented")
+    }
+
     override suspend fun doesDeviceWithGivenIdAlreadyExist(deviceId: Long) =
         _allDevicesDataFlow.replayCache.firstOrNull()?.any { it.id == deviceId } ?: false
 

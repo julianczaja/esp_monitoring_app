@@ -10,6 +10,8 @@ interface DeviceRepository {
 
     suspend fun getDeviceById(id: Long): Device?
 
+    fun getDeviceByIdFlow(id: Long): Flow<Device?>
+
     suspend fun doesDeviceWithGivenIdAlreadyExist(deviceId: Long): Boolean
 
     suspend fun doesDeviceWithGivenNameAlreadyExist(name: String): Boolean

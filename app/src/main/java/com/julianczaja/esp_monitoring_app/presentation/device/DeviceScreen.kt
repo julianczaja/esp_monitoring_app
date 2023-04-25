@@ -36,6 +36,7 @@ enum class DevicePage(
 @OptIn(ExperimentalPagerApi::class)
 @Composable
 fun DeviceScreen(
+    navigateToPhotoPreview: (Long, String) -> Unit,
 ) {
     val coroutineScope = rememberCoroutineScope()
     val pagerState = rememberPagerState()
@@ -82,7 +83,7 @@ fun DeviceScreen(
             modifier = Modifier.fillMaxSize()
         ) { page ->
             when (page) {
-                DevicePage.Photos.index -> DevicePhotosScreen()
+                DevicePage.Photos.index -> DevicePhotosScreen(navigateToPhotoPreview)
                 DevicePage.Saved.index -> DeviceSavedScreen()
                 DevicePage.Settings.index -> DeviceSettingsScreen()
             }

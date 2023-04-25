@@ -8,6 +8,7 @@ import androidx.navigation.compose.dialog
 import com.julianczaja.esp_monitoring_app.presentation.adddevice.AddNewDeviceDialog
 import com.julianczaja.esp_monitoring_app.presentation.device.DeviceScreen
 import com.julianczaja.esp_monitoring_app.presentation.devices.DevicesScreen
+import com.julianczaja.esp_monitoring_app.presentation.photopreview.PhotoPreviewDialog
 import com.julianczaja.esp_monitoring_app.presentation.removedevice.RemoveDeviceDialog
 
 
@@ -71,12 +72,37 @@ fun NavController.navigateToDevice(deviceId: Long, navOptions: NavOptions? = nul
     this.navigate("$deviceNavigationRoute/$encoded", navOptions)
 }
 
-fun NavGraphBuilder.deviceScreen() {
+fun NavGraphBuilder.deviceScreen(
+    navigateToPhotoPreview: (Long, String) -> Unit,
+) {
     composable(
         route = "$deviceNavigationRoute/{${DeviceIdArgs.KEY}}",
         arguments = listOf(navArgument(DeviceIdArgs.KEY) { type = DeviceIdArgs.NAV_TYPE })
     ) {
-        DeviceScreen()
+        DeviceScreen(navigateToPhotoPreview)
+    }
+}
+
+// Photo preview
+const val photoPreviewNavigationRoute = "photo_preview_route"
+
+fun NavController.navigateToPhotoPreview(deviceId: Long, photoFileName: String, navOptions: NavOptions? = null) {
+    val encodedDeviceId = Uri.encode(deviceId.toString())
+    val encodedFileName = Uri.encode(photoFileName)
+    this.navigate("$photoPreviewNavigationRoute/$encodedDeviceId/$encodedFileName", navOptions)
+}
+
+fun NavGraphBuilder.photoPreviewDialog(
+    onDismiss: () -> Unit,
+) {
+    dialog(
+        route = "$photoPreviewNavigationRoute/{${DeviceIdArgs.KEY}}/{${PhotoFileNameArgs.KEY}}",
+        arguments = listOf(
+            navArgument(DeviceIdArgs.KEY) { type = DeviceIdArgs.NAV_TYPE },
+            navArgument(PhotoFileNameArgs.KEY) { type = PhotoFileNameArgs.NAV_TYPE },
+        )
+    ) {
+        PhotoPreviewDialog(onDismiss)
     }
 }
 
@@ -88,4 +114,13 @@ data class DeviceIdArgs(val deviceId: Long) {
     }
 
     constructor(savedStateHandle: SavedStateHandle) : this(savedStateHandle.get<Long>(KEY) ?: -1L)
+}
+
+data class PhotoFileNameArgs(val fileName: String) {
+    companion object {
+        const val KEY = "fileName"
+        val NAV_TYPE = NavType.StringType
+    }
+
+    constructor(savedStateHandle: SavedStateHandle) : this(savedStateHandle.get<String>(KEY) ?: "")
 }

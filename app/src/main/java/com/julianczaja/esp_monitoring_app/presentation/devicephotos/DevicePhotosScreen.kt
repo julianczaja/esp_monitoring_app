@@ -42,6 +42,7 @@ const val DEFAULT_PHOTO_HEIGHT = 150
 @OptIn(ExperimentalPagerApi::class)
 @Composable
 fun PagerScope.DevicePhotosScreen(
+    navigateToPhotoPreview: (Long, String) -> Unit,
     viewModel: DevicePhotosScreenViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.devicePhotosUiState.collectAsStateWithLifecycle()
@@ -49,7 +50,7 @@ fun PagerScope.DevicePhotosScreen(
     DevicePhotosScreenContent(
         uiState = uiState,
         updatePhotos = viewModel::updatePhotos,
-        onPhotoClick = {}, // TODO: Implement photos full screen preview
+        onPhotoClick = { navigateToPhotoPreview(it.deviceId, it.fileName) },
         onPhotoLongClick = viewModel::removePhoto // TODO: Open confirmation dialog or implement items selection
     )
 }
