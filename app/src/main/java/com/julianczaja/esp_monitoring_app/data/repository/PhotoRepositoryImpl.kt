@@ -18,6 +18,8 @@ class PhotoRepositoryImpl @Inject constructor(
     override fun getAllPhotosLocal(deviceId: Long): Flow<List<Photo>> =
         photoDao.getAll(deviceId).map { photos -> photos.map { it.toPhoto() } }
 
+    override fun getPhotoByFileNameLocal(fileName: String): Photo? = photoDao.getByFileName(fileName)?.toPhoto()
+
     override suspend fun updateAllPhotosRemote(
         deviceId: Long,
         from: Long?,
@@ -33,5 +35,12 @@ class PhotoRepositoryImpl @Inject constructor(
         return newPhotos
     }
 
-    override suspend fun removePhotoRemote(fileName: String) = api.removePhoto(fileName)
+    override suspend fun removePhotoByFileNameLocal(fileName: String) = try {
+        photoDao.deleteByFileName(fileName)
+        Result.success(Unit)
+    } catch (e: Exception) {
+        Result.failure(e)
+    }
+
+    override suspend fun removePhotoByFileNameRemote(fileName: String) = api.removePhoto(fileName)
 }

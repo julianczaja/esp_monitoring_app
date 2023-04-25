@@ -2,14 +2,19 @@ package com.julianczaja.esp_monitoring_app
 
 import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
-import androidx.navigation.*
+import androidx.navigation.NavController
+import androidx.navigation.NavGraphBuilder
+import androidx.navigation.NavOptions
+import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.dialog
+import androidx.navigation.navArgument
 import com.julianczaja.esp_monitoring_app.presentation.adddevice.AddNewDeviceDialog
 import com.julianczaja.esp_monitoring_app.presentation.device.DeviceScreen
 import com.julianczaja.esp_monitoring_app.presentation.devices.DevicesScreen
 import com.julianczaja.esp_monitoring_app.presentation.photopreview.PhotoPreviewDialog
 import com.julianczaja.esp_monitoring_app.presentation.removedevice.RemoveDeviceDialog
+import com.julianczaja.esp_monitoring_app.presentation.removephoto.RemovePhotoDialog
 
 
 // Devices
@@ -64,6 +69,25 @@ fun NavGraphBuilder.removeDeviceDialog(
     }
 }
 
+// Remove photo
+const val removePhotoDialogNavigationRoute = "remove_photo_route"
+
+fun NavController.navigateToRemovePhotoDialog(photoFileName: String, navOptions: NavOptions? = null) {
+    val encoded = Uri.encode(photoFileName)
+    this.navigate("$removePhotoDialogNavigationRoute/$encoded", navOptions)
+}
+
+fun NavGraphBuilder.removePhotoDialog(
+    onDismiss: () -> Unit,
+) {
+    dialog(
+        route = "$removePhotoDialogNavigationRoute/{${PhotoFileNameArgs.KEY}}",
+        arguments = listOf(navArgument(PhotoFileNameArgs.KEY) { type = PhotoFileNameArgs.NAV_TYPE })
+    ) {
+        RemovePhotoDialog(onDismiss)
+    }
+}
+
 // Device
 const val deviceNavigationRoute = "device_route"
 
@@ -74,12 +98,13 @@ fun NavController.navigateToDevice(deviceId: Long, navOptions: NavOptions? = nul
 
 fun NavGraphBuilder.deviceScreen(
     navigateToPhotoPreview: (Long, String) -> Unit,
+    navigateToRemovePhotoDialog: (String) -> Unit,
 ) {
     composable(
         route = "$deviceNavigationRoute/{${DeviceIdArgs.KEY}}",
         arguments = listOf(navArgument(DeviceIdArgs.KEY) { type = DeviceIdArgs.NAV_TYPE })
     ) {
-        DeviceScreen(navigateToPhotoPreview)
+        DeviceScreen(navigateToPhotoPreview, navigateToRemovePhotoDialog)
     }
 }
 
@@ -115,6 +140,7 @@ data class DeviceIdArgs(val deviceId: Long) {
 
     constructor(savedStateHandle: SavedStateHandle) : this(savedStateHandle.get<Long>(KEY) ?: -1L)
 }
+
 
 data class PhotoFileNameArgs(val fileName: String) {
     companion object {

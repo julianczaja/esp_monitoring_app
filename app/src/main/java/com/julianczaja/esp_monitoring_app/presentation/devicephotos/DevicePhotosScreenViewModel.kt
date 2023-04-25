@@ -12,6 +12,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import java.time.LocalDate
 import javax.inject.Inject
 
@@ -50,7 +51,7 @@ class DevicePhotosScreenViewModel @Inject constructor(
 
     fun removePhoto(photo: Photo) = viewModelScope.launch(Dispatchers.IO) {
         isRefreshing.update { true }
-        photoRepository.removePhotoRemote(photo.fileName)
+        photoRepository.removePhotoByFileNameRemote(photo.fileName)
             .onFailure {
                 apiError.emit(it.getErrorMessageId())
                 isRefreshing.update { false }

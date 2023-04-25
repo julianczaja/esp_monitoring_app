@@ -43,6 +43,7 @@ const val DEFAULT_PHOTO_HEIGHT = 150
 @Composable
 fun PagerScope.DevicePhotosScreen(
     navigateToPhotoPreview: (Long, String) -> Unit,
+    navigateToRemovePhotoDialog: (String) -> Unit,
     viewModel: DevicePhotosScreenViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.devicePhotosUiState.collectAsStateWithLifecycle()
@@ -51,7 +52,7 @@ fun PagerScope.DevicePhotosScreen(
         uiState = uiState,
         updatePhotos = viewModel::updatePhotos,
         onPhotoClick = { navigateToPhotoPreview(it.deviceId, it.fileName) },
-        onPhotoLongClick = viewModel::removePhoto // TODO: Open confirmation dialog or implement items selection
+        onPhotoLongClick = { navigateToRemovePhotoDialog(it.fileName) }
     )
 }
 

@@ -37,6 +37,7 @@ enum class DevicePage(
 @Composable
 fun DeviceScreen(
     navigateToPhotoPreview: (Long, String) -> Unit,
+    navigateToRemovePhotoDialog: (String) -> Unit,
 ) {
     val coroutineScope = rememberCoroutineScope()
     val pagerState = rememberPagerState()
@@ -83,7 +84,7 @@ fun DeviceScreen(
             modifier = Modifier.fillMaxSize()
         ) { page ->
             when (page) {
-                DevicePage.Photos.index -> DevicePhotosScreen(navigateToPhotoPreview)
+                DevicePage.Photos.index -> DevicePhotosScreen(navigateToPhotoPreview, navigateToRemovePhotoDialog)
                 DevicePage.Saved.index -> DeviceSavedScreen()
                 DevicePage.Settings.index -> DeviceSettingsScreen()
             }

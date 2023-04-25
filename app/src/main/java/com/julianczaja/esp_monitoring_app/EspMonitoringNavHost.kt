@@ -22,7 +22,8 @@ fun EspMonitoringNavHost(
             navigateToRemoveDevice = navController::navigateToRemoveDeviceDialog
         )
         deviceScreen(
-            navigateToPhotoPreview = navController::navigateToPhotoPreview
+            navigateToPhotoPreview = navController::navigateToPhotoPreview,
+            navigateToRemovePhotoDialog = navController::navigateToRemovePhotoDialog
         )
         addNewDeviceDialog(
             onDismiss = onBackClick
@@ -31,6 +32,9 @@ fun EspMonitoringNavHost(
             onDismiss = onBackClick
         )
         photoPreviewDialog(
+            onDismiss = onBackClick
+        )
+        removePhotoDialog(
             onDismiss = onBackClick
         )
     }

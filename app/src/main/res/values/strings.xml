@@ -18,8 +18,10 @@
     <string name="ok_label">OK</string>
     <string name="photos_tab_label">Photos</string>
     <string name="remove_device_explanation">This will remove device \"%s\" (id: %d) and all its photos from phone memory. Photos still will be stored on server.</string>
+    <string name="remove_photo_explanation">This will remove photo \"%s\" also from server. This action is not recoverable.</string>
     <string name="remove_device_menu_item_remove">Remove</string>
     <string name="remove_device_title">Remove device?</string>
+    <string name="remove_photo_title">Remove photo?</string>
     <string name="saved_tab_label">Saved</string>
     <string name="settings_tab_label">Settings</string>
     <string name="unknown_error_message">Unknown error</string>

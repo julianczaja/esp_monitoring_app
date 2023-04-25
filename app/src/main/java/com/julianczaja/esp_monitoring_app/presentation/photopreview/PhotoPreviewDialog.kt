@@ -9,7 +9,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
@@ -53,7 +52,6 @@ fun PhotoPreviewDialog(
     )
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun PhotoPreviewDialogContent(
     uiState: PhotoPreviewUiState,
@@ -95,7 +93,7 @@ fun PhotoPreviewDialogContent(
 
 @OptIn(ExperimentalPagerApi::class)
 @Composable
-fun ColumnScope.PhotoPreview(
+fun PhotoPreview(
     uiState: PhotoPreviewUiState.Success,
 ) {
     val pagerState = rememberPagerState(initialPage = uiState.initialPhotoIndex)

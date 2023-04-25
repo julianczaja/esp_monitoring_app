@@ -8,13 +8,15 @@ interface PhotoRepository {
 
     fun getAllPhotosLocal(deviceId: Long): Flow<List<Photo>>
 
+    fun getPhotoByFileNameLocal(fileName: String): Photo?
+
     suspend fun updateAllPhotosRemote(
         deviceId: Long,
         from: Long? = null,
         to: Long? = null,
     ): Result<List<Photo>>
 
-    suspend fun removePhotoRemote(
-        fileName: String
-    ): Result<Unit>
+    suspend fun removePhotoByFileNameLocal(fileName: String): Result<Unit>
+
+    suspend fun removePhotoByFileNameRemote(fileName: String): Result<Unit>
 }

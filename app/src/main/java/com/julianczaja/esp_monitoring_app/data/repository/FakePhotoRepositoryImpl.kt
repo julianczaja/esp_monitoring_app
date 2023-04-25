@@ -19,13 +19,20 @@ class FakePhotoRepositoryImpl : PhotoRepository {
     }
 
     override fun getAllPhotosLocal(deviceId: Long) = _allPhotosLocalFlow
+    override fun getPhotoByFileNameLocal(fileName: String): Photo? {
+        TODO("Not yet implemented")
+    }
 
     override suspend fun updateAllPhotosRemote(deviceId: Long, from: Long?, to: Long?): Result<List<Photo>> {
         delay(1000L)
         return _updateAllPhotosRemoteData
     }
 
-    override suspend fun removePhotoRemote(fileName: String): Result<Unit> {
+    override suspend fun removePhotoByFileNameLocal(fileName: String): Result<Unit> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun removePhotoByFileNameRemote(fileName: String): Result<Unit> {
         return Result.success(Unit)
     }
 }
