@@ -6,19 +6,17 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.julianczaja.esp_monitoring_app.DeviceIdArgs
 import com.julianczaja.esp_monitoring_app.domain.model.DeviceSettings
-import com.julianczaja.esp_monitoring_app.domain.model.getErrorMessageId
-import com.julianczaja.esp_monitoring_app.domain.repository.DeviceSettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
 @HiltViewModel
-class DeviceSettingsScreenViewModel @Inject constructor(
-    savedStateHandle: SavedStateHandle,
-    private val deviceSettingsRepository: DeviceSettingsRepository,
-) : ViewModel() {
+class DeviceSettingsScreenViewModel @Inject constructor(savedStateHandle: SavedStateHandle) : ViewModel() {
 
     private val deviceIdArgs: DeviceIdArgs = DeviceIdArgs(savedStateHandle)
 
@@ -33,36 +31,20 @@ class DeviceSettingsScreenViewModel @Inject constructor(
             initialValue = DeviceSettingsScreenUiState(DeviceSettingsState.Loading, true)
         )
 
-    init {
-        updateDeviceSettings()
-    }
-
     private fun deviceSettingsUiState(): Flow<DeviceSettingsScreenUiState> =
-        combine(deviceSettingsStream(), apiError, isRefreshing) { settings, apiErr, refreshing ->
+//        combine(deviceSettingsStream(), apiError, isRefreshing) { settings, apiErr, refreshing ->
+        combine(apiError, isRefreshing) { apiErr, refreshing ->
             return@combine if (apiErr != null) {
                 DeviceSettingsScreenUiState(DeviceSettingsState.Error(apiErr), refreshing)
             } else {
-                DeviceSettingsScreenUiState(settings, refreshing)
+                val tempState = DeviceSettingsState.Success(DeviceSettings(deviceIdArgs.deviceId))
+                DeviceSettingsScreenUiState(tempState, refreshing)
             }
         }
 
-    fun updateDeviceSettings() = viewModelScope.launch(Dispatchers.IO) {
-        isRefreshing.update { true }
-        deviceSettingsRepository.getCurrentDeviceSettingsRemote(deviceIdArgs.deviceId) // TODO: Check if it's not in progress already
-            .onFailure {
-                apiError.emit(it.getErrorMessageId())
-                isRefreshing.update { false }
-            }
-            .onSuccess {
-                apiError.emit(null)
-                isRefreshing.update { false }
-            }
-    }
+    fun updateDeviceSettings() {
 
-    private fun deviceSettingsStream() = deviceSettingsRepository.getDeviceSettingsLocal(deviceIdArgs.deviceId)
-        .onStart { DeviceSettingsState.Loading }
-        .catch { DeviceSettingsState.Error(it.getErrorMessageId()) }
-        .map { settings -> DeviceSettingsState.Success(deviceSettings = settings) }
+    }
 }
 
 data class DeviceSettingsScreenUiState(

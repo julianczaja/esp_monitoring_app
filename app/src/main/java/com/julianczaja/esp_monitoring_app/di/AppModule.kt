@@ -6,15 +6,12 @@ import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFact
 import com.julianczaja.esp_monitoring_app.*
 import com.julianczaja.esp_monitoring_app.data.local.database.EspMonitoringDatabase
 import com.julianczaja.esp_monitoring_app.data.local.database.dao.DeviceDao
-import com.julianczaja.esp_monitoring_app.data.local.database.dao.DeviceSettingsDao
 import com.julianczaja.esp_monitoring_app.data.local.database.dao.PhotoDao
 import com.julianczaja.esp_monitoring_app.data.remote.RetrofitEspMonitoringApi
 import com.julianczaja.esp_monitoring_app.data.repository.DeviceRepositoryImpl
-import com.julianczaja.esp_monitoring_app.data.repository.DeviceSettingsRepositoryImpl
 import com.julianczaja.esp_monitoring_app.data.repository.PhotoRepositoryImpl
 import com.julianczaja.esp_monitoring_app.domain.model.ResultCallAdapterFactory
 import com.julianczaja.esp_monitoring_app.domain.repository.DeviceRepository
-import com.julianczaja.esp_monitoring_app.domain.repository.DeviceSettingsRepository
 import com.julianczaja.esp_monitoring_app.domain.repository.PhotoRepository
 import dagger.Module
 import dagger.Provides
@@ -83,18 +80,9 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideDeviceSettingsDao(espMonitoringDatabase: EspMonitoringDatabase) = espMonitoringDatabase.deviceSettingsDao()
-
-    @Provides
-    @Singleton
     fun provideDeviceRepository(deviceDao: DeviceDao): DeviceRepository = DeviceRepositoryImpl(deviceDao)
 
     @Provides
     @Singleton
     fun providePhotoRepository(photoDao: PhotoDao, api: RetrofitEspMonitoringApi): PhotoRepository = PhotoRepositoryImpl(photoDao, api)
-
-    @Provides
-    @Singleton
-    fun provideDeviceSettingsRepository(deviceSettingsDao: DeviceSettingsDao, api: RetrofitEspMonitoringApi): DeviceSettingsRepository =
-        DeviceSettingsRepositoryImpl(deviceSettingsDao, api)
 }
