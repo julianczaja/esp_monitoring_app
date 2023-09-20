@@ -9,24 +9,24 @@ import com.julianczaja.esp_monitoring_app.data.local.database.entity.BaseEntity
 abstract class EntityDao<in E : BaseEntity> {
 
     @Insert
-    abstract suspend fun insert(entity: E): Long
+    abstract fun insert(entity: E): Long
 
     @Insert
-    abstract suspend fun insertAll(vararg entity: E)
+    abstract fun insertAll(vararg entity: E)
 
     @Insert
-    abstract suspend fun insertAll(entities: List<E>)
+    abstract fun insertAll(entities: List<E>)
 
     @Update
-    abstract suspend fun update(entity: E)
+    abstract fun update(entity: E)
 
     @Delete
-    abstract suspend fun deleteEntity(entity: E): Int
+    abstract fun deleteEntity(entity: E): Int
 
     @Transaction
-    open suspend fun withTransaction(tx: suspend () -> Unit) = tx()
+    open fun withTransaction(tx: () -> Unit) = tx()
 
-    suspend fun insertOrUpdate(entity: E): Long {
+    fun insertOrUpdate(entity: E): Long {
         return if (entity.id == 0L) {
             insert(entity)
         } else {
@@ -36,7 +36,7 @@ abstract class EntityDao<in E : BaseEntity> {
     }
 
     @Transaction
-    open suspend fun insertOrUpdate(entities: List<E>) {
+    open fun insertOrUpdate(entities: List<E>) {
         entities.forEach {
             insertOrUpdate(it)
         }

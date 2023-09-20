@@ -18,8 +18,8 @@ abstract class DeviceDao : EntityDao<DeviceEntity>() {
     abstract fun getByIdFlow(deviceId: Long): Flow<DeviceEntity?>
 
     @Query("SELECT EXISTS(SELECT * FROM device where id = :deviceId)")
-    abstract suspend fun hasDeviceWithId(deviceId: Long): Boolean
+    abstract fun hasDeviceWithId(deviceId: Long): Boolean
 
     @Query("SELECT EXISTS(SELECT * FROM device where name = :name)")
-    abstract suspend fun hasDeviceWithName(name: String): Boolean
+    abstract fun hasDeviceWithName(name: String): Boolean
 }
