@@ -50,7 +50,6 @@ fun AddNewDeviceDialog(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddNewDeviceDialogContent(
     onDismiss: () -> Unit,

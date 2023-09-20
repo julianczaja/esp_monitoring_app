@@ -40,7 +40,8 @@ object AppModule {
         .apply {
             if (BuildConfig.DEBUG) {
                 baseUrl("http://192.168.1.11:8123/")
-                // baseUrl("http://10.0.2.2:8123/") // FIXME
+//                 baseUrl("http://10.0.2.2:8123/") // FIXME
+//                 baseUrl("http://127.0.0.1:8123/") // FIXME
             } else {
                 baseUrl("http://maluch.mikr.us:30188/")
             }
