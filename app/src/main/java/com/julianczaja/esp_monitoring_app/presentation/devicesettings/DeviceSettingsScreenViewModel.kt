@@ -8,18 +8,15 @@ import androidx.lifecycle.viewModelScope
 import com.julianczaja.esp_monitoring_app.DeviceIdArgs
 import com.julianczaja.esp_monitoring_app.di.IoDispatcher
 import com.julianczaja.esp_monitoring_app.domain.model.DeviceSettings
-import com.julianczaja.esp_monitoring_app.domain.model.getErrorMessageId
-import com.julianczaja.esp_monitoring_app.domain.repository.DeviceSettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -28,7 +25,6 @@ import javax.inject.Inject
 @HiltViewModel
 class DeviceSettingsScreenViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    private val deviceSettingsRepository: DeviceSettingsRepository,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
 
@@ -62,22 +58,15 @@ class DeviceSettingsScreenViewModel @Inject constructor(
         isRefreshing.update { true }
 
         viewModelScope.launch(ioDispatcher) {
-            deviceSettingsRepository.getCurrentDeviceSettingsRemote(deviceIdArgs.deviceId) // TODO: Check if it's not in progress already
-                .onFailure {
-                    apiError.emit(it.getErrorMessageId())
-                    isRefreshing.update { false }
-                }
-                .onSuccess {
-                    apiError.emit(null)
-                    isRefreshing.update { false }
-                }
+            delay(1000)
+            isRefreshing.update { false }
+            apiError.emit(null)
         }
     }
 
-    private fun deviceSettingsStream() = deviceSettingsRepository.getDeviceSettingsLocal(deviceIdArgs.deviceId)
-        .onStart { DeviceSettingsState.Loading }
-        .catch { DeviceSettingsState.Error(it.getErrorMessageId()) }
-        .map { settings -> DeviceSettingsState.Success(deviceSettings = settings) }
+    private fun deviceSettingsStream() = flowOf(
+        DeviceSettingsState.Success(deviceSettings = DeviceSettings(deviceIdArgs.deviceId))
+    ) // it will be changed in future
 
     @Immutable
     data class DeviceSettingsScreenUiState(

@@ -5,9 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.di.IoDispatcher
 import com.julianczaja.esp_monitoring_app.domain.model.Device
-import com.julianczaja.esp_monitoring_app.domain.model.DeviceSettings
 import com.julianczaja.esp_monitoring_app.domain.repository.DeviceRepository
-import com.julianczaja.esp_monitoring_app.domain.repository.DeviceSettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -21,7 +19,6 @@ import javax.inject.Inject
 @HiltViewModel
 class AddDeviceDialogViewModel @Inject constructor(
     private val deviceRepository: DeviceRepository,
-    private val deviceSettingsRepository: DeviceSettingsRepository,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
 
@@ -69,7 +66,6 @@ class AddDeviceDialogViewModel @Inject constructor(
 
         if (device != null) {
             deviceRepository.addNew(device)
-            deviceSettingsRepository.saveDeviceSettingsLocal(DeviceSettings(deviceId = device.id))
             eventFlow.emit(Event.DEVICE_ADDED)
         } else {
             // TODO: Add error state and retry button in view that reset inputs
