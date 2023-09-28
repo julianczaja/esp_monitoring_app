@@ -8,16 +8,15 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionState
 import com.julianczaja.esp_monitoring_app.DeviceIdArgs
 import com.julianczaja.esp_monitoring_app.data.utils.combine
+import com.julianczaja.esp_monitoring_app.domain.MonitoringDevice
 import com.julianczaja.esp_monitoring_app.domain.model.DeviceSettings
 import com.julianczaja.esp_monitoring_app.domain.model.DeviceStatus
 import com.julianczaja.esp_monitoring_app.domain.model.ScanStatus
 import com.juul.kable.AndroidAdvertisement
 import com.juul.kable.ConnectionLostException
 import com.juul.kable.ConnectionRejectedException
-import com.juul.kable.Peripheral
 import com.juul.kable.Scanner
 import com.juul.kable.State
-import com.juul.kable.characteristicOf
 import com.juul.kable.logs.Hex
 import com.juul.kable.logs.Logging
 import com.juul.kable.logs.SystemLogEngine
@@ -31,6 +30,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -43,20 +43,11 @@ class DeviceSettingsScreenViewModel @Inject constructor(savedStateHandle: SavedS
 
     companion object {
         const val SCAN_DURATION_MILLIS = 5000L
-
-        const val INFO_SERVICE_UUID = "691ff8e2-b4d3-4c2e-b72f-95b6e5acd64b"
-        const val SETTINGS_SERVICE_UUID = "ecb44d46-93cf-45cc-bd34-b82205e80d7b"
-        const val DEVICE_ID_CHARACTERISTIC_UUID = "17a4e7f7-f645-4f67-a618-98037cb4372a"
-        const val FRAME_SIZE_CHARACTERISTIC_UUID = "2c0980bd-efc9-49e2-8043-ad94bf4bf81e"
-        const val QUALITY_CHARACTERISTIC_UUID = "06135106-f60d-4d46-858d-b8988f33aafa"
-        const val BRIGHTNESS_CHARACTERISTIC_UUID = "1d7e8059-f231-44f2-be7c-9cb51855c30b"
     }
 
     private val deviceIdArgs: DeviceIdArgs = DeviceIdArgs(savedStateHandle)
 
     private val _apiError = MutableStateFlow<Int?>(null)
-
-    private val _isRefreshing = MutableStateFlow(false)
 
     private val _arePermissionsGranted = MutableStateFlow(false)
 
@@ -69,58 +60,73 @@ class DeviceSettingsScreenViewModel @Inject constructor(savedStateHandle: SavedS
 
     private val _advertisementsSorted = MutableStateFlow<List<AndroidAdvertisement>>(emptyList())
 
-    private var peripheral: Peripheral? = null
-
-    private var isPeripheralConnected: Boolean = false
-
-    private val characteristic = characteristicOf(
-        service = SETTINGS_SERVICE_UUID,
-        characteristic = BRIGHTNESS_CHARACTERISTIC_UUID,
-    )
-
     private var scanJob: Job? = null
-
 
     private val scanner by lazy {
         Scanner {
             logging { level = Logging.Level.Events }
         }
     }
+
+    private var monitoringDevice: MonitoringDevice? = null
     // ---
 
     val deviceSettingsUiState: StateFlow<DeviceSettingsScreenUiState> = deviceSettingsUiState()
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = DeviceSettingsScreenUiState(DeviceSettingsState.Init, true)
+            initialValue = DeviceSettingsScreenUiState(DeviceSettingsState.GrantPermissions)
         )
 
     private fun deviceSettingsUiState(): Flow<DeviceSettingsScreenUiState> =
         combine(
             _apiError,
-            _isRefreshing,
             _arePermissionsGranted,
             _scanStatus,
             _deviceStatus,
             _advertisementsSorted
-        ) { apiError, isRefreshing, arePermissionsGranted, scanStatus, deviceStatus, advertisementsSorted ->
+        ) { apiError, arePermissionsGranted, scanStatus, deviceStatus, advertisementsSorted, ->
             val lastState = deviceSettingsUiState.value.deviceSettingsState
 
+            Timber.i("NEW state lastState=${lastState.javaClass.simpleName}, monitoringDevice=$monitoringDevice, arePermissionsGranted=$arePermissionsGranted apiError=$apiError, scanStatus=$scanStatus, deviceStatus=$deviceStatus, advertisementsSorted=$advertisementsSorted")
+
             val deviceSettingsState = when {
-                apiError != null -> DeviceSettingsState.Error(apiError)
-                !arePermissionsGranted -> DeviceSettingsState.Init
-                deviceStatus == DeviceStatus.Disconnected -> DeviceSettingsState.Init
-                scanStatus == ScanStatus.else -> {
-                    Timber.e("Unknown state apiError=$apiError, scanStatus=$scanStatus, deviceStatus=$deviceStatus, advertisements=$advertisements")
-                    DeviceSettingsState.Loading
+                apiError != null -> {
+                    DeviceSettingsState.Error(apiError)
+                }
+
+                lastState is DeviceSettingsState.GrantPermissions && arePermissionsGranted -> {
+                    DeviceSettingsState.Scan(scanStatus, advertisementsSorted)
+                }
+
+                lastState is DeviceSettingsState.Scan && monitoringDevice != null -> {
+                    DeviceSettingsState.Connect(deviceStatus, monitoringDevice!!.deviceSettings.value)
+                }
+
+                lastState is DeviceSettingsState.Connect && deviceStatus == DeviceStatus.Disconnected -> {
+                    DeviceSettingsState.Scan(scanStatus, advertisementsSorted)
+                }
+
+                else -> {
+                    Timber.e("Unknown state lastState=$lastState, arePermissionsGranted=$arePermissionsGranted apiError=$apiError, scanStatus=$scanStatus, deviceStatus=$deviceStatus, advertisementsSorted=$advertisementsSorted")
+                    when (lastState) {
+                        is DeviceSettingsState.GrantPermissions, is DeviceSettingsState.Error -> lastState
+                        is DeviceSettingsState.Connect -> {
+                            Timber.e("NEW SETTINGS: ${monitoringDevice!!.deviceSettings.value}")
+                            DeviceSettingsState.Connect(deviceStatus, monitoringDevice!!.deviceSettings.value)
+                        }
+
+                        is DeviceSettingsState.Scan -> DeviceSettingsState.Scan(scanStatus, advertisementsSorted)
+                    }
                 }
             }
 
-            DeviceSettingsScreenUiState(deviceSettingsState, isRefreshing)
+            DeviceSettingsScreenUiState(deviceSettingsState)
         }
 
-    fun setArePermissionsGranted(allPermissionsGranted: Boolean) {
-        _arePermissionsGranted.value = allPermissionsGranted
+    fun onPermissionsGranted() {
+        Timber.e("onPermissionsGranted")
+        _arePermissionsGranted.value = true
     }
 
     @OptIn(ExperimentalPermissionsApi::class)
@@ -179,28 +185,49 @@ class DeviceSettingsScreenViewModel @Inject constructor(savedStateHandle: SavedS
     fun connectDevice(address: String) {
         Timber.e("connectDevice address=$address")
         stopScanning()
-        peripheral = viewModelScope.peripheral(address) {
-            logging {
-                engine = SystemLogEngine
-                level = Logging.Level.Warnings
-                format = Logging.Format.Multiline
-                data = Hex
+        monitoringDevice = MonitoringDevice(
+            deviceId = deviceIdArgs.deviceId,
+            peripheral = viewModelScope.peripheral(address) {
+                logging {
+                    engine = SystemLogEngine
+                    level = Logging.Level.Warnings
+                    format = Logging.Format.Multiline
+                    data = Hex
+                }
             }
-        }
-        Timber.e("connectDevice peripheral=$peripheral")
-        Timber.e("connectDevice peripheral.services=${peripheral?.services}")
+        )
+        Timber.e("connectDevice monitoringDevice=$monitoringDevice")
+        Timber.e("connectDevice monitoringDevice.services=${monitoringDevice?.services}")
+
+        var lastStatus = State.Disconnected()
 
         viewModelScope.launch {
             viewModelScope.launch {
-                peripheral?.state?.collect {
-                    Timber.d("NEW PERIPHERIAL STATUS: $it")
-                    isPeripheralConnected = it is State.Connected
+                monitoringDevice?.state?.collect {
+                    Timber.d("NEW monitoringDevice STATUS: $it")
+                    _deviceStatus.value = when (it) {
+                        is State.Disconnected -> {
+                            if (lastStatus !is State.Disconnected) {
+                                Timber.e("SETTING monitoringDevice TO NULL !!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+                                monitoringDevice = null
+                            }
+                            DeviceStatus.Disconnected
+                        }
+
+                        is State.Connecting -> DeviceStatus.Connecting
+                        State.Connected -> {
+                            monitoringDevice?.updateBrightness()
+                            DeviceStatus.Connected
+                        }
+
+                        State.Disconnecting -> DeviceStatus.Disconnecting
+                    }
                 }
             }
 
             try {
                 Timber.d("connect")
-                peripheral!!.connect()
+                monitoringDevice?.connect()
             } catch (e: ConnectionLostException) {
                 Timber.w("Connection attempt failed (ConnectionLostException)")
             } catch (e: ConnectionRejectedException) {
@@ -211,26 +238,18 @@ class DeviceSettingsScreenViewModel @Inject constructor(savedStateHandle: SavedS
         }
     }
 
-    fun updateDeviceSettings() {
-        Timber.e("updateDeviceSettings")
+    fun onBrightnessSet(newBrightness: Int) = viewModelScope.launch {
+        monitoringDevice?.setBrightness(newBrightness)
     }
 }
 
-// 1. permissions checking
-// 2. enable bluetooth
-// 3. scan for devices
-// 4. connect to device
-// 5. connected (data transfer) (on disconnect back to "scan for devices")
-
 data class DeviceSettingsScreenUiState(
     val deviceSettingsState: DeviceSettingsState,
-    val isRefreshing: Boolean,
 )
 
 sealed interface DeviceSettingsState {
-    data object Init : DeviceSettingsState
-    data class Disconnected(val scanStatus: ScanStatus, val advertisements: List<AndroidAdvertisement>) : DeviceSettingsState
-    data class Connected(val deviceStatus: DeviceStatus, val deviceSettings: DeviceSettings) : DeviceSettingsState
+    data object GrantPermissions : DeviceSettingsState
+    data class Scan(val scanStatus: ScanStatus, val advertisements: List<AndroidAdvertisement>) : DeviceSettingsState
+    data class Connect(val deviceStatus: DeviceStatus, val deviceSettings: DeviceSettings) : DeviceSettingsState
     data class Error(@StringRes val messageId: Int) : DeviceSettingsState
-    data object Loading : DeviceSettingsState
 }

@@ -8,7 +8,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.activity.ComponentActivity
-import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -38,8 +37,16 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.PagerScope
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.MultiplePermissionsState
+import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
+import com.julianczaja.esp_monitoring_app.domain.model.EspCameraFrameSize
+import com.julianczaja.esp_monitoring_app.domain.model.EspCameraSpecialEffect
+import com.julianczaja.esp_monitoring_app.domain.model.EspCameraWhiteBalanceMode
+import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
+import com.juul.kable.AndroidAdvertisement
 import timber.log.Timber
+import kotlin.math.absoluteValue
 
 @OptIn(ExperimentalPagerApi::class, ExperimentalPermissionsApi::class)
 @Composable
@@ -57,224 +64,298 @@ fun PagerScope.DeviceSettingsScreen(viewModel: DeviceSettingsScreenViewModel = h
                 Manifest.permission.ACCESS_FINE_LOCATION,
             )
         }
-    )
-
-    viewModel.setArePermissionsGranted(permissionsState.allPermissionsGranted)
-
-    if (permissionsState.allPermissionsGranted) {
-        val uiState by viewModel.deviceSettingsUiState.collectAsStateWithLifecycle()
-        DeviceSettingsScreenContent(
-            uiState = uiState,
-            updateSettings = viewModel::updateDeviceSettings,
-            onStartScanClicked = {
-                if (isBluetoothEnabled(context)) {
-                    viewModel.startScanning()
-                } else {
-                    promptEnableBluetooth(context)
-                }
-            },
-            onDeviceClicked = viewModel::connectDevice
-        )
-    } else {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Text(viewModel.getTextToShowGivenPermissions(permissionsState.permissions, permissionsState.shouldShowRationale))
-            Button(onClick = { permissionsState.launchMultiplePermissionRequest() }) {
-                Text("REQUEST PERMISSIONS")
-            }
+    ) {
+        Timber.e("rememberMultiplePermissionsState RET: $it")
+        if (!it.containsValue(false)) {
+            viewModel.onPermissionsGranted()
         }
     }
+    if (permissionsState.allPermissionsGranted) {
+        viewModel.onPermissionsGranted() // FIXME
+    }
+
+    val uiState by viewModel.deviceSettingsUiState.collectAsStateWithLifecycle()
+
+    DeviceSettingsScreenContent(
+        uiState = uiState,
+        permissionsState = permissionsState,
+        onStartScanClicked = {
+            when {
+                isBluetoothEnabled(context) -> viewModel.startScanning()
+                else -> promptEnableBluetooth(context)
+            }
+        },
+        getTextToShowGivenPermissions = viewModel::getTextToShowGivenPermissions,
+        onDeviceClicked = viewModel::connectDevice,
+        onBrightnessSet = viewModel::onBrightnessSet
+    )
 }
 
-@OptIn(ExperimentalPagerApi::class, ExperimentalMaterialApi::class)
+@OptIn(ExperimentalPagerApi::class, ExperimentalPermissionsApi::class)
 @Composable
 private fun PagerScope.DeviceSettingsScreenContent(
     uiState: DeviceSettingsScreenUiState,
-    updateSettings: () -> Unit,
+    permissionsState: MultiplePermissionsState,
+    onStartScanClicked: () -> Unit,
+    getTextToShowGivenPermissions: (List<PermissionState>, Boolean) -> String,
+    onDeviceClicked: (String) -> Unit,
+    onBrightnessSet: (Int) -> Unit,
+) {
+    when (uiState.deviceSettingsState) {
+        is DeviceSettingsState.GrantPermissions -> DeviceSettingsGrantPermissionsScreen(
+            permissionsState = permissionsState,
+            getTextToShowGivenPermissions = getTextToShowGivenPermissions
+        )
+
+        is DeviceSettingsState.Scan -> DeviceSettingsScanScreen(
+            uiState = uiState.deviceSettingsState,
+            onStartScanClicked = onStartScanClicked,
+            onDeviceClicked = onDeviceClicked
+        )
+
+        is DeviceSettingsState.Connect -> DeviceSettingsConnectScreen(
+            uiState = uiState.deviceSettingsState,
+            onBrightnessSet = onBrightnessSet
+        )
+
+        is DeviceSettingsState.Error -> DeviceSettingsErrorScreen(
+            uiState.deviceSettingsState
+        )
+    }
+}
+
+
+@OptIn(ExperimentalPermissionsApi::class)
+@Composable
+fun DeviceSettingsGrantPermissionsScreen(
+    permissionsState: MultiplePermissionsState,
+    getTextToShowGivenPermissions: (List<PermissionState>, Boolean) -> String,
+) {
+    when {
+        permissionsState.allPermissionsGranted -> {
+            Text("PERMISSIONS GRANTED")
+        }
+
+        else -> {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Text(getTextToShowGivenPermissions(permissionsState.permissions, permissionsState.shouldShowRationale))
+                Button(
+                    onClick = { permissionsState.launchMultiplePermissionRequest() }
+                ) {
+                    Text("REQUEST PERMISSIONS")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun DeviceSettingsScanScreen(
+    uiState: DeviceSettingsState.Scan,
     onStartScanClicked: () -> Unit,
     onDeviceClicked: (String) -> Unit,
 ) {
-    val pullRefreshState = rememberPullRefreshState(uiState.isRefreshing, updateSettings)
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .pullRefresh(pullRefreshState)
+    Column(
+        verticalArrangement = Arrangement.SpaceBetween,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxSize()
     ) {
-        when (uiState.deviceSettingsState) {
-            is DeviceSettingsState.Error -> DeviceSettingsErrorScreen(uiState.deviceSettingsState.messageId)
-            DeviceSettingsState.Loading -> DeviceSettingsLoadingScreen()
-            is DeviceSettingsState.Connected -> {
-                Text("Connected")
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(0.8f)
+                .padding(8.dp)
+        ) {
+            items(uiState.advertisements) {
+                AdvertisementItem(it, onDeviceClicked)
             }
-
-            DeviceSettingsState.Init -> {
-                Text("Init")
-            }
-
-            is DeviceSettingsState.Disconnected -> {
-                Column(
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    Button(
-                        onClick = onStartScanClicked
-                    ) {
-                        Text(text = "Scan devices")
-                    }
-
-                    Text(text = "Scan Status: ${uiState.deviceSettingsState.scanStatus}")
-
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(300.dp)
-                            .padding(8.dp)
-                    ) {
-                        items(uiState.deviceSettingsState.advertisements) {
-                            Card(
-                                modifier = Modifier
-                                    .fillParentMaxWidth()
-                                    .padding(vertical = 4.dp)
-                                    .clickable { onDeviceClicked(it.address) }
-                            ) {
-                                Text(
-                                    text = it.name ?: it.identifier,
-                                    modifier = Modifier.padding(start = 8.dp, end = 8.dp, top = 8.dp)
-                                )
-                                Text(
-                                    text = "RSSI: ${it.rssi}",
-                                    modifier = Modifier.padding(start = 8.dp, end = 8.dp)
-                                )
-                                Text(
-                                    text = "Connectable: ${it.isConnectable}",
-                                    modifier = Modifier.padding(start = 8.dp, end = 8.dp, bottom = 8.dp)
-                                )
-                            }
-                        }
-                    }
-//                    Button(
-//                        onClick = onReadDeviceDataClicked
-//                    ) {
-//                        Text(text = "Read data")
-//                    }
-//                    Button(
-//                        onClick = onWriteDeviceDataClicked
-//                    ) {
-//                        Text(text = "Write data")
-//                    }
-                }
-            }
-//            is DeviceSettingsState.Success -> {
-//
-//                Column(
-//                    verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium, Alignment.CenterVertically),
-//                    horizontalAlignment = Alignment.CenterHorizontally,
-//                    modifier = Modifier
-//                        .fillMaxSize()
-//                        .verticalScroll(rememberScrollState())
-//                        .padding(vertical = 16.dp)
-//                ) {
-//
-//                    // -   val deviceId: Long,
-//                    // -   val name: String = "Default",
-//                    // -   val frameSize: EspCameraFrameSize = EspCameraFrameSize.FrameSizeSVGA,
-//                    // -   val jpegQuality: Int = 10,
-//                    // -   val brightness: Int = 0, // -2 to 2
-//                    // -   val contrast: Int = 0, // -2 to 2
-//                    // -   val saturation: Int = 0, // -2 to 2
-//                    // -   val flashOn: Boolean = false,
-//                    // -   val specialEffect: EspCameraSpecialEffect = EspCameraSpecialEffect.NoEffect,
-//                    // -   val whiteBalanceMode: EspCameraWhiteBalanceMode = EspCameraWhiteBalanceMode.Auto,
-//                    // -   val verticalFlip: Boolean = false,
-//                    // -   val horizontalMirror: Boolean = false,
-//
-//                    DefaultDropdownMenuBox(
-//                        title = "Frame size",
-//                        items = EspCameraFrameSize.values().map { it.description },
-//                        selectedIndex = uiState.deviceSettingsState.deviceSettings.frameSize.ordinal,
-//                        onItemClicked = { EspCameraFrameSize.values()[it] }
-//                    )
-//                    DefaultDropdownMenuBox(
-//                        title = "Special effect",
-//                        items = EspCameraSpecialEffect.values().map { it.description },
-//                        selectedIndex = uiState.deviceSettingsState.deviceSettings.specialEffect.ordinal,
-//                        onItemClicked = { EspCameraSpecialEffect.values()[it] }
-//                    )
-//                    DefaultDropdownMenuBox(
-//                        title = "White balance mode",
-//                        items = EspCameraWhiteBalanceMode.values().map { it.description },
-//                        selectedIndex = uiState.deviceSettingsState.deviceSettings.whiteBalanceMode.ordinal,
-//                        onItemClicked = { EspCameraWhiteBalanceMode.values()[it] }
-//                    )
-//                    DefaultDropdownMenuBox(
-//                        title = "White balance mode",
-//                        items = EspCameraWhiteBalanceMode.values().map { it.description },
-//                        selectedIndex = uiState.deviceSettingsState.deviceSettings.whiteBalanceMode.ordinal,
-//                        onItemClicked = { EspCameraWhiteBalanceMode.values()[it] }
-//                    )
-//                    DefaultDropdownMenuBox(
-//                        title = "White balance mode",
-//                        items = EspCameraWhiteBalanceMode.values().map { it.description },
-//                        selectedIndex = uiState.deviceSettingsState.deviceSettings.whiteBalanceMode.ordinal,
-//                        onItemClicked = { EspCameraWhiteBalanceMode.values()[it] }
-//                    )
-//                    DefaultIntSliderRow(
-//                        label = "Brightness",
-//                        value = uiState.deviceSettingsState.deviceSettings.brightness,
-//                        steps = 3,
-//                        valueRange = -2..2,
-//                        onValueChange = { newValue -> }
-//                    )
-//                    DefaultIntSliderRow(
-//                        label = "Contrast",
-//                        value = uiState.deviceSettingsState.deviceSettings.contrast,
-//                        steps = 3,
-//                        valueRange = -2..2,
-//                        onValueChange = { newValue -> }
-//                    )
-//                    DefaultIntSliderRow(
-//                        label = "Saturation",
-//                        value = uiState.deviceSettingsState.deviceSettings.saturation,
-//                        steps = 3,
-//                        valueRange = -2..2,
-//                        onValueChange = { newValue -> }
-//                    )
-//                    DefaultIntSliderRow(
-//                        label = "Quality",
-//                        value = uiState.deviceSettingsState.deviceSettings.jpegQuality,
-//                        steps = 10,
-//                        valueRange = 10..63,
-//                        onValueChange = { newValue -> }
-//                    )
-//                    SwitchWithLabel(
-//                        label = "Flash LED",
-//                        isChecked = uiState.deviceSettingsState.deviceSettings.flashOn,
-//                        onCheckedChange = { newValue -> },
-//                        modifier = Modifier.fillMaxWidth(.7f)
-//                    )
-//                    SwitchWithLabel(
-//                        label = "Vertical flip",
-//                        isChecked = uiState.deviceSettingsState.deviceSettings.flashOn,
-//                        onCheckedChange = { newValue -> },
-//                        modifier = Modifier.fillMaxWidth(.7f)
-//                    )
-//                    SwitchWithLabel(
-//                        label = "Horizontal mirror",
-//                        isChecked = uiState.deviceSettingsState.deviceSettings.horizontalMirror,
-//                        onCheckedChange = { newValue -> },
-//                        modifier = Modifier.fillMaxWidth(.7f)
-//                    )
-//                }
-//            }
         }
-        PullRefreshIndicator(uiState.isRefreshing, pullRefreshState, Modifier.align(Alignment.TopCenter))
+        Column(
+            Modifier.weight(0.2f)
+        ) {
+            Button(
+                onClick = onStartScanClicked
+            ) {
+                Text(text = "Scan devices")
+            }
+            Text(text = "Scan Status: ${uiState.scanStatus}")
+        }
     }
 }
+
+@Composable
+fun AdvertisementItem(
+    androidAdvertisement: AndroidAdvertisement,
+    onDeviceClicked: (String) -> Unit,
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+            .clickable { onDeviceClicked(androidAdvertisement.address) }
+    ) {
+        Text(
+            text = androidAdvertisement.name ?: androidAdvertisement.identifier,
+            modifier = Modifier.padding(start = 8.dp, end = 8.dp, top = 8.dp)
+        )
+        Text(
+            text = "RSSI: ${androidAdvertisement.rssi}",
+            modifier = Modifier.padding(start = 8.dp, end = 8.dp)
+        )
+        Text(
+            text = "Connectable: ${androidAdvertisement.isConnectable}",
+            modifier = Modifier.padding(start = 8.dp, end = 8.dp, bottom = 8.dp)
+        )
+    }
+}
+
+@Composable
+private fun DeviceSettingsConnectScreen(
+    uiState: DeviceSettingsState.Connect,
+    onBrightnessSet: (Int) -> Unit,
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium, Alignment.CenterVertically),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(vertical = 16.dp)
+    ) {
+
+        // -   val deviceId: Long,
+        // -   val name: String = "Default",
+        // -   val frameSize: EspCameraFrameSize = EspCameraFrameSize.FrameSizeSVGA,
+        // -   val jpegQuality: Int = 10,
+        // -   val brightness: Int = 0, // -2 to 2
+        // -   val contrast: Int = 0, // -2 to 2
+        // -   val saturation: Int = 0, // -2 to 2
+        // -   val flashOn: Boolean = false,
+        // -   val specialEffect: EspCameraSpecialEffect = EspCameraSpecialEffect.NoEffect,
+        // -   val whiteBalanceMode: EspCameraWhiteBalanceMode = EspCameraWhiteBalanceMode.Auto,
+        // -   val verticalFlip: Boolean = false,
+        // -   val horizontalMirror: Boolean = false,
+
+        DefaultDropdownMenuBox(
+            title = "Frame size",
+            items = EspCameraFrameSize.values().map { it.description },
+            selectedIndex = uiState.deviceSettings.frameSize.ordinal,
+            onItemClicked = { EspCameraFrameSize.values()[it] }
+        )
+        DefaultDropdownMenuBox(
+            title = "Special effect",
+            items = EspCameraSpecialEffect.values().map { it.description },
+            selectedIndex = uiState.deviceSettings.specialEffect.ordinal,
+            onItemClicked = { EspCameraSpecialEffect.values()[it] }
+        )
+        DefaultDropdownMenuBox(
+            title = "White balance mode",
+            items = EspCameraWhiteBalanceMode.values().map { it.description },
+            selectedIndex = uiState.deviceSettings.whiteBalanceMode.ordinal,
+            onItemClicked = { EspCameraWhiteBalanceMode.values()[it] }
+        )
+        DefaultDropdownMenuBox(
+            title = "White balance mode",
+            items = EspCameraWhiteBalanceMode.values().map { it.description },
+            selectedIndex = uiState.deviceSettings.whiteBalanceMode.ordinal,
+            onItemClicked = { EspCameraWhiteBalanceMode.values()[it] }
+        )
+        DefaultDropdownMenuBox(
+            title = "White balance mode",
+            items = EspCameraWhiteBalanceMode.values().map { it.description },
+            selectedIndex = uiState.deviceSettings.whiteBalanceMode.ordinal,
+            onItemClicked = { EspCameraWhiteBalanceMode.values()[it] }
+        )
+        DefaultIntSliderRow(
+            label = "Brightness",
+            value = uiState.deviceSettings.brightness,
+            steps = 3,
+            valueRange = -2..2,
+            onValueChange = { newValue ->
+                onBrightnessSet(newValue)
+            }
+        )
+        DefaultIntSliderRow(
+            label = "Contrast",
+            value = uiState.deviceSettings.contrast,
+            steps = 3,
+            valueRange = -2..2,
+            onValueChange = { newValue -> }
+        )
+        DefaultIntSliderRow(
+            label = "Saturation",
+            value = uiState.deviceSettings.saturation,
+            steps = 3,
+            valueRange = -2..2,
+            onValueChange = { newValue -> }
+        )
+        DefaultIntSliderRow(
+            label = "Quality",
+            value = uiState.deviceSettings.jpegQuality,
+            steps = 10,
+            valueRange = 10..63,
+            onValueChange = { newValue -> }
+        )
+        SwitchWithLabel(
+            label = "Flash LED",
+            isChecked = uiState.deviceSettings.flashOn,
+            onCheckedChange = { newValue -> },
+            modifier = Modifier.fillMaxWidth(.7f)
+        )
+        SwitchWithLabel(
+            label = "Vertical flip",
+            isChecked = uiState.deviceSettings.flashOn,
+            onCheckedChange = { newValue -> },
+            modifier = Modifier.fillMaxWidth(.7f)
+        )
+        SwitchWithLabel(
+            label = "Horizontal mirror",
+            isChecked = uiState.deviceSettings.horizontalMirror,
+            onCheckedChange = { newValue -> },
+            modifier = Modifier.fillMaxWidth(.7f)
+        )
+    }
+}
+
+
+@Composable
+private fun DeviceSettingsErrorScreen(
+    uiState: DeviceSettingsState.Error,
+) {
+    Column(
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+    ) {
+        Text(
+            text = stringResource(uiState.messageId),
+            color = MaterialTheme.colorScheme.error,
+            style = MaterialTheme.typography.headlineSmall,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
+private fun DeviceSettingsLoadingScreen() {
+    Column(
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+    ) {
+        CircularProgressIndicator()
+    }
+}
+
+// --------------------------------------
 
 @Composable
 private fun SwitchWithLabel(
@@ -319,7 +400,9 @@ fun DefaultIntSliderRow(
     valueRange: IntRange,
     onValueChange: (Int) -> Unit,
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
+    val interactionSource by remember { mutableStateOf(MutableInteractionSource()) }
+    var tempValue by remember { mutableIntStateOf(value) }
+
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -329,7 +412,8 @@ fun DefaultIntSliderRow(
         Text(text = label)
         Slider(
             value = value.toFloat(),
-            onValueChange = { onValueChange(it.toInt()) },
+            onValueChange = { tempValue = it.toInt() },
+            onValueChangeFinished = { onValueChange(tempValue) },
             valueRange = valueRange.first.toFloat()..valueRange.last.toFloat(),
             steps = steps,
             interactionSource = interactionSource,
@@ -441,37 +525,6 @@ fun DefaultDropdownMenuBox(
                 Divider()
             }
         }
-    }
-}
-
-@Composable
-private fun DeviceSettingsErrorScreen(@StringRes errorMessageId: Int) {
-    Column(
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-    ) {
-        Text(
-            text = stringResource(errorMessageId),
-            color = MaterialTheme.colorScheme.error,
-            style = MaterialTheme.typography.headlineSmall,
-            textAlign = TextAlign.Center
-        )
-    }
-}
-
-@Composable
-private fun DeviceSettingsLoadingScreen() {
-    Column(
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-    ) {
-        CircularProgressIndicator()
     }
 }
 
