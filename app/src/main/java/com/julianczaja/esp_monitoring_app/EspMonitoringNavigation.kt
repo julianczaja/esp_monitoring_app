@@ -1,6 +1,8 @@
 package com.julianczaja.esp_monitoring_app
 
 import android.net.Uri
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
 import androidx.lifecycle.SavedStateHandle
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
@@ -28,7 +30,33 @@ fun NavGraphBuilder.devicesScreen(
     navigateToDevice: (Long) -> Unit,
     navigateToRemoveDevice: (Long) -> Unit,
 ) {
-    composable(route = devicesNavigationRoute) {
+    composable(
+        route = devicesNavigationRoute,
+        enterTransition = {
+            slideIntoContainer(
+                towards = AnimatedContentTransitionScope.SlideDirection.Companion.Left,
+                animationSpec = tween()
+            )
+        },
+        exitTransition = {
+            slideOutOfContainer(
+                towards = AnimatedContentTransitionScope.SlideDirection.Companion.Left,
+                animationSpec = tween()
+            )
+        },
+        popEnterTransition = {
+            slideIntoContainer(
+                towards = AnimatedContentTransitionScope.SlideDirection.Companion.Right,
+                animationSpec = tween()
+            )
+        },
+        popExitTransition = {
+            slideOutOfContainer(
+                towards = AnimatedContentTransitionScope.SlideDirection.Companion.Right,
+                animationSpec = tween()
+            )
+        }
+    ) {
         DevicesScreen(navigateToDevice, navigateToRemoveDevice)
     }
 }
@@ -102,7 +130,31 @@ fun NavGraphBuilder.deviceScreen(
 ) {
     composable(
         route = "$deviceNavigationRoute/{${DeviceIdArgs.KEY}}",
-        arguments = listOf(navArgument(DeviceIdArgs.KEY) { type = DeviceIdArgs.NAV_TYPE })
+        arguments = listOf(navArgument(DeviceIdArgs.KEY) { type = DeviceIdArgs.NAV_TYPE }),
+        enterTransition = {
+            slideIntoContainer(
+                towards = AnimatedContentTransitionScope.SlideDirection.Companion.Left,
+                animationSpec = tween()
+            )
+        },
+        exitTransition = {
+            slideOutOfContainer(
+                towards = AnimatedContentTransitionScope.SlideDirection.Companion.Left,
+                animationSpec = tween()
+            )
+        },
+        popEnterTransition = {
+            slideIntoContainer(
+                towards = AnimatedContentTransitionScope.SlideDirection.Companion.Right,
+                animationSpec = tween()
+            )
+        },
+        popExitTransition = {
+            slideOutOfContainer(
+                towards = AnimatedContentTransitionScope.SlideDirection.Companion.Right,
+                animationSpec = tween()
+            )
+        }
     ) {
         DeviceScreen(navigateToPhotoPreview, navigateToRemovePhotoDialog)
     }

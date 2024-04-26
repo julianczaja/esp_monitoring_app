@@ -18,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -143,44 +144,64 @@ private fun DevicePhotosLazyGrid(
     onPhotoClick: (Photo) -> Unit,
     onPhotoLongClick: (Photo) -> Unit,
 ) {
-    LazyVerticalGrid(
-        columns = GridCells.Adaptive(minSize),
-        contentPadding = PaddingValues(MaterialTheme.spacing.medium),
-        horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium, Alignment.CenterHorizontally),
-        verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium, Alignment.Top),
-        modifier = Modifier.fillMaxSize()
-    ) {
-        dateGroupedPhotos.onEachIndexed { index, (localDate, photos) ->
-            header {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium, Alignment.CenterHorizontally),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.DateRange,
-                        contentDescription = null
-                    )
-                    Text(
-                        text = localDate.toString(),
-                        style = MaterialTheme.typography.bodyLarge
+    Column {
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp)
+        ) {
+            Text("123 photos")
+            Row {
+                Icon(
+                    painter = painterResource(id = R.drawable.baseline_sort_24),
+                    contentDescription = null
+                )
+                Text("Sort")
+                Icon(
+                    painter = painterResource(id = R.drawable.baseline_filter_list_24),
+                    contentDescription = null
+                )
+                Text("Filter")
+            }
+        }
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(minSize),
+            contentPadding = PaddingValues(MaterialTheme.spacing.medium),
+            horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium, Alignment.CenterHorizontally),
+            verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium, Alignment.Top),
+            modifier = Modifier.fillMaxSize()
+        ) {
+            dateGroupedPhotos.onEachIndexed { index, (localDate, photos) ->
+                header {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium, Alignment.CenterHorizontally),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.DateRange,
+                            contentDescription = null
+                        )
+                        Text(
+                            text = localDate.toString(),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
+                }
+                items(photos, key = { it.dateTime }) { photo ->
+                    DevicePhoto(
+                        photo = photo,
+                        minSize = minSize,
+                        onClick = onPhotoClick,
+                        onLongClick = onPhotoLongClick
                     )
                 }
-            }
-            items(photos, key = { it.dateTime }) { photo ->
-                DevicePhoto(
-                    photo = photo,
-                    minSize = minSize,
-                    onClick = onPhotoClick,
-                    onLongClick = onPhotoLongClick
-                )
-            }
-            if (index < dateGroupedPhotos.size - 1) {
-                header {
-                    Divider(
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(MaterialTheme.spacing.small)
-                    )
+                if (index < dateGroupedPhotos.size - 1) {
+                    header {
+                        Divider(
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(MaterialTheme.spacing.small)
+                        )
+                    }
                 }
             }
         }
