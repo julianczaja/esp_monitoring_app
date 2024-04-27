@@ -1,38 +1,64 @@
 package com.julianczaja.esp_monitoring_app.presentation.devicesettings
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.pager.PagerScope
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.DropdownMenu
-import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.pullrefresh.PullRefreshIndicator
-import androidx.compose.material.pullrefresh.pullRefresh
-import androidx.compose.material.pullrefresh.rememberPullRefreshState
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuDefaults
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.SliderPositions
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.google.accompanist.pager.ExperimentalPagerApi
-import com.google.accompanist.pager.PagerScope
 import com.julianczaja.esp_monitoring_app.domain.model.EspCameraFrameSize
 import com.julianczaja.esp_monitoring_app.domain.model.EspCameraSpecialEffect
 import com.julianczaja.esp_monitoring_app.domain.model.EspCameraWhiteBalanceMode
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 import timber.log.Timber
 
-@OptIn(ExperimentalPagerApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PagerScope.DeviceSettingsScreen(
     viewModel: DeviceSettingsScreenViewModel = hiltViewModel(),
@@ -41,18 +67,29 @@ fun PagerScope.DeviceSettingsScreen(
     DeviceSettingsScreenContent(uiState, viewModel::updateDeviceSettings)
 }
 
-@OptIn(ExperimentalPagerApi::class, ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 private fun PagerScope.DeviceSettingsScreenContent(
     uiState: DeviceSettingsScreenUiState,
     updateSettings: () -> Unit,
 ) {
-    val pullRefreshState = rememberPullRefreshState(uiState.isRefreshing, updateSettings)
+    val pullRefreshState = rememberPullToRefreshState()
+    LaunchedEffect(uiState.isRefreshing) {
+        if (!uiState.isRefreshing) {
+            pullRefreshState.endRefresh()
+        }
+    }
+    if (pullRefreshState.isRefreshing) {
+        LaunchedEffect(true) {
+            updateSettings()
+        }
+    }
+
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .pullRefresh(pullRefreshState)
+            .nestedScroll(pullRefreshState.nestedScrollConnection)
     ) {
         when (uiState.deviceSettingsState) {
             is DeviceSettingsState.Error -> DeviceSettingsErrorScreen(uiState.deviceSettingsState.messageId)
@@ -60,7 +97,10 @@ private fun PagerScope.DeviceSettingsScreenContent(
             is DeviceSettingsState.Success -> {
 
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium, Alignment.CenterVertically),
+                    verticalArrangement = Arrangement.spacedBy(
+                        MaterialTheme.spacing.medium,
+                        Alignment.CenterVertically
+                    ),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
                         .fillMaxSize()
@@ -83,33 +123,33 @@ private fun PagerScope.DeviceSettingsScreenContent(
 
                     DefaultDropdownMenuBox(
                         title = "Frame size",
-                        items = EspCameraFrameSize.values().map { it.description },
+                        items = EspCameraFrameSize.entries.map { it.description },
                         selectedIndex = uiState.deviceSettingsState.deviceSettings.frameSize.ordinal,
-                        onItemClicked = { EspCameraFrameSize.values()[it] }
+                        onItemClicked = { EspCameraFrameSize.entries[it] }
                     )
                     DefaultDropdownMenuBox(
                         title = "Special effect",
-                        items = EspCameraSpecialEffect.values().map { it.description },
+                        items = EspCameraSpecialEffect.entries.map { it.description },
                         selectedIndex = uiState.deviceSettingsState.deviceSettings.specialEffect.ordinal,
-                        onItemClicked = { EspCameraSpecialEffect.values()[it] }
+                        onItemClicked = { EspCameraSpecialEffect.entries[it] }
                     )
                     DefaultDropdownMenuBox(
                         title = "White balance mode",
-                        items = EspCameraWhiteBalanceMode.values().map { it.description },
+                        items = EspCameraWhiteBalanceMode.entries.map { it.description },
                         selectedIndex = uiState.deviceSettingsState.deviceSettings.whiteBalanceMode.ordinal,
-                        onItemClicked = { EspCameraWhiteBalanceMode.values()[it] }
+                        onItemClicked = { EspCameraWhiteBalanceMode.entries[it] }
                     )
                     DefaultDropdownMenuBox(
                         title = "White balance mode",
-                        items = EspCameraWhiteBalanceMode.values().map { it.description },
+                        items = EspCameraWhiteBalanceMode.entries.map { it.description },
                         selectedIndex = uiState.deviceSettingsState.deviceSettings.whiteBalanceMode.ordinal,
-                        onItemClicked = { EspCameraWhiteBalanceMode.values()[it] }
+                        onItemClicked = { EspCameraWhiteBalanceMode.entries[it] }
                     )
                     DefaultDropdownMenuBox(
                         title = "White balance mode",
-                        items = EspCameraWhiteBalanceMode.values().map { it.description },
+                        items = EspCameraWhiteBalanceMode.entries.map { it.description },
                         selectedIndex = uiState.deviceSettingsState.deviceSettings.whiteBalanceMode.ordinal,
-                        onItemClicked = { EspCameraWhiteBalanceMode.values()[it] }
+                        onItemClicked = { EspCameraWhiteBalanceMode.entries[it] }
                     )
                     DefaultIntSliderRow(
                         label = "Brightness",
@@ -162,7 +202,10 @@ private fun PagerScope.DeviceSettingsScreenContent(
 
             }
         }
-        PullRefreshIndicator(uiState.isRefreshing, pullRefreshState, Modifier.align(Alignment.TopCenter))
+        PullToRefreshContainer(
+            modifier = Modifier.align(Alignment.TopCenter),
+            state = pullRefreshState,
+        )
     }
 }
 
@@ -234,12 +277,12 @@ fun DefaultIntSliderRow(
             },
             // thumb = { DefaultSliderThumbWithLabel(sliderPosition.toString(), it, interactionSource) },
             track = { sliderPositions ->
-                SliderDefaults.Track(
-                    colors = SliderDefaults.colors(
-                        activeTrackColor = MaterialTheme.colorScheme.primary
-                    ),
-                    sliderPositions = sliderPositions
-                )
+//                SliderDefaults.Track( // FIXME
+//                    colors = SliderDefaults.colors(
+//                        activeTrackColor = MaterialTheme.colorScheme.primary
+//                    ),
+//                    sliderPositions = sliderPositions
+//                )
             },
             modifier = Modifier.fillMaxWidth(.7f)
         )
@@ -247,7 +290,6 @@ fun DefaultIntSliderRow(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DefaultSliderThumbWithLabel(
     labelText: String,
@@ -329,7 +371,7 @@ fun DefaultDropdownMenuBox(
                         }
                     }
                 )
-                Divider()
+                HorizontalDivider()
             }
         }
     }

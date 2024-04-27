@@ -8,12 +8,12 @@ plugins {
 
 android {
     namespace 'com.julianczaja.esp_monitoring_app'
-    compileSdk 33
+    compileSdk 34
 
     defaultConfig {
         applicationId "com.julianczaja.esp_monitoring_app"
         minSdk 27
-        targetSdk 33
+        targetSdk 34
         versionCode 1
         versionName "1.0"
 
@@ -58,7 +58,7 @@ android {
         compose true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion '1.4.6'
+        kotlinCompilerExtensionVersion '1.5.12'
     }
     packagingOptions {
         resources {
@@ -68,17 +68,17 @@ android {
 }
 
 dependencies {
-    implementation 'androidx.core:core-ktx:1.10.0'
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.1'
-    implementation "androidx.lifecycle:lifecycle-runtime-compose:2.6.1"
-    implementation 'androidx.activity:activity-compose:1.7.1'
+    implementation 'androidx.core:core-ktx:1.13.0'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.7.0'
+    implementation "androidx.lifecycle:lifecycle-runtime-compose:2.7.0"
+    implementation 'androidx.activity:activity-compose:1.9.0'
     implementation "androidx.compose.ui:ui:$compose_ui_version"
     implementation "androidx.compose.ui:ui-tooling-preview:$compose_ui_version"
-    implementation "androidx.compose.material3:material3:1.0.1"
-    implementation "androidx.compose.material3:material3-window-size-class:1.0.1"
-    implementation "androidx.navigation:navigation-compose:2.5.3"
+    implementation "androidx.compose.material3:material3:1.2.1"
+    implementation "androidx.compose.material3:material3-window-size-class:1.2.1"
+    implementation "androidx.navigation:navigation-compose:2.7.7"
     debugImplementation "androidx.compose.ui:ui-tooling:$compose_ui_version"
-    implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0"
+    implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1"
     implementation "com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter:0.8.0"
     implementation "androidx.constraintlayout:constraintlayout-compose:1.0.1"
 
@@ -86,17 +86,17 @@ dependencies {
     implementation 'androidx.core:core-splashscreen:1.0.1'
 
     // Hilt
-    implementation 'androidx.hilt:hilt-navigation-compose:1.0.0'
+    implementation 'androidx.hilt:hilt-navigation-compose:1.2.0'
     implementation "com.google.dagger:hilt-android:$hilt_version"
     kapt "com.google.dagger:hilt-compiler:$hilt_version"
 
     // Retrofit
-    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
+    implementation 'com.squareup.retrofit2:retrofit:2.11.0'
     implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
-    implementation 'com.squareup.okhttp3:logging-interceptor:4.10.0'
+    implementation 'com.squareup.okhttp3:logging-interceptor:4.12.0'
 
     // Data store
-    implementation "androidx.datastore:datastore-preferences:1.0.0"
+    implementation "androidx.datastore:datastore-preferences:1.1.0"
 
     // Coroutines
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutines_version"
@@ -112,19 +112,15 @@ dependencies {
     kapt "androidx.room:room-compiler:$room_version"
     implementation "androidx.room:room-ktx:$room_version"
 
-    // Viewpager
-    implementation "com.google.accompanist:accompanist-pager:0.28.0"
-    implementation "com.google.accompanist:accompanist-pager-indicators:0.28.0"
-
     // Tests
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.robolectric:robolectric:4.9.2'
     testImplementation "androidx.compose.ui:ui-test-junit4:$compose_ui_version"
     debugImplementation "androidx.compose.ui:ui-test-manifest:$compose_ui_version"
     testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:$coroutines_version"
-    testImplementation "com.google.truth:truth:1.1.3"
-    testImplementation "io.mockk:mockk:1.12.2"
-    testImplementation 'app.cash.turbine:turbine:0.12.1'
+    testImplementation "com.google.truth:truth:1.4.2"
+    testImplementation "io.mockk:mockk:1.13.10"
+    testImplementation 'app.cash.turbine:turbine:1.1.0'
 }
 
 kapt {

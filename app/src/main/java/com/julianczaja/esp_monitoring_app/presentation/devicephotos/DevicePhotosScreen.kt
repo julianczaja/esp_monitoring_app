@@ -1,23 +1,37 @@
 package com.julianczaja.esp_monitoring_app.presentation.devicephotos
 
 import androidx.annotation.StringRes
-import androidx.compose.foundation.*
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyGridItemScope
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.pullrefresh.PullRefreshIndicator
-import androidx.compose.material.pullrefresh.pullRefresh
-import androidx.compose.material.pullrefresh.rememberPullRefreshState
-import androidx.compose.material3.*
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -25,8 +39,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.google.accompanist.pager.ExperimentalPagerApi
-import com.google.accompanist.pager.PagerScope
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.components.DefaultProgressIndicator
 import com.julianczaja.esp_monitoring_app.components.ErrorText
@@ -43,9 +55,8 @@ import java.time.LocalDateTime
 
 const val DEFAULT_PHOTO_HEIGHT = 150
 
-@OptIn(ExperimentalPagerApi::class)
 @Composable
-fun PagerScope.DevicePhotosScreen(
+fun DevicePhotosScreen(
     navigateToPhotoPreview: (Long, String) -> Unit,
     navigateToRemovePhotoDialog: (String) -> Unit,
     viewModel: DevicePhotosScreenViewModel = hiltViewModel(),
@@ -60,7 +71,7 @@ fun PagerScope.DevicePhotosScreen(
     )
 }
 
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DevicePhotosScreenContent(
     uiState: DevicePhotosScreenUiState,
@@ -68,12 +79,23 @@ private fun DevicePhotosScreenContent(
     onPhotoClick: (Photo) -> Unit,
     onPhotoLongClick: (Photo) -> Unit,
 ) {
-    val pullRefreshState = rememberPullRefreshState(uiState.isRefreshing, updatePhotos)
+    val pullRefreshState = rememberPullToRefreshState()
+
+    LaunchedEffect(key1 = uiState.isRefreshing) {
+        if (!uiState.isRefreshing) {
+            pullRefreshState.endRefresh()
+        }
+    }
+    if (pullRefreshState.isRefreshing) {
+        LaunchedEffect(true) {
+            updatePhotos()
+        }
+    }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .pullRefresh(pullRefreshState)
+            .nestedScroll(pullRefreshState.nestedScrollConnection)
     ) {
         when (uiState.devicePhotosUiState) {
             DevicePhotosState.Loading -> DevicePhotosLoadingScreen()
@@ -88,7 +110,10 @@ private fun DevicePhotosScreenContent(
                 )
             }
         }
-        PullRefreshIndicator(uiState.isRefreshing, pullRefreshState, Modifier.align(Alignment.TopCenter))
+        PullToRefreshContainer(
+            modifier = Modifier.align(Alignment.TopCenter),
+            state = pullRefreshState,
+        )
     }
 }
 
@@ -154,7 +179,10 @@ private fun DevicePhotosLazyGrid(
             header {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium, Alignment.CenterHorizontally),
+                    horizontalArrangement = Arrangement.spacedBy(
+                        space = MaterialTheme.spacing.medium,
+                        alignment = Alignment.CenterHorizontally
+                    ),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Icon(
@@ -177,7 +205,7 @@ private fun DevicePhotosLazyGrid(
             }
             if (index < dateGroupedPhotos.size - 1) {
                 header {
-                    Divider(
+                    HorizontalDivider(
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(MaterialTheme.spacing.small)
                     )
@@ -196,8 +224,7 @@ private fun LazyGridItemScope.DevicePhoto(
     onLongClick: (Photo) -> Unit,
 ) {
     Box(
-        modifier = Modifier
-            .animateItemPlacement()
+        modifier = Modifier.animateItemPlacement()
     ) {
         PhotoCoilImage(
             url = photo.url,
@@ -207,8 +234,8 @@ private fun LazyGridItemScope.DevicePhoto(
         )
         Box(
             modifier = Modifier
-                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.75f))
                 .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.75f))
                 .align(Alignment.BottomCenter)
         ) {
             Text(

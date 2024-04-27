@@ -30,6 +30,6 @@ class DevicesScreenViewModel @Inject constructor(
 @Immutable
 sealed interface DevicesScreenUiState {
     data class Success(val devices: List<Device>) : DevicesScreenUiState
-    object Loading : DevicesScreenUiState
+    data object Loading : DevicesScreenUiState
     data class Error(val messageId: Int) : DevicesScreenUiState
 }

@@ -72,6 +72,6 @@ class RemoveDeviceDialogViewModel @Inject constructor(
 @Immutable
 sealed interface RemoveDeviceScreenUiState {
     data class Success(val device: Device) : RemoveDeviceScreenUiState
-    object Loading : RemoveDeviceScreenUiState
+    data object Loading : RemoveDeviceScreenUiState
     data class Error(val messageId: Int) : RemoveDeviceScreenUiState
 }

@@ -7,17 +7,13 @@ import com.julianczaja.esp_monitoring_app.DeviceIdArgs
 import com.julianczaja.esp_monitoring_app.data.repository.FakePhotoRepositoryImpl
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.presentation.devices.MainDispatcherRule
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import java.time.LocalDateTime
 
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class DevicePhotosScreenViewModelTest {
 
     @get:Rule
@@ -47,7 +43,13 @@ class DevicePhotosScreenViewModelTest {
 
     @Test
     fun `UI State is success when local photos returned`() = runTest {
-        val fakePhoto = Photo(deviceId, LocalDateTime.of(2022, 1, 1, 1, 1, 1), "fileName", "url")
+        val fakePhoto = Photo(
+            deviceId = deviceId,
+            dateTime = LocalDateTime.of(2022, 1, 1, 1, 1, 1),
+            fileName = "fileName",
+            url = "url",
+            size = "100x500"
+        )
         var uiState: DevicePhotosScreenUiState
 
         viewModel.devicePhotosUiState.test {

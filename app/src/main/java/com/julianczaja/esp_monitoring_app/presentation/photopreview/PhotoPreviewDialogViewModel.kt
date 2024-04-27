@@ -58,7 +58,7 @@ sealed interface PhotoPreviewUiState {
         val initialPhotoIndex: Int,
     ) : PhotoPreviewUiState
 
-    object Loading : PhotoPreviewUiState
+    data object Loading : PhotoPreviewUiState
 
     data class Error(@StringRes val messageId: Int) : PhotoPreviewUiState
 }

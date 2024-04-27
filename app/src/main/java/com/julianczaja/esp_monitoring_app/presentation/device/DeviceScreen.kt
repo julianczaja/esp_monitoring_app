@@ -2,24 +2,27 @@ package com.julianczaja.esp_monitoring_app.presentation.device
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.TabRow
-import androidx.compose.material3.*
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.zIndex
-import com.google.accompanist.pager.ExperimentalPagerApi
-import com.google.accompanist.pager.HorizontalPager
-import com.google.accompanist.pager.pagerTabIndicatorOffset
-import com.google.accompanist.pager.rememberPagerState
 import com.julianczaja.esp_monitoring_app.R
-import com.julianczaja.esp_monitoring_app.presentation.devicesettings.DeviceSettingsScreen
 import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DevicePhotosScreen
 import com.julianczaja.esp_monitoring_app.presentation.devicesavedphotos.DeviceSavedScreen
+import com.julianczaja.esp_monitoring_app.presentation.devicesettings.DeviceSettingsScreen
 import kotlinx.coroutines.launch
 
 
@@ -33,28 +36,23 @@ enum class DevicePage(
     Settings(2, R.string.settings_tab_label, R.drawable.ic_baseline_settings_24)
 }
 
-@OptIn(ExperimentalPagerApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun DeviceScreen(
     navigateToPhotoPreview: (Long, String) -> Unit,
     navigateToRemovePhotoDialog: (String) -> Unit,
 ) {
     val coroutineScope = rememberCoroutineScope()
-    val pagerState = rememberPagerState()
     val pages = listOf(DevicePage.Photos, DevicePage.Saved, DevicePage.Settings)
+    val pagerState = rememberPagerState(pageCount = { pages.size })
 
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
         TabRow(
             selectedTabIndex = pagerState.currentPage,
-            backgroundColor = MaterialTheme.colorScheme.background,
-            divider = { Divider(color = MaterialTheme.colorScheme.surfaceVariant) },
-            indicator = { tabPositions ->
-                TabRowDefaults.Indicator(
-                    modifier = Modifier.pagerTabIndicatorOffset(pagerState, tabPositions)
-                )
-            },
+            containerColor = MaterialTheme.colorScheme.background,
+            divider = { HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant) },
             tabs = {
                 pages.forEach { devicePage ->
                     Tab(
@@ -79,12 +77,15 @@ fun DeviceScreen(
             modifier = Modifier.zIndex(1f) // to hide PullRefreshIndicator under TabRow
         )
         HorizontalPager(
-            count = pages.size,
             state = pagerState,
             modifier = Modifier.fillMaxSize()
         ) { page ->
             when (page) {
-                DevicePage.Photos.index -> DevicePhotosScreen(navigateToPhotoPreview, navigateToRemovePhotoDialog)
+                DevicePage.Photos.index -> DevicePhotosScreen(
+                    navigateToPhotoPreview,
+                    navigateToRemovePhotoDialog
+                )
+
                 DevicePage.Saved.index -> DeviceSavedScreen()
                 DevicePage.Settings.index -> DeviceSettingsScreen()
             }

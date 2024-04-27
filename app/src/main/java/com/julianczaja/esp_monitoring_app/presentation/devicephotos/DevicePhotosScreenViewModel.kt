@@ -10,9 +10,17 @@ import com.julianczaja.esp_monitoring_app.domain.model.getErrorMessageId
 import com.julianczaja.esp_monitoring_app.domain.repository.PhotoRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import timber.log.Timber
 import java.time.LocalDate
 import javax.inject.Inject
 
@@ -49,20 +57,6 @@ class DevicePhotosScreenViewModel @Inject constructor(
         .catch { emit(DevicePhotosState.Error(it.getErrorMessageId())) }
         .onStart { emit(DevicePhotosState.Loading) }
 
-    fun removePhoto(photo: Photo) = viewModelScope.launch(Dispatchers.IO) {
-        isRefreshing.update { true }
-        photoRepository.removePhotoByFileNameRemote(photo.fileName)
-            .onFailure {
-                apiError.emit(it.getErrorMessageId())
-                isRefreshing.update { false }
-            }
-            .onSuccess {
-                apiError.emit(null)
-                isRefreshing.update { false }
-                updatePhotos()
-            }
-    }
-
     fun updatePhotos() = viewModelScope.launch(Dispatchers.IO) {
         isRefreshing.update { true }
         photoRepository.updateAllPhotosRemote(deviceIdArgs.deviceId) // TODO: Check if it's not in progress already
@@ -76,7 +70,7 @@ class DevicePhotosScreenViewModel @Inject constructor(
             }
     }
 
-    private fun groupPhotosByDayDesc(photos: List<Photo>): Map<LocalDate, List<Photo>> = photos.groupBy { it.dateTime.toLocalDate() }
+    private fun groupPhotosByDayDesc(photos: List<Photo>) = photos.groupBy { it.dateTime.toLocalDate() }
 }
 
 data class DevicePhotosScreenUiState(
@@ -86,6 +80,6 @@ data class DevicePhotosScreenUiState(
 
 sealed interface DevicePhotosState {
     data class Success(val dateGroupedPhotos: Map<LocalDate, List<Photo>>) : DevicePhotosState
-    object Loading : DevicePhotosState
+    data object Loading : DevicePhotosState
     data class Error(@StringRes val messageId: Int) : DevicePhotosState
 }

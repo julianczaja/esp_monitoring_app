@@ -1,13 +1,23 @@
 package com.julianczaja.esp_monitoring_app.presentation.photopreview
 
 import android.content.res.Configuration
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,15 +39,9 @@ import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import coil.size.Scale
 import coil.size.Size
-import com.google.accompanist.pager.ExperimentalPagerApi
-import com.google.accompanist.pager.HorizontalPager
-import com.google.accompanist.pager.calculateCurrentOffsetForPage
-import com.google.accompanist.pager.rememberPagerState
 import com.julianczaja.esp_monitoring_app.components.DefaultProgressIndicator
 import com.julianczaja.esp_monitoring_app.data.utils.toPrettyString
 import com.julianczaja.esp_monitoring_app.presentation.theme.shape
-import kotlin.math.absoluteValue
-
 
 @Composable
 fun PhotoPreviewDialog(
@@ -91,16 +95,18 @@ fun PhotoPreviewDialogContent(
     }
 }
 
-@OptIn(ExperimentalPagerApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PhotoPreview(
     uiState: PhotoPreviewUiState.Success,
 ) {
-    val pagerState = rememberPagerState(initialPage = uiState.initialPhotoIndex)
+    val pagerState = rememberPagerState(
+        pageCount = { uiState.photos.size },
+        initialPage = uiState.initialPhotoIndex
+    )
     val context = LocalContext.current
 
     HorizontalPager(
-        count = uiState.photos.size,
         state = pagerState,
         modifier = Modifier
             .fillMaxSize()
@@ -111,7 +117,9 @@ fun PhotoPreview(
                 .fillMaxSize()
                 .padding(vertical = 16.dp)
                 .graphicsLayer {
-                    val pageOffset = calculateCurrentOffsetForPage(page).absoluteValue
+//                    val pageOffset = calculateCurrentOffsetForPage(page).absoluteValue
+                    val pageOffset =
+                        (pagerState.currentPage - page) + pagerState.currentPageOffsetFraction
 
                     lerp(
                         start = ScaleFactor(0.65f, 0.65f),
@@ -193,7 +201,12 @@ fun PhotoPreview(
                                     }
                             )
 
-                            createVerticalChain(image, imageInfoSize, imageInfoDate, chainStyle = ChainStyle.Packed)
+                            createVerticalChain(
+                                image,
+                                imageInfoSize,
+                                imageInfoDate,
+                                chainStyle = ChainStyle.Packed
+                            )
                         }
                     }
                 },

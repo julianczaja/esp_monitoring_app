@@ -73,6 +73,6 @@ class RemovePhotoDialogViewModel @Inject constructor(
 @Immutable
 sealed interface RemovePhotoScreenUiState {
     data class Success(val photo: Photo) : RemovePhotoScreenUiState
-    object Loading : RemovePhotoScreenUiState
+    data object Loading : RemovePhotoScreenUiState
     data class Error(val messageId: Int) : RemovePhotoScreenUiState
 }

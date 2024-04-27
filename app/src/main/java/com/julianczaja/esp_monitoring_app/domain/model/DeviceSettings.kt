@@ -25,14 +25,14 @@ data class DeviceSettingsDto(
 fun DeviceSettingsDto.toDeviceSettings() = DeviceSettings(
     deviceId = deviceId,
     name = name,
-    frameSize = EspCameraFrameSize.values()[frameSize],
+    frameSize = EspCameraFrameSize.entries[frameSize],
     jpegQuality = jpegQuality,
     brightness = brightness,
     contrast = contrast,
     saturation = saturation,
     flashOn = flashOn.toBoolean(),
-    specialEffect = EspCameraSpecialEffect.values()[specialEffect],
-    whiteBalanceMode = EspCameraWhiteBalanceMode.values()[whiteBalanceMode],
+    specialEffect = EspCameraSpecialEffect.entries[specialEffect],
+    whiteBalanceMode = EspCameraWhiteBalanceMode.entries[whiteBalanceMode],
     verticalFlip = verticalFlip.toBoolean(),
     horizontalMirror = horizontalMirror.toBoolean()
 )

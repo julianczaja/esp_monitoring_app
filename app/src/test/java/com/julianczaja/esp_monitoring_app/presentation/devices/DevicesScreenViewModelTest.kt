@@ -7,16 +7,12 @@ import com.julianczaja.esp_monitoring_app.data.repository.FakeDeviceRepositoryIm
 import com.julianczaja.esp_monitoring_app.domain.model.Device
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
 
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class DevicesScreenViewModelTest {
 
     @get:Rule

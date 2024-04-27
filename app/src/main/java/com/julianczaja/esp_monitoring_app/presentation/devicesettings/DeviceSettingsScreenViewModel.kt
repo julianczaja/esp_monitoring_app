@@ -72,6 +72,6 @@ data class DeviceSettingsScreenUiState(
 
 sealed interface DeviceSettingsState {
     data class Success(val deviceSettings: DeviceSettings) : DeviceSettingsState
-    object Loading : DeviceSettingsState
+    data object Loading : DeviceSettingsState
     data class Error(@StringRes val messageId: Int) : DeviceSettingsState
 }

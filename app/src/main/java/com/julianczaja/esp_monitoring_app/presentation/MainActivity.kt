@@ -8,10 +8,9 @@ import android.view.animation.AnticipateInterpolator
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.consumedWindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
@@ -19,7 +18,7 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -51,7 +50,7 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-    @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
@@ -95,7 +94,7 @@ class MainActivity : ComponentActivity() {
                                             onClick = appState::onBackClick
                                         ) {
                                             Icon(
-                                                imageVector = Icons.Default.ArrowBack,
+                                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                                 tint = MaterialTheme.colorScheme.onSurface,
                                                 contentDescription = null
                                             )
@@ -129,7 +128,7 @@ class MainActivity : ComponentActivity() {
                                 onBackClick = appState::onBackClick,
                                 modifier = Modifier
                                     .padding(paddingValues)
-                                    .consumedWindowInsets(paddingValues)
+                                    .consumeWindowInsets(paddingValues)
                             )
                         }
                     }

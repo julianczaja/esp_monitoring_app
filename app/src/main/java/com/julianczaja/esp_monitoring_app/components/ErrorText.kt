@@ -9,9 +9,9 @@ import androidx.compose.ui.text.style.TextAlign
 
 @Composable
 fun ErrorText(
+    modifier: Modifier = Modifier,
     text: String,
     textAlign: TextAlign = TextAlign.Center,
-    modifier: Modifier = Modifier,
 ) {
     Text(
         text = text,
