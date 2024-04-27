@@ -1,8 +1,6 @@
 package com.julianczaja.esp_monitoring_app.data.utils
 
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.Serializer
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
@@ -34,8 +32,6 @@ fun LocalDateTime.toPrettyString(): String = this.format(localDateTimePrettyForm
 
 fun LocalTime.toPrettyString(): String = this.format(localTimePrettyFormatter)
 
-@OptIn(ExperimentalSerializationApi::class)
-@Serializer(forClass = LocalDateTime::class)
 object LocalDateTimeAsStringSerializer : KSerializer<LocalDateTime> {
     override val descriptor = PrimitiveSerialDescriptor("LocalDateTimeAsStringSerializer", PrimitiveKind.STRING)
     override fun serialize(encoder: Encoder, value: LocalDateTime) = encoder.encodeString(value.toDefaultFormatString())

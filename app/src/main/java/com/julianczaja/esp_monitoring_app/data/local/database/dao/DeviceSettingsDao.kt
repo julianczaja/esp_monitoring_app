@@ -1,4 +1,4 @@
-package com.julianczaja.esp_monitoring_app.data.local.database.dao;
+package com.julianczaja.esp_monitoring_app.data.local.database.dao
 
 import androidx.room.Dao
 import androidx.room.Query
