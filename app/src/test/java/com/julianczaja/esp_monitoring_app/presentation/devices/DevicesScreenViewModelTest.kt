@@ -5,9 +5,6 @@ import com.google.common.truth.Truth.assertThat
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.data.repository.FakeDeviceRepositoryImpl
 import com.julianczaja.esp_monitoring_app.domain.model.Device
-import io.mockk.every
-import io.mockk.mockk
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
@@ -31,8 +28,7 @@ class DevicesScreenViewModelTest {
 
     @Test
     fun `UI State error when repository thrown exception`() = runTest {
-        val fakeDeviceRepository = mockk<FakeDeviceRepositoryImpl>()
-        every { fakeDeviceRepository.getAllDevices() }.returns(flow { throw Exception() })
+        val fakeDeviceRepository = FakeDeviceRepositoryImpl().apply { getAllDevicesThrowError = true }
         val viewModel = DevicesScreenViewModel(fakeDeviceRepository)
 
         viewModel.devicesUiState.test {

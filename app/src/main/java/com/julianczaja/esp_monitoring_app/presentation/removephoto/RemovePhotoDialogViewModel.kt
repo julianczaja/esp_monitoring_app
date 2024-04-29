@@ -9,11 +9,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.julianczaja.esp_monitoring_app.PhotoFileNameArgs
 import com.julianczaja.esp_monitoring_app.R
+import com.julianczaja.esp_monitoring_app.di.IoDispatcher
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.domain.model.getErrorMessageId
 import com.julianczaja.esp_monitoring_app.domain.repository.PhotoRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,6 +26,7 @@ import javax.inject.Inject
 class RemovePhotoDialogViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val photoRepository: PhotoRepository,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
 
     enum class Event {
@@ -39,7 +41,7 @@ class RemovePhotoDialogViewModel @Inject constructor(
     val uiState = _uiState.asStateFlow()
 
     init {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(ioDispatcher) {
             val photo = photoRepository.getPhotoByFileNameLocal(photoFileNameArgs.fileName)
             if (photo != null) {
                 _uiState.update { RemovePhotoScreenUiState.Success(photo) }
@@ -49,7 +51,7 @@ class RemovePhotoDialogViewModel @Inject constructor(
         }
     }
 
-    fun removePhoto(photo: Photo) = viewModelScope.launch(Dispatchers.IO) {
+    fun removePhoto(photo: Photo) = viewModelScope.launch(ioDispatcher) {
         _uiState.update { RemovePhotoScreenUiState.Loading }
         try {
             photoRepository.removePhotoByFileNameRemote(photo.fileName)

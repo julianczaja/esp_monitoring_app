@@ -9,11 +9,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.julianczaja.esp_monitoring_app.DeviceIdArgs
 import com.julianczaja.esp_monitoring_app.R
+import com.julianczaja.esp_monitoring_app.di.IoDispatcher
 import com.julianczaja.esp_monitoring_app.domain.model.Device
 import com.julianczaja.esp_monitoring_app.domain.model.getErrorMessageId
 import com.julianczaja.esp_monitoring_app.domain.repository.DeviceRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,6 +26,7 @@ import javax.inject.Inject
 class RemoveDeviceDialogViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val deviceRepository: DeviceRepository,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
 
     enum class Event {
@@ -39,7 +41,7 @@ class RemoveDeviceDialogViewModel @Inject constructor(
     val uiState = _uiState.asStateFlow()
 
     init {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(ioDispatcher) {
             val device = deviceRepository.getDeviceById(deviceIdArgs.deviceId)
             if (device != null) {
                 _uiState.update { RemoveDeviceScreenUiState.Success(device) }

@@ -5,13 +5,20 @@ import com.julianczaja.esp_monitoring_app.domain.model.InternalAppException
 import com.julianczaja.esp_monitoring_app.domain.repository.DeviceRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.flow
 
 
 class FakeDeviceRepositoryImpl : DeviceRepository {
 
     private val _allDevicesDataFlow = MutableSharedFlow<List<Device>>(replay = 1)
 
-    override fun getAllDevices(): Flow<List<Device>> = _allDevicesDataFlow
+    var getAllDevicesThrowError = false
+
+    override fun getAllDevices(): Flow<List<Device>> = if (getAllDevicesThrowError) {
+        flow { throw Exception("error") }
+    } else {
+        _allDevicesDataFlow
+    }
 
     override suspend fun getDeviceById(id: Long): Device? =
         _allDevicesDataFlow.replayCache.firstOrNull()?.find { it.id == id }

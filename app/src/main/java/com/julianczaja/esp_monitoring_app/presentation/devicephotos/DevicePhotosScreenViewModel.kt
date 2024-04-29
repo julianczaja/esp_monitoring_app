@@ -5,12 +5,12 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.julianczaja.esp_monitoring_app.DeviceIdArgs
+import com.julianczaja.esp_monitoring_app.di.IoDispatcher
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.domain.model.getErrorMessageId
 import com.julianczaja.esp_monitoring_app.domain.repository.PhotoRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -28,6 +28,7 @@ import javax.inject.Inject
 class DevicePhotosScreenViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val photoRepository: PhotoRepository,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
 
     private val deviceIdArgs: DeviceIdArgs = DeviceIdArgs(savedStateHandle)
@@ -57,9 +58,9 @@ class DevicePhotosScreenViewModel @Inject constructor(
         .catch { emit(DevicePhotosState.Error(it.getErrorMessageId())) }
         .onStart { emit(DevicePhotosState.Loading) }
 
-    fun updatePhotos() = viewModelScope.launch(Dispatchers.IO) {
+    fun updatePhotos() = viewModelScope.launch(ioDispatcher) {
         isRefreshing.update { true }
-        photoRepository.updateAllPhotosRemote(deviceIdArgs.deviceId) // TODO: Check if it's not in progress already
+        photoRepository.updateAllPhotosRemote(deviceIdArgs.deviceId)
             .onFailure {
                 apiError.emit(it.getErrorMessageId())
                 isRefreshing.update { false }

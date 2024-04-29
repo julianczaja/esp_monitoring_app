@@ -29,7 +29,11 @@ class DevicePhotosScreenViewModelTest {
     fun setup() {
         savedStateHandle = SavedStateHandle().apply { set(DeviceIdArgs.KEY, deviceId) }
         photoRepository = FakePhotoRepositoryImpl()
-        viewModel = DevicePhotosScreenViewModel(savedStateHandle, photoRepository)
+        viewModel = DevicePhotosScreenViewModel(
+            savedStateHandle = savedStateHandle,
+            photoRepository = photoRepository,
+            ioDispatcher = dispatcherRule.testDispatcher
+        )
     }
 
     @Test

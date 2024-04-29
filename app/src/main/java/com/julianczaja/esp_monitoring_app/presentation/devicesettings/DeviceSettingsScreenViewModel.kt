@@ -5,11 +5,12 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.julianczaja.esp_monitoring_app.DeviceIdArgs
+import com.julianczaja.esp_monitoring_app.di.IoDispatcher
 import com.julianczaja.esp_monitoring_app.domain.model.DeviceSettings
 import com.julianczaja.esp_monitoring_app.domain.model.getErrorMessageId
 import com.julianczaja.esp_monitoring_app.domain.repository.DeviceSettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -18,6 +19,7 @@ import javax.inject.Inject
 class DeviceSettingsScreenViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val deviceSettingsRepository: DeviceSettingsRepository,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
 
     private val deviceIdArgs: DeviceIdArgs = DeviceIdArgs(savedStateHandle)
@@ -46,7 +48,7 @@ class DeviceSettingsScreenViewModel @Inject constructor(
             }
         }
 
-    fun updateDeviceSettings() = viewModelScope.launch(Dispatchers.IO) {
+    fun updateDeviceSettings() = viewModelScope.launch(ioDispatcher) {
         isRefreshing.update { true }
         deviceSettingsRepository.getCurrentDeviceSettingsRemote(deviceIdArgs.deviceId) // TODO: Check if it's not in progress already
             .onFailure {

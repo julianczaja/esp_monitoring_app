@@ -3,12 +3,13 @@ package com.julianczaja.esp_monitoring_app.presentation.adddevice
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.julianczaja.esp_monitoring_app.R
+import com.julianczaja.esp_monitoring_app.di.IoDispatcher
 import com.julianczaja.esp_monitoring_app.domain.model.Device
 import com.julianczaja.esp_monitoring_app.domain.model.DeviceSettings
 import com.julianczaja.esp_monitoring_app.domain.repository.DeviceRepository
 import com.julianczaja.esp_monitoring_app.domain.repository.DeviceSettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,6 +22,7 @@ import javax.inject.Inject
 class AddDeviceDialogViewModel @Inject constructor(
     private val deviceRepository: DeviceRepository,
     private val deviceSettingsRepository: DeviceSettingsRepository,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
 
     enum class Event {
@@ -60,7 +62,7 @@ class AddDeviceDialogViewModel @Inject constructor(
         }
     }
 
-    fun addDevice() = viewModelScope.launch(Dispatchers.IO) {
+    fun addDevice() = viewModelScope.launch(ioDispatcher) {
         val device = createDevice()
 
         if (device != null) {
