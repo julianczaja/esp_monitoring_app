@@ -6,6 +6,8 @@ import com.google.common.truth.Truth.assertThat
 import com.julianczaja.esp_monitoring_app.DeviceIdArgs
 import com.julianczaja.esp_monitoring_app.data.repository.FakePhotoRepositoryImpl
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
+import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DevicePhotosScreenViewModel.DevicePhotosScreenUiState
+import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DevicePhotosScreenViewModel.DevicePhotosState
 import com.julianczaja.esp_monitoring_app.presentation.devices.MainDispatcherRule
 import kotlinx.coroutines.test.runTest
 import org.junit.Before

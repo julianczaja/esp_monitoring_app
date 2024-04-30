@@ -55,6 +55,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.julianczaja.esp_monitoring_app.domain.model.EspCameraFrameSize
 import com.julianczaja.esp_monitoring_app.domain.model.EspCameraSpecialEffect
 import com.julianczaja.esp_monitoring_app.domain.model.EspCameraWhiteBalanceMode
+import com.julianczaja.esp_monitoring_app.presentation.devicesettings.DeviceSettingsScreenViewModel.DeviceSettingsScreenUiState
+import com.julianczaja.esp_monitoring_app.presentation.devicesettings.DeviceSettingsScreenViewModel.DeviceSettingsState
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 import timber.log.Timber
 

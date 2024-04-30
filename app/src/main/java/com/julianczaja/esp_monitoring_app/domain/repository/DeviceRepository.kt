@@ -19,5 +19,4 @@ interface DeviceRepository {
     suspend fun addNew(device: Device)
 
     suspend fun remove(device: Device)
-
 }

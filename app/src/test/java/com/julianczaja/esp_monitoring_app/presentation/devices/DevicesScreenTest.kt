@@ -6,6 +6,7 @@ import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.domain.model.Device
+import com.julianczaja.esp_monitoring_app.presentation.devices.DevicesScreenViewModel.DevicesScreenUiState
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test

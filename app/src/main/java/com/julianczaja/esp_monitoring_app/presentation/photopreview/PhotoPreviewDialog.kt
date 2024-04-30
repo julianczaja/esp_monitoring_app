@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,6 +28,7 @@ import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.layout.lerp
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -41,6 +43,7 @@ import coil.size.Scale
 import coil.size.Size
 import com.julianczaja.esp_monitoring_app.components.DefaultProgressIndicator
 import com.julianczaja.esp_monitoring_app.data.utils.toPrettyString
+import com.julianczaja.esp_monitoring_app.presentation.photopreview.PhotoPreviewDialogViewModel.PhotoPreviewUiState
 import com.julianczaja.esp_monitoring_app.presentation.theme.shape
 
 @Composable
@@ -82,11 +85,15 @@ fun PhotoPreviewDialogContent(
         ) {
             when (uiState) {
                 PhotoPreviewUiState.Loading -> {
-
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        CircularProgressIndicator()
+                    }
                 }
 
                 is PhotoPreviewUiState.Error -> {
-
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        Text(text = stringResource(uiState.messageId))
+                    }
                 }
 
                 is PhotoPreviewUiState.Success -> PhotoPreview(uiState)

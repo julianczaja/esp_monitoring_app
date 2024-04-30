@@ -1,6 +1,7 @@
 package com.julianczaja.esp_monitoring_app.presentation.devicephotos
 
 import androidx.annotation.StringRes
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -16,6 +17,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
@@ -55,32 +57,38 @@ class DevicePhotosScreenViewModel @Inject constructor(
 
     private fun photosStream() = photoRepository.getAllPhotosLocal(deviceIdArgs.deviceId)
         .map<List<Photo>, DevicePhotosState> { photos -> DevicePhotosState.Success(groupPhotosByDayDesc(photos)) }
+        .flowOn(ioDispatcher)
         .catch { emit(DevicePhotosState.Error(it.getErrorMessageId())) }
         .onStart { emit(DevicePhotosState.Loading) }
 
-    fun updatePhotos() = viewModelScope.launch(ioDispatcher) {
+    fun updatePhotos() {
         isRefreshing.update { true }
-        photoRepository.updateAllPhotosRemote(deviceIdArgs.deviceId)
-            .onFailure {
-                apiError.emit(it.getErrorMessageId())
-                isRefreshing.update { false }
-            }
-            .onSuccess {
-                apiError.emit(null)
-                isRefreshing.update { false }
-            }
+
+        viewModelScope.launch(ioDispatcher) {
+            photoRepository.updateAllPhotosRemote(deviceIdArgs.deviceId)
+                .onFailure {
+                    apiError.emit(it.getErrorMessageId())
+                    isRefreshing.update { false }
+                }
+                .onSuccess {
+                    apiError.emit(null)
+                    isRefreshing.update { false }
+                }
+        }
     }
 
     private fun groupPhotosByDayDesc(photos: List<Photo>) = photos.groupBy { it.dateTime.toLocalDate() }
-}
 
-data class DevicePhotosScreenUiState(
-    val devicePhotosUiState: DevicePhotosState,
-    val isRefreshing: Boolean,
-)
+    @Immutable
+    data class DevicePhotosScreenUiState(
+        val devicePhotosUiState: DevicePhotosState,
+        val isRefreshing: Boolean,
+    )
 
-sealed interface DevicePhotosState {
-    data class Success(val dateGroupedPhotos: Map<LocalDate, List<Photo>>) : DevicePhotosState
-    data object Loading : DevicePhotosState
-    data class Error(@StringRes val messageId: Int) : DevicePhotosState
+    @Immutable
+    sealed interface DevicePhotosState {
+        data class Success(val dateGroupedPhotos: Map<LocalDate, List<Photo>>) : DevicePhotosState
+        data object Loading : DevicePhotosState
+        data class Error(@StringRes val messageId: Int) : DevicePhotosState
+    }
 }

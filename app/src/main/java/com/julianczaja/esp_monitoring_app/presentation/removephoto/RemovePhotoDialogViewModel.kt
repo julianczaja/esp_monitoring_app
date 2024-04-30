@@ -1,5 +1,6 @@
 package com.julianczaja.esp_monitoring_app.presentation.removephoto
 
+import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -43,11 +44,15 @@ class RemovePhotoDialogViewModel @Inject constructor(
     init {
         viewModelScope.launch(ioDispatcher) {
             val photo = photoRepository.getPhotoByFileNameLocal(photoFileNameArgs.fileName)
-            if (photo != null) {
-                _uiState.update { RemovePhotoScreenUiState.Success(photo) }
-            } else {
-                _uiState.update { RemovePhotoScreenUiState.Error(R.string.internal_app_error_message) }
-            }
+            updateUiState(photo)
+        }
+    }
+
+    private fun updateUiState(photo: Photo?) {
+        if (photo != null) {
+            _uiState.update { RemovePhotoScreenUiState.Success(photo) }
+        } else {
+            _uiState.update { RemovePhotoScreenUiState.Error(R.string.internal_app_error_message) }
         }
     }
 
@@ -76,5 +81,5 @@ class RemovePhotoDialogViewModel @Inject constructor(
 sealed interface RemovePhotoScreenUiState {
     data class Success(val photo: Photo) : RemovePhotoScreenUiState
     data object Loading : RemovePhotoScreenUiState
-    data class Error(val messageId: Int) : RemovePhotoScreenUiState
+    data class Error(@StringRes val messageId: Int) : RemovePhotoScreenUiState
 }

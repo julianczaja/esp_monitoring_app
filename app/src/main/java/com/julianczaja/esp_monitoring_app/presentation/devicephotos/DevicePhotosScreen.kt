@@ -47,6 +47,8 @@ import com.julianczaja.esp_monitoring_app.components.header
 import com.julianczaja.esp_monitoring_app.data.utils.toPrettyString
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.presentation.AppBackground
+import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DevicePhotosScreenViewModel.DevicePhotosScreenUiState
+import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DevicePhotosScreenViewModel.DevicePhotosState
 import com.julianczaja.esp_monitoring_app.presentation.theme.AppTheme
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 import java.time.LocalDate

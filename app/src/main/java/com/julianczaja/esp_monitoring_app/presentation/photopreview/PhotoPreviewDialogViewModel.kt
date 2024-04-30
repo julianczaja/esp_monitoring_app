@@ -1,6 +1,7 @@
 package com.julianczaja.esp_monitoring_app.presentation.photopreview
 
 import androidx.annotation.StringRes
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -13,7 +14,11 @@ import com.julianczaja.esp_monitoring_app.domain.model.getErrorMessageId
 import com.julianczaja.esp_monitoring_app.domain.repository.DeviceRepository
 import com.julianczaja.esp_monitoring_app.domain.repository.PhotoRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
 @HiltViewModel
@@ -36,7 +41,7 @@ class PhotoPreviewDialogViewModel @Inject constructor(
 
     private fun photoPreviewUiState() = combine(deviceStream(), photosStream()) { device, photos ->
         if (device != null && photos.isNotEmpty()) {
-            return@combine PhotoPreviewUiState.Success(
+            PhotoPreviewUiState.Success(
                 device = device,
                 photos = photos,
                 initialPhotoIndex = photos.indexOfFirst { it.fileName == photoFileNameArgs.fileName }
@@ -49,16 +54,16 @@ class PhotoPreviewDialogViewModel @Inject constructor(
     private fun deviceStream() = deviceRepository.getDeviceByIdFlow(deviceIdArgs.deviceId)
 
     private fun photosStream() = photoRepository.getAllPhotosLocal(deviceIdArgs.deviceId)
-}
 
-sealed interface PhotoPreviewUiState {
-    data class Success(
-        val device: Device,
-        val photos: List<Photo>,
-        val initialPhotoIndex: Int,
-    ) : PhotoPreviewUiState
+    @Immutable
+    sealed interface PhotoPreviewUiState {
+        data class Success(
+            val device: Device,
+            val photos: List<Photo>,
+            val initialPhotoIndex: Int,
+        ) : PhotoPreviewUiState
 
-    data object Loading : PhotoPreviewUiState
-
-    data class Error(@StringRes val messageId: Int) : PhotoPreviewUiState
+        data object Loading : PhotoPreviewUiState
+        data class Error(@StringRes val messageId: Int) : PhotoPreviewUiState
+    }
 }

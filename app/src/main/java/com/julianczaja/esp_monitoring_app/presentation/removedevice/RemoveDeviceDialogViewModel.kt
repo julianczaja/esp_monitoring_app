@@ -1,5 +1,6 @@
 package com.julianczaja.esp_monitoring_app.presentation.removedevice
 
+import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -69,11 +70,11 @@ class RemoveDeviceDialogViewModel @Inject constructor(
             addStyle(spanStyle, start = from, end = to)
         }
     }
-}
 
-@Immutable
-sealed interface RemoveDeviceScreenUiState {
-    data class Success(val device: Device) : RemoveDeviceScreenUiState
-    data object Loading : RemoveDeviceScreenUiState
-    data class Error(val messageId: Int) : RemoveDeviceScreenUiState
+    @Immutable
+    sealed interface RemoveDeviceScreenUiState {
+        data class Success(val device: Device) : RemoveDeviceScreenUiState
+        data object Loading : RemoveDeviceScreenUiState
+        data class Error(@StringRes val messageId: Int) : RemoveDeviceScreenUiState
+    }
 }

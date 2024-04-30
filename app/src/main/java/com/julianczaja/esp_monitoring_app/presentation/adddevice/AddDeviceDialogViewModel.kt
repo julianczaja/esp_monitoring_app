@@ -32,13 +32,15 @@ class AddDeviceDialogViewModel @Inject constructor(
     val eventFlow = MutableSharedFlow<Event>()
 
     private val _name = MutableStateFlow("")
-    private val _nameError = MutableStateFlow<Int?>(null)
     val name = _name.asStateFlow()
+
+    private val _nameError = MutableStateFlow<Int?>(null)
     val nameError = _nameError.asStateFlow()
 
     private val _id = MutableStateFlow("")
-    private val _idError = MutableStateFlow<Int?>(null)
     val id = _id.asStateFlow()
+
+    private val _idError = MutableStateFlow<Int?>(null)
     val idError = _idError.asStateFlow()
 
     fun updateName(newVal: String) {
@@ -70,7 +72,7 @@ class AddDeviceDialogViewModel @Inject constructor(
             deviceSettingsRepository.saveDeviceSettingsLocal(DeviceSettings(deviceId = device.id))
             eventFlow.emit(Event.DEVICE_ADDED)
         } else {
-            // TODO
+            // TODO: Add error state and retry button in view that reset inputs
         }
     }
 

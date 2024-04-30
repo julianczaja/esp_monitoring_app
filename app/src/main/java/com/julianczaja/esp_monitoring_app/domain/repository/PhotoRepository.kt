@@ -10,13 +10,13 @@ interface PhotoRepository {
 
     fun getPhotoByFileNameLocal(fileName: String): Photo?
 
+    suspend fun removePhotoByFileNameLocal(fileName: String): Result<Unit>
+
     suspend fun updateAllPhotosRemote(
         deviceId: Long,
         from: Long? = null,
         to: Long? = null,
     ): Result<List<Photo>>
-
-    suspend fun removePhotoByFileNameLocal(fileName: String): Result<Unit>
 
     suspend fun removePhotoByFileNameRemote(fileName: String): Result<Unit>
 }

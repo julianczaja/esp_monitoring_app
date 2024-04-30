@@ -23,8 +23,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.julianczaja.esp_monitoring_app.R
-import com.julianczaja.esp_monitoring_app.components.*
+import com.julianczaja.esp_monitoring_app.components.DefaultDialog
+import com.julianczaja.esp_monitoring_app.components.DefaultProgressIndicator
+import com.julianczaja.esp_monitoring_app.components.DialogOneButton
+import com.julianczaja.esp_monitoring_app.components.DialogTwoButtons
+import com.julianczaja.esp_monitoring_app.components.ErrorText
 import com.julianczaja.esp_monitoring_app.domain.model.Device
+import com.julianczaja.esp_monitoring_app.presentation.removedevice.RemoveDeviceDialogViewModel.RemoveDeviceScreenUiState
 import com.julianczaja.esp_monitoring_app.presentation.theme.AppTheme
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 

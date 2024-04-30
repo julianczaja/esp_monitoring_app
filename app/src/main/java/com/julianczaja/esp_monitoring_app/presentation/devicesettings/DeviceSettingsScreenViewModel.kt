@@ -1,6 +1,7 @@
 package com.julianczaja.esp_monitoring_app.presentation.devicesettings
 
 import androidx.annotation.StringRes
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -11,7 +12,16 @@ import com.julianczaja.esp_monitoring_app.domain.model.getErrorMessageId
 import com.julianczaja.esp_monitoring_app.domain.repository.DeviceSettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -48,32 +58,37 @@ class DeviceSettingsScreenViewModel @Inject constructor(
             }
         }
 
-    fun updateDeviceSettings() = viewModelScope.launch(ioDispatcher) {
+    fun updateDeviceSettings() {
         isRefreshing.update { true }
-        deviceSettingsRepository.getCurrentDeviceSettingsRemote(deviceIdArgs.deviceId) // TODO: Check if it's not in progress already
-            .onFailure {
-                apiError.emit(it.getErrorMessageId())
-                isRefreshing.update { false }
-            }
-            .onSuccess {
-                apiError.emit(null)
-                isRefreshing.update { false }
-            }
+
+        viewModelScope.launch(ioDispatcher) {
+            deviceSettingsRepository.getCurrentDeviceSettingsRemote(deviceIdArgs.deviceId) // TODO: Check if it's not in progress already
+                .onFailure {
+                    apiError.emit(it.getErrorMessageId())
+                    isRefreshing.update { false }
+                }
+                .onSuccess {
+                    apiError.emit(null)
+                    isRefreshing.update { false }
+                }
+        }
     }
 
     private fun deviceSettingsStream() = deviceSettingsRepository.getDeviceSettingsLocal(deviceIdArgs.deviceId)
         .onStart { DeviceSettingsState.Loading }
         .catch { DeviceSettingsState.Error(it.getErrorMessageId()) }
         .map { settings -> DeviceSettingsState.Success(deviceSettings = settings) }
-}
 
-data class DeviceSettingsScreenUiState(
-    val deviceSettingsState: DeviceSettingsState,
-    val isRefreshing: Boolean,
-)
+    @Immutable
+    data class DeviceSettingsScreenUiState(
+        val deviceSettingsState: DeviceSettingsState,
+        val isRefreshing: Boolean,
+    )
 
-sealed interface DeviceSettingsState {
-    data class Success(val deviceSettings: DeviceSettings) : DeviceSettingsState
-    data object Loading : DeviceSettingsState
-    data class Error(@StringRes val messageId: Int) : DeviceSettingsState
+    @Immutable
+    sealed interface DeviceSettingsState {
+        data class Success(val deviceSettings: DeviceSettings) : DeviceSettingsState
+        data object Loading : DeviceSettingsState
+        data class Error(@StringRes val messageId: Int) : DeviceSettingsState
+    }
 }
