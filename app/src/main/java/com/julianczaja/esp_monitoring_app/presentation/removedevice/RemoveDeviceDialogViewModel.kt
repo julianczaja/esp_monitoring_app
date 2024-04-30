@@ -19,6 +19,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -43,7 +44,7 @@ class RemoveDeviceDialogViewModel @Inject constructor(
 
     init {
         viewModelScope.launch(ioDispatcher) {
-            val device = deviceRepository.getDeviceById(deviceIdArgs.deviceId)
+            val device = deviceRepository.getDeviceById(deviceIdArgs.deviceId).first()
             if (device != null) {
                 _uiState.update { RemoveDeviceScreenUiState.Success(device) }
             } else {
@@ -54,12 +55,9 @@ class RemoveDeviceDialogViewModel @Inject constructor(
 
     fun removeDevice(device: Device) = viewModelScope.launch {
         _uiState.update { RemoveDeviceScreenUiState.Loading }
-        try {
-            deviceRepository.remove(device)
-            eventFlow.emit(Event.DEVICE_REMOVED)
-        } catch (e: Exception) {
-            _uiState.update { RemoveDeviceScreenUiState.Error(e.getErrorMessageId()) }
-        }
+        deviceRepository.remove(device)
+            .onFailure { e -> _uiState.update { RemoveDeviceScreenUiState.Error(e.getErrorMessageId()) } }
+            .onSuccess { eventFlow.emit(Event.DEVICE_REMOVED) }
     }
 
     fun convertExplanationStringToStyledText(explanationText: String, spanStyle: SpanStyle): AnnotatedString {

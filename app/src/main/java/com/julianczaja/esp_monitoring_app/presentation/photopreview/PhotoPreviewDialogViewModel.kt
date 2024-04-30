@@ -51,7 +51,7 @@ class PhotoPreviewDialogViewModel @Inject constructor(
         }
     }
 
-    private fun deviceStream() = deviceRepository.getDeviceByIdFlow(deviceIdArgs.deviceId)
+    private fun deviceStream() = deviceRepository.getDeviceById(deviceIdArgs.deviceId)
 
     private fun photosStream() = photoRepository.getAllPhotosLocal(deviceIdArgs.deviceId)
 

@@ -1,5 +1,6 @@
 package com.julianczaja.esp_monitoring_app.data.repository
 
+import com.julianczaja.esp_monitoring_app.data.local.database.RoomDeleteResult
 import com.julianczaja.esp_monitoring_app.data.local.database.dao.DeviceDao
 import com.julianczaja.esp_monitoring_app.data.local.database.entity.toDevice
 import com.julianczaja.esp_monitoring_app.domain.model.Device
@@ -17,25 +18,23 @@ class DeviceRepositoryImpl @Inject constructor(
 
     override fun getAllDevices(): Flow<List<Device>> = deviceDao.getAll().map { devices -> devices.map { it.toDevice() } }
 
-    override suspend fun getDeviceById(id: Long): Device? = deviceDao.getById(id)?.toDevice()
+    override fun getDeviceById(id: Long): Flow<Device?> = deviceDao.getById(id).mapNotNull { it?.toDevice() }
 
-    override fun getDeviceByIdFlow(id: Long): Flow<Device?> = deviceDao.getByIdFlow(id).mapNotNull { it?.toDevice() }
+    override suspend fun doesDeviceWithGivenIdAlreadyExist(deviceId: Long) = deviceDao.hasDeviceWithId(deviceId)
 
-    override suspend fun doesDeviceWithGivenIdAlreadyExist(deviceId: Long): Boolean {
-        return deviceDao.hasDeviceWithId(deviceId)
-    }
+    override suspend fun doesDeviceWithGivenNameAlreadyExist(name: String) = deviceDao.hasDeviceWithName(name)
 
-    override suspend fun doesDeviceWithGivenNameAlreadyExist(name: String): Boolean {
-        return deviceDao.hasDeviceWithName(name)
-    }
-
-    override suspend fun addNew(device: Device) {
+    override suspend fun addNew(device: Device): Result<Unit> = try {
         deviceDao.insert(device.toDeviceEntity())
+        Result.success(Unit)
+    } catch (e: Exception) {
+        Result.failure(e)
     }
 
-    override suspend fun remove(device: Device) {
-        if (deviceDao.deleteEntity(device.toDeviceEntity()) == 0) {
-            throw InternalAppException()
+    override suspend fun remove(device: Device): Result<Unit> =
+        if (deviceDao.deleteEntity(device.toDeviceEntity()) == RoomDeleteResult.SUCCESS) {
+            Result.success(Unit)
+        } else {
+            Result.failure(InternalAppException())
         }
-    }
 }

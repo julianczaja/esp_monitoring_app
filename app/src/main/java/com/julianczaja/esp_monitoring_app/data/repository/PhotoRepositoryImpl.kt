@@ -20,22 +20,7 @@ class PhotoRepositoryImpl @Inject constructor(
 
     override fun getPhotoByFileNameLocal(fileName: String): Photo? = photoDao.getByFileName(fileName)?.toPhoto()
 
-    override suspend fun updateAllPhotosRemote(
-        deviceId: Long,
-        from: Long?,
-        to: Long?,
-    ): Result<List<Photo>> {
-        val newPhotos = api.getDevicePhotos(deviceId, from, to)
-        newPhotos.onSuccess { photos ->
-            photoDao.withTransaction {
-                photoDao.deleteAll(deviceId)
-                photoDao.insertAll(photos.map { it.toPhotoEntity() })
-            }
-        }
-        return newPhotos
-    }
-
-    override suspend fun removePhotoByFileNameLocal(fileName: String) = try {
+    override suspend fun removePhotoByFileNameLocal(fileName: String): Result<Unit> = try {
         photoDao.deleteByFileName(fileName)
         Result.success(Unit)
     } catch (e: Exception) {
@@ -43,4 +28,17 @@ class PhotoRepositoryImpl @Inject constructor(
     }
 
     override suspend fun removePhotoByFileNameRemote(fileName: String) = api.removePhoto(fileName)
+
+    override suspend fun updateAllPhotosRemote(deviceId: Long, from: Long?, to: Long?): Result<Unit> {
+        var result = Result.success(Unit)
+        api.getDevicePhotos(deviceId, from, to)
+            .onFailure { result = Result.failure(it) }
+            .onSuccess { refreshPhotosCache(deviceId, it) }
+        return result
+    }
+
+    private suspend fun refreshPhotosCache(deviceId: Long, photos: List<Photo>) = photoDao.withTransaction {
+        photoDao.deleteAll(deviceId)
+        photoDao.insertAll(photos.map(Photo::toPhotoEntity))
+    }
 }

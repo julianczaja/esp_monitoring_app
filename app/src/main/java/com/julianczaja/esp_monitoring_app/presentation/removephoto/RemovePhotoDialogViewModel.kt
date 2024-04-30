@@ -58,13 +58,14 @@ class RemovePhotoDialogViewModel @Inject constructor(
 
     fun removePhoto(photo: Photo) = viewModelScope.launch(ioDispatcher) {
         _uiState.update { RemovePhotoScreenUiState.Loading }
-        try {
-            photoRepository.removePhotoByFileNameRemote(photo.fileName)
-            photoRepository.removePhotoByFileNameLocal(photo.fileName)
-            eventFlow.emit(Event.PHOTO_REMOVED)
-        } catch (e: Exception) {
-            _uiState.update { RemovePhotoScreenUiState.Error(e.getErrorMessageId()) }
-        }
+
+        photoRepository.removePhotoByFileNameRemote(photo.fileName)
+            .onFailure { e -> _uiState.update { RemovePhotoScreenUiState.Error(e.getErrorMessageId()) } }
+            .onSuccess {
+                photoRepository.removePhotoByFileNameLocal(photo.fileName)
+                    .onFailure { e -> _uiState.update { RemovePhotoScreenUiState.Error(e.getErrorMessageId()) } }
+                    .onSuccess { eventFlow.emit(Event.PHOTO_REMOVED) }
+            }
     }
 
     fun convertExplanationStringToStyledText(explanationText: String, spanStyle: SpanStyle): AnnotatedString {

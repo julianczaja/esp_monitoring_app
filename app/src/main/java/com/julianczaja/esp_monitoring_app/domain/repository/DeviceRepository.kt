@@ -8,15 +8,13 @@ interface DeviceRepository {
 
     fun getAllDevices(): Flow<List<Device>>
 
-    suspend fun getDeviceById(id: Long): Device?
-
-    fun getDeviceByIdFlow(id: Long): Flow<Device?>
+    fun getDeviceById(id: Long): Flow<Device?>
 
     suspend fun doesDeviceWithGivenIdAlreadyExist(deviceId: Long): Boolean
 
     suspend fun doesDeviceWithGivenNameAlreadyExist(name: String): Boolean
 
-    suspend fun addNew(device: Device)
+    suspend fun addNew(device: Device): Result<Unit>
 
-    suspend fun remove(device: Device)
+    suspend fun remove(device: Device): Result<Unit>
 }

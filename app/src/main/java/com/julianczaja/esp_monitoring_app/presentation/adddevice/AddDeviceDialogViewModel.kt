@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
@@ -62,37 +62,37 @@ class AddDeviceDialogViewModel @Inject constructor(
     }
 
     fun addDevice() = viewModelScope.launch(ioDispatcher) {
-        val device = createDevice()
+        val device = createDeviceOrNull()
 
         if (device != null) {
             deviceRepository.addNew(device)
-            eventFlow.emit(Event.DEVICE_ADDED)
+                .onFailure { Timber.e(it) } // TODO: Add error state and retry button in view that reset inputs
+                .onSuccess { eventFlow.emit(Event.DEVICE_ADDED) }
+
         } else {
-            // TODO: Add error state and retry button in view that reset inputs
+            Timber.e("Can't create device")  // TODO: Add error state and retry button in view that reset inputs
         }
     }
 
-    private fun createDevice(): Device? {
-        if (nameError.value == null && idError.value == null) {
-            try {
-                val deviceId = id.value.toLong()
-                val deviceWithGivenIdAlreadyExists = runBlocking { deviceRepository.doesDeviceWithGivenIdAlreadyExist(deviceId) }
-                if (deviceWithGivenIdAlreadyExists) {
-                    _idError.update { R.string.add_device_error_id_exists }
-                    return null
-                }
+    private suspend fun createDeviceOrNull(): Device? {
+        if (nameError.value != null || idError.value != null) return null
 
-                val deviceWithGivenNameAlreadyExists = runBlocking { deviceRepository.doesDeviceWithGivenNameAlreadyExist(name.value) }
-                if (deviceWithGivenNameAlreadyExists) {
-                    _nameError.update { R.string.add_device_error_name_exists }
-                    return null
-                }
-                return Device(deviceId, name.value)
-            } catch (e: NumberFormatException) {
-                return null
-            }
-        } else {
+        val deviceId = try {
+            id.value.toLong()
+        } catch (e: NumberFormatException) {
             return null
         }
+
+        if (deviceRepository.doesDeviceWithGivenIdAlreadyExist(deviceId)) {
+            _idError.update { R.string.add_device_error_id_exists }
+            return null
+        }
+
+        if (deviceRepository.doesDeviceWithGivenNameAlreadyExist(name.value)) {
+            _nameError.update { R.string.add_device_error_name_exists }
+            return null
+        }
+
+        return Device(deviceId, name.value)
     }
 }
