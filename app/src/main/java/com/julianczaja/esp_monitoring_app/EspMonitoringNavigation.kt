@@ -1,6 +1,10 @@
 package com.julianczaja.esp_monitoring_app
 
 import android.net.Uri
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.EaseIn
+import androidx.compose.animation.core.EaseOut
+import androidx.compose.animation.core.tween
 import androidx.lifecycle.SavedStateHandle
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
@@ -102,7 +106,19 @@ fun NavGraphBuilder.deviceScreen(
 ) {
     composable(
         route = "$deviceNavigationRoute/{${DeviceIdArgs.KEY}}",
-        arguments = listOf(navArgument(DeviceIdArgs.KEY) { type = DeviceIdArgs.NAV_TYPE })
+        arguments = listOf(navArgument(DeviceIdArgs.KEY) { type = DeviceIdArgs.NAV_TYPE }),
+        enterTransition = {
+            slideIntoContainer(
+                animationSpec = tween(300, easing = EaseIn),
+                towards = AnimatedContentTransitionScope.SlideDirection.Start
+            )
+        },
+        exitTransition = {
+             slideOutOfContainer(
+                animationSpec = tween(300, easing = EaseOut),
+                towards = AnimatedContentTransitionScope.SlideDirection.End
+            )
+        }
     ) {
         DeviceScreen(navigateToPhotoPreview, navigateToRemovePhotoDialog)
     }
