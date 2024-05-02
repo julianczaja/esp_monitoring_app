@@ -37,8 +37,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -242,6 +244,8 @@ private fun LazyGridItemScope.DevicePhoto(
     onClick: (Photo) -> Unit,
     onLongClick: (Photo) -> Unit,
 ) {
+    val haptics = LocalHapticFeedback.current
+
     Box(
         modifier = Modifier.animateItemPlacement()
     ) {
@@ -249,7 +253,10 @@ private fun LazyGridItemScope.DevicePhoto(
             url = photo.url,
             height = minSize,
             onClick = { onClick(photo) },
-            onLongClick = { onLongClick(photo) }
+            onLongClick = {
+                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                onLongClick(photo)
+            }
         )
         Box(
             modifier = Modifier
