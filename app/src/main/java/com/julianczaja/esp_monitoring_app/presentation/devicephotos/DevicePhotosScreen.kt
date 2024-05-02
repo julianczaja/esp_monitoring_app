@@ -1,11 +1,12 @@
 package com.julianczaja.esp_monitoring_app.presentation.devicephotos
 
-import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -40,17 +41,16 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.julianczaja.esp_monitoring_app.R
-import com.julianczaja.esp_monitoring_app.components.DefaultProgressIndicator
-import com.julianczaja.esp_monitoring_app.components.ErrorText
 import com.julianczaja.esp_monitoring_app.components.PhotoCoilImage
 import com.julianczaja.esp_monitoring_app.components.header
 import com.julianczaja.esp_monitoring_app.data.utils.toPrettyString
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.presentation.AppBackground
-import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DevicePhotosScreenViewModel.DevicePhotosScreenUiState
-import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DevicePhotosScreenViewModel.DevicePhotosState
+import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DevicePhotosScreenViewModel.Event
+import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DevicePhotosScreenViewModel.UiState
 import com.julianczaja.esp_monitoring_app.presentation.theme.AppTheme
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
+import timber.log.Timber
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -65,6 +65,14 @@ fun DevicePhotosScreen(
 ) {
     val uiState by viewModel.devicePhotosUiState.collectAsStateWithLifecycle()
 
+    LaunchedEffect(true) {
+        viewModel.eventFlow.collect { event ->
+            when (event) {
+                is Event.ShowError -> Timber.e("TODO: Show error ${event.messageId}")
+            }
+        }
+    }
+
     DevicePhotosScreenContent(
         uiState = uiState,
         updatePhotos = viewModel::updatePhotos,
@@ -76,12 +84,13 @@ fun DevicePhotosScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DevicePhotosScreenContent(
-    uiState: DevicePhotosScreenUiState,
+    uiState: UiState,
     updatePhotos: () -> Unit,
     onPhotoClick: (Photo) -> Unit,
     onPhotoLongClick: (Photo) -> Unit,
 ) {
-    val pullRefreshState = rememberPullToRefreshState()
+    val pullRefreshState = rememberPullToRefreshState(enabled = { uiState.isOnline })
+
 
     LaunchedEffect(key1 = uiState.isRefreshing) {
         if (!uiState.isRefreshing) {
@@ -99,14 +108,15 @@ private fun DevicePhotosScreenContent(
             .fillMaxSize()
             .nestedScroll(pullRefreshState.nestedScrollConnection)
     ) {
-        when (uiState.devicePhotosUiState) {
-            DevicePhotosState.Loading -> DevicePhotosLoadingScreen()
-            is DevicePhotosState.Error -> DevicePhotosErrorScreen(uiState.devicePhotosUiState.messageId)
-            is DevicePhotosState.Success -> if (uiState.devicePhotosUiState.dateGroupedPhotos.isEmpty()) {
+        Column(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            OfflineBar(uiState.isOnline)
+            if (uiState.dateGroupedPhotos.isEmpty()) {
                 DevicePhotosEmptyScreen()
             } else {
                 DevicePhotosLazyGrid(
-                    dateGroupedPhotos = uiState.devicePhotosUiState.dateGroupedPhotos,
+                    dateGroupedPhotos = uiState.dateGroupedPhotos,
                     onPhotoClick = onPhotoClick,
                     onPhotoLongClick = onPhotoLongClick
                 )
@@ -120,15 +130,19 @@ private fun DevicePhotosScreenContent(
 }
 
 @Composable
-private fun DevicePhotosErrorScreen(@StringRes errorMessageId: Int) {
-    Column(
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-    ) {
-        ErrorText(text = stringResource(errorMessageId))
+private fun ColumnScope.OfflineBar(isOnline: Boolean) {
+    AnimatedVisibility(visible = !isOnline) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.errorContainer)
+        ) {
+            Text(
+                text = stringResource(R.string.you_are_offline),
+                color = MaterialTheme.colorScheme.onErrorContainer,
+                modifier = Modifier.align(Alignment.Center)
+            )
+        }
     }
 }
 
@@ -146,19 +160,6 @@ private fun DevicePhotosEmptyScreen() {
             style = MaterialTheme.typography.headlineSmall,
             textAlign = TextAlign.Center
         )
-    }
-}
-
-@Composable
-private fun DevicePhotosLoadingScreen() {
-    Column(
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-    ) {
-        DefaultProgressIndicator()
     }
 }
 
@@ -252,7 +253,7 @@ private fun LazyGridItemScope.DevicePhoto(
 
 @Preview(showSystemUi = true)
 @Composable
-private fun DevicePhotosStateSuccessPreview() {
+private fun DevicePhotosStateItemsPreview() {
     AppTheme {
         AppBackground {
             val dateGroupedPhotos = mapOf(
@@ -267,7 +268,7 @@ private fun DevicePhotosStateSuccessPreview() {
                 )
             )
             DevicePhotosScreenContent(
-                DevicePhotosScreenUiState(DevicePhotosState.Success(dateGroupedPhotos), false),
+                UiState(dateGroupedPhotos, false, true),
                 {}, {}, {}
             )
         }
@@ -280,33 +281,7 @@ private fun DevicePhotosStateSuccessNoItemsPreview() {
     AppTheme {
         AppBackground {
             DevicePhotosScreenContent(
-                DevicePhotosScreenUiState(DevicePhotosState.Success(emptyMap()), false),
-                {}, {}, {}
-            )
-        }
-    }
-}
-
-@Preview(showSystemUi = true)
-@Composable
-private fun DevicePhotosStateLoadingPreview() {
-    AppTheme {
-        AppBackground {
-            DevicePhotosScreenContent(
-                DevicePhotosScreenUiState(DevicePhotosState.Loading, false),
-                {}, {}, {}
-            )
-        }
-    }
-}
-
-@Preview(showSystemUi = true)
-@Composable
-private fun DevicePhotosStateErrorPreview() {
-    AppTheme {
-        AppBackground {
-            DevicePhotosScreenContent(
-                DevicePhotosScreenUiState(DevicePhotosState.Error(R.string.internal_app_error_message), false),
+                UiState(emptyMap(), false, true),
                 {}, {}, {}
             )
         }

@@ -7,15 +7,11 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 
 class FakePhotoRepositoryImpl : PhotoRepository {
 
-    private val _allPhotosLocalFlow = MutableSharedFlow<List<Photo>>(replay = 1)
+    private val _allPhotosLocalFlow = MutableSharedFlow<List<Photo>>(replay = 1, extraBufferCapacity = 1)
 
-    private var _updateAllPhotosRemoteData = Result.success(listOf<Photo>())
+    var updateAllPhotosReturnsException = false
 
-    fun emitAllPhotosLocalData(data: List<Photo>) = _allPhotosLocalFlow.tryEmit(data)
-
-    fun setUpdateAllPhotosRemoteReturnData(data: Result<List<Photo>>) {
-        _updateAllPhotosRemoteData = data
-    }
+    suspend fun emitAllPhotosLocalData(data: List<Photo>) = _allPhotosLocalFlow.emit(data)
 
     override fun getAllPhotosLocal(deviceId: Long) = _allPhotosLocalFlow
 
@@ -24,7 +20,11 @@ class FakePhotoRepositoryImpl : PhotoRepository {
     }
 
     override suspend fun updateAllPhotosRemote(deviceId: Long, from: Long?, to: Long?): Result<Unit> {
-        return Result.success(Unit)
+        return if (updateAllPhotosReturnsException) {
+            Result.failure(Exception("error"))
+        } else {
+            Result.success(Unit)
+        }
     }
 
     override suspend fun removePhotoByFileNameLocal(fileName: String): Result<Unit> {

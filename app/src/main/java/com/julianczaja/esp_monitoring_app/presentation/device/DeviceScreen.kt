@@ -1,7 +1,5 @@
 package com.julianczaja.esp_monitoring_app.presentation.device
 
-import androidx.annotation.DrawableRes
-import androidx.annotation.StringRes
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,22 +17,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.zIndex
-import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DevicePhotosScreen
 import com.julianczaja.esp_monitoring_app.presentation.devicesavedphotos.DeviceSavedScreen
 import com.julianczaja.esp_monitoring_app.presentation.devicesettings.DeviceSettingsScreen
 import kotlinx.coroutines.launch
 
-
-enum class DevicePage(
-    val index: Int,
-    @StringRes val titleId: Int,
-    @DrawableRes val drawableId: Int,
-) {
-    Photos(0, R.string.photos_tab_label, R.drawable.ic_baseline_photo_24),
-    Saved(1, R.string.saved_tab_label, R.drawable.ic_baseline_bookmarks_24),
-    Settings(2, R.string.settings_tab_label, R.drawable.ic_baseline_settings_24)
-}
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable

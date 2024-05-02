@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import com.julianczaja.esp_monitoring_app.BuildConfig
+import com.julianczaja.esp_monitoring_app.data.NetworkManager
 import com.julianczaja.esp_monitoring_app.data.local.database.EspMonitoringDatabase
 import com.julianczaja.esp_monitoring_app.data.local.database.dao.DeviceDao
 import com.julianczaja.esp_monitoring_app.data.local.database.dao.PhotoDao
@@ -61,6 +62,10 @@ object AppModule {
         )
         .build()
         .create(RetrofitEspMonitoringApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideNetworkManager(@ApplicationContext context: Context) = NetworkManager(context)
 
     @Provides
     @Singleton

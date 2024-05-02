@@ -25,4 +25,5 @@
     <string name="settings_tab_label">Settings</string>
     <string name="unknown_error_message">Unknown error</string>
     <string name="work_in_progress">\uD83D\uDD25 Work in progress \uD83D\uDD25</string>
+    <string name="you_are_offline">You are offline</string>
 </resources>
