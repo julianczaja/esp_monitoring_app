@@ -5,6 +5,7 @@ import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.EaseIn
 import androidx.compose.animation.core.EaseOut
 import androidx.compose.animation.core.tween
+import androidx.compose.material3.SnackbarHostState
 import androidx.lifecycle.SavedStateHandle
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
@@ -101,6 +102,7 @@ fun NavController.navigateToDevice(deviceId: Long, navOptions: NavOptions? = nul
 }
 
 fun NavGraphBuilder.deviceScreen(
+    snackbarHostState: SnackbarHostState,
     navigateToPhotoPreview: (Long, String) -> Unit,
     navigateToRemovePhotoDialog: (String) -> Unit,
 ) {
@@ -120,7 +122,7 @@ fun NavGraphBuilder.deviceScreen(
             )
         }
     ) {
-        DeviceScreen(navigateToPhotoPreview, navigateToRemovePhotoDialog)
+        DeviceScreen(snackbarHostState, navigateToPhotoPreview, navigateToRemovePhotoDialog)
     }
 }
 

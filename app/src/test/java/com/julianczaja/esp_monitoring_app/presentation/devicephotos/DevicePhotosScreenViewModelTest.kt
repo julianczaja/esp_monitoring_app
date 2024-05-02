@@ -21,6 +21,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 
@@ -51,12 +52,29 @@ class DevicePhotosScreenViewModelTest {
     }
 
     @Test
-    fun `isRefreshing should be true on start`() = runTest {
+    fun `isRefreshing should be false on start`() = runTest {
         viewModel.devicePhotosUiState.test {
             val uiState = awaitItem()
-            assertThat(uiState.isRefreshing).isEqualTo(true)
+            assertThat(uiState.isRefreshing).isEqualTo(false)
         }
-        coVerify(exactly = 1) { photoRepository.updateAllPhotosRemote(any()) }
+        coVerify(exactly = 0) { photoRepository.updateAllPhotosRemote(deviceId) }
+    }
+
+    @Test
+    fun `isRefreshing should be true after updatePhotos has been called`() = runTest {
+        val remotePhotos = listOf(Photo(1L, LocalDateTime.MAX, "", "", ""))
+        photoRepository.remotePhotos = remotePhotos
+
+        viewModel.devicePhotosUiState.test {
+            var uiState = awaitItem()
+            assertThat(uiState.isRefreshing).isEqualTo(false)
+            viewModel.updatePhotos()
+            uiState = awaitItem()
+            assertThat(uiState.isRefreshing).isEqualTo(true)
+            uiState = awaitItem()
+            assertThat(uiState.isRefreshing).isEqualTo(false)
+        }
+        coVerify(exactly = 1) { photoRepository.updateAllPhotosRemote(deviceId) }
     }
 
     @Test
@@ -73,27 +91,24 @@ class DevicePhotosScreenViewModelTest {
 
         viewModel.devicePhotosUiState.test {
             var uiState: UiState = awaitItem()
-            assertThat(uiState.isRefreshing).isEqualTo(true)
+            assertThat(uiState.dateGroupedPhotos).isEqualTo(emptyMap<LocalDate, List<Photo>>())
 
             photoRepository.emitAllPhotosLocalData(localPhotos)
             uiState = awaitItem()
-            assertThat(uiState.isRefreshing).isEqualTo(false)
             assertThat(uiState.dateGroupedPhotos).isEqualTo(dateGroupedPhotos)
-
         }
         verify(exactly = 1) { photoRepository.getAllPhotosLocal(deviceId) }
-        coVerify(exactly = 1) { photoRepository.updateAllPhotosRemote(any()) }
     }
 
     @Test
     fun `event flow emits ShowError when repository thrown exception`() = runTest {
-
         photoRepository.updateAllPhotosReturnsException = true
 
         viewModel.eventFlow.test {
+            viewModel.updatePhotos()
             viewModel.devicePhotosUiState.first()
             assertThat(awaitItem()).isInstanceOf(DevicePhotosScreenViewModel.Event.ShowError::class.java)
         }
-        coVerify(exactly = 1) { photoRepository.updateAllPhotosRemote(any()) }
+        coVerify(exactly = 1) { photoRepository.updateAllPhotosRemote(deviceId) }
     }
 }

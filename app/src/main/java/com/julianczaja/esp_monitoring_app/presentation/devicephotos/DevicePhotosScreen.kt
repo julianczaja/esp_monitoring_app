@@ -24,15 +24,21 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -50,7 +56,6 @@ import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DevicePhotos
 import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DevicePhotosScreenViewModel.UiState
 import com.julianczaja.esp_monitoring_app.presentation.theme.AppTheme
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
-import timber.log.Timber
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -59,16 +64,26 @@ const val DEFAULT_PHOTO_HEIGHT = 150
 
 @Composable
 fun DevicePhotosScreen(
+    snackbarHostState: SnackbarHostState,
     navigateToPhotoPreview: (Long, String) -> Unit,
     navigateToRemovePhotoDialog: (String) -> Unit,
     viewModel: DevicePhotosScreenViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.devicePhotosUiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    var updatePhotosCalled by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(true) {
+        if (!updatePhotosCalled) {
+            viewModel.updatePhotos()
+            updatePhotosCalled = true
+        }
         viewModel.eventFlow.collect { event ->
             when (event) {
-                is Event.ShowError -> Timber.e("TODO: Show error ${event.messageId}")
+                is Event.ShowError -> snackbarHostState.showSnackbar(
+                    message = context.getString(event.messageId),
+                    duration = SnackbarDuration.Short
+                )
             }
         }
     }
@@ -91,9 +106,10 @@ private fun DevicePhotosScreenContent(
 ) {
     val pullRefreshState = rememberPullToRefreshState(enabled = { uiState.isOnline })
 
-
-    LaunchedEffect(key1 = uiState.isRefreshing) {
-        if (!uiState.isRefreshing) {
+    LaunchedEffect(uiState.isRefreshing) {
+        if (uiState.isRefreshing) {
+            pullRefreshState.startRefresh()
+        } else {
             pullRefreshState.endRefresh()
         }
     }
@@ -268,7 +284,7 @@ private fun DevicePhotosStateItemsPreview() {
                 )
             )
             DevicePhotosScreenContent(
-                UiState(dateGroupedPhotos, false, true),
+                UiState(dateGroupedPhotos = dateGroupedPhotos, isRefreshing = false, isOnline = false),
                 {}, {}, {}
             )
         }
@@ -281,7 +297,7 @@ private fun DevicePhotosStateSuccessNoItemsPreview() {
     AppTheme {
         AppBackground {
             DevicePhotosScreenContent(
-                UiState(emptyMap(), false, true),
+                UiState(dateGroupedPhotos = emptyMap(), isRefreshing = false, isOnline = true),
                 {}, {}, {}
             )
         }

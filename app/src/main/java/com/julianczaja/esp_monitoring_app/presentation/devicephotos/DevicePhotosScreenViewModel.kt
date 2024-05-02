@@ -45,13 +45,12 @@ class DevicePhotosScreenViewModel @Inject constructor(
     val eventFlow = MutableSharedFlow<Event>()
 
     val devicePhotosUiState: StateFlow<UiState> = devicePhotosUiState()
-        .onStart { updatePhotos() }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = UiState(
                 dateGroupedPhotos = emptyMap(),
-                isRefreshing = true,
+                isRefreshing = false,
                 isOnline = true
             )
         )

@@ -8,6 +8,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
@@ -26,6 +27,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun DeviceScreen(
+    snackbarHostState: SnackbarHostState,
     navigateToPhotoPreview: (Long, String) -> Unit,
     navigateToRemovePhotoDialog: (String) -> Unit,
 ) {
@@ -69,6 +71,7 @@ fun DeviceScreen(
         ) { page ->
             when (page) {
                 DevicePage.Photos.index -> DevicePhotosScreen(
+                    snackbarHostState,
                     navigateToPhotoPreview,
                     navigateToRemovePhotoDialog
                 )

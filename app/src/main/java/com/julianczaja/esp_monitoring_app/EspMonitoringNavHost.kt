@@ -1,5 +1,6 @@
 package com.julianczaja.esp_monitoring_app
 
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
@@ -9,6 +10,7 @@ import androidx.navigation.compose.NavHost
 fun EspMonitoringNavHost(
     modifier: Modifier = Modifier,
     navController: NavHostController,
+    snackbarHostState: SnackbarHostState,
     onBackClick: () -> Unit,
     startDestination: String = devicesNavigationRoute,
 ) {
@@ -22,6 +24,7 @@ fun EspMonitoringNavHost(
             navigateToRemoveDevice = navController::navigateToRemoveDeviceDialog
         )
         deviceScreen(
+            snackbarHostState = snackbarHostState,
             navigateToPhotoPreview = navController::navigateToPhotoPreview,
             navigateToRemovePhotoDialog = navController::navigateToRemovePhotoDialog
         )
