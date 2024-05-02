@@ -8,6 +8,9 @@ import androidx.navigation.NavDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.julianczaja.esp_monitoring_app.navigation.DeviceIdArgs
+import com.julianczaja.esp_monitoring_app.navigation.deviceNavigationRoute
+import com.julianczaja.esp_monitoring_app.navigation.devicesNavigationRoute
 
 
 @Composable

@@ -51,7 +51,7 @@ import com.julianczaja.esp_monitoring_app.components.PhotoCoilImage
 import com.julianczaja.esp_monitoring_app.components.header
 import com.julianczaja.esp_monitoring_app.data.utils.toPrettyString
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
-import com.julianczaja.esp_monitoring_app.presentation.AppBackground
+import com.julianczaja.esp_monitoring_app.components.AppBackground
 import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DevicePhotosScreenViewModel.Event
 import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DevicePhotosScreenViewModel.UiState
 import com.julianczaja.esp_monitoring_app.presentation.theme.AppTheme

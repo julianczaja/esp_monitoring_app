@@ -3,7 +3,7 @@ package com.julianczaja.esp_monitoring_app.presentation.devicephotos
 import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
-import com.julianczaja.esp_monitoring_app.DeviceIdArgs
+import com.julianczaja.esp_monitoring_app.navigation.DeviceIdArgs
 import com.julianczaja.esp_monitoring_app.data.NetworkManager
 import com.julianczaja.esp_monitoring_app.data.repository.FakePhotoRepositoryImpl
 import com.julianczaja.esp_monitoring_app.domain.model.Photo

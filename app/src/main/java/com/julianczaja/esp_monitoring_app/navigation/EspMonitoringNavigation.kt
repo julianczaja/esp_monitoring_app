@@ -1,4 +1,4 @@
-package com.julianczaja.esp_monitoring_app
+package com.julianczaja.esp_monitoring_app.navigation
 
 import android.net.Uri
 import androidx.compose.animation.AnimatedContentTransitionScope
