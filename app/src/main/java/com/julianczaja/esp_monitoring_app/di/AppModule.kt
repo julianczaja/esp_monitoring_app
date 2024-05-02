@@ -6,14 +6,8 @@ import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFact
 import com.julianczaja.esp_monitoring_app.BuildConfig
 import com.julianczaja.esp_monitoring_app.data.NetworkManager
 import com.julianczaja.esp_monitoring_app.data.local.database.EspMonitoringDatabase
-import com.julianczaja.esp_monitoring_app.data.local.database.dao.DeviceDao
-import com.julianczaja.esp_monitoring_app.data.local.database.dao.PhotoDao
 import com.julianczaja.esp_monitoring_app.data.remote.RetrofitEspMonitoringApi
-import com.julianczaja.esp_monitoring_app.data.repository.DeviceRepositoryImpl
-import com.julianczaja.esp_monitoring_app.data.repository.PhotoRepositoryImpl
 import com.julianczaja.esp_monitoring_app.domain.model.ResultCallAdapterFactory
-import com.julianczaja.esp_monitoring_app.domain.repository.DeviceRepository
-import com.julianczaja.esp_monitoring_app.domain.repository.PhotoRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -49,9 +43,7 @@ object AppModule {
         .client(OkHttpClient().newBuilder()
             .apply {
                 if (BuildConfig.DEBUG) {
-                    addInterceptor(
-                        HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY)
-                    )
+                    addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
                 }
             }
             .build())
@@ -82,12 +74,4 @@ object AppModule {
     @Provides
     @Singleton
     fun providePhotoDao(espMonitoringDatabase: EspMonitoringDatabase) = espMonitoringDatabase.photoDao()
-
-    @Provides
-    @Singleton
-    fun provideDeviceRepository(deviceDao: DeviceDao): DeviceRepository = DeviceRepositoryImpl(deviceDao)
-
-    @Provides
-    @Singleton
-    fun providePhotoRepository(photoDao: PhotoDao, api: RetrofitEspMonitoringApi): PhotoRepository = PhotoRepositoryImpl(photoDao, api)
 }
