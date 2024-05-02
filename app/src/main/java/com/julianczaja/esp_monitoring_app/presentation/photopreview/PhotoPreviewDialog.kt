@@ -43,7 +43,7 @@ import coil.size.Scale
 import coil.size.Size
 import com.julianczaja.esp_monitoring_app.components.DefaultProgressIndicator
 import com.julianczaja.esp_monitoring_app.data.utils.toPrettyString
-import com.julianczaja.esp_monitoring_app.presentation.photopreview.PhotoPreviewDialogViewModel.PhotoPreviewUiState
+import com.julianczaja.esp_monitoring_app.presentation.photopreview.PhotoPreviewDialogViewModel.UiState
 import com.julianczaja.esp_monitoring_app.presentation.theme.shape
 
 @Composable
@@ -61,7 +61,7 @@ fun PhotoPreviewDialog(
 
 @Composable
 fun PhotoPreviewDialogContent(
-    uiState: PhotoPreviewUiState,
+    uiState: UiState,
     onDismiss: () -> Unit,
 ) {
     val orientation = LocalConfiguration.current.orientation
@@ -84,19 +84,19 @@ fun PhotoPreviewDialogContent(
             modifier = columnModifier.clip(RoundedCornerShape(MaterialTheme.shape.dialogCorners))
         ) {
             when (uiState) {
-                PhotoPreviewUiState.Loading -> {
+                UiState.Loading -> {
                     Box(modifier = Modifier.fillMaxSize()) {
                         CircularProgressIndicator()
                     }
                 }
 
-                is PhotoPreviewUiState.Error -> {
+                is UiState.Error -> {
                     Box(modifier = Modifier.fillMaxSize()) {
                         Text(text = stringResource(uiState.messageId))
                     }
                 }
 
-                is PhotoPreviewUiState.Success -> PhotoPreview(uiState)
+                is UiState.Success -> PhotoPreview(uiState)
             }
         }
     }
@@ -105,7 +105,7 @@ fun PhotoPreviewDialogContent(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PhotoPreview(
-    uiState: PhotoPreviewUiState.Success,
+    uiState: UiState.Success,
 ) {
     val pagerState = rememberPagerState(
         pageCount = { uiState.photos.size },

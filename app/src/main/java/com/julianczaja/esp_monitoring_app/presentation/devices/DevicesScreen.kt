@@ -47,7 +47,7 @@ import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.components.DefaultProgressIndicator
 import com.julianczaja.esp_monitoring_app.components.ErrorText
 import com.julianczaja.esp_monitoring_app.domain.model.Device
-import com.julianczaja.esp_monitoring_app.presentation.devices.DevicesScreenViewModel.DevicesScreenUiState
+import com.julianczaja.esp_monitoring_app.presentation.devices.DevicesScreenViewModel.UiState
 import com.julianczaja.esp_monitoring_app.presentation.theme.AppTheme
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 
@@ -60,7 +60,7 @@ fun DevicesScreen(
     navigateToRemoveDevice: (Long) -> Unit,
     viewModel: DevicesScreenViewModel = hiltViewModel(),
 ) {
-    val uiState by viewModel.devicesUiState.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     DevicesScreenContent(
         uiState = uiState,
         onDeviceClicked = navigateToDevice,
@@ -70,7 +70,7 @@ fun DevicesScreen(
 
 @Composable
 fun DevicesScreenContent(
-    uiState: DevicesScreenUiState,
+    uiState: UiState,
     onDeviceClicked: (Long) -> Unit,
     onRemoveDeviceClicked: (Long) -> Unit,
 ) {
@@ -84,7 +84,7 @@ fun DevicesScreenContent(
 
 @Composable
 private fun DevicesScreenPortrait(
-    uiState: DevicesScreenUiState,
+    uiState: UiState,
     onDeviceClicked: (Long) -> Unit,
     onRemoveDeviceClicked: (Long) -> Unit,
 ) {
@@ -101,7 +101,7 @@ private fun DevicesScreenPortrait(
 
 @Composable
 private fun DevicesScreenLandscape(
-    uiState: DevicesScreenUiState,
+    uiState: UiState,
     onDeviceClicked: (Long) -> Unit,
     onRemoveDeviceClicked: (Long) -> Unit,
 ) {
@@ -118,17 +118,17 @@ private fun DevicesScreenLandscape(
 }
 
 private fun LazyListScope.devicesScreenContent(
-    uiState: DevicesScreenUiState,
+    uiState: UiState,
     onDeviceClicked: (Long) -> Unit,
     onRemoveDeviceClicked: (Long) -> Unit,
 ) {
     when (uiState) {
-        DevicesScreenUiState.Loading -> {
+        UiState.Loading -> {
             item {
                 DefaultProgressIndicator()
             }
         }
-        is DevicesScreenUiState.Success -> {
+        is UiState.Success -> {
             items(uiState.devices, key = { it.id }) {
                 DeviceItem(
                     device = it,
@@ -137,7 +137,7 @@ private fun LazyListScope.devicesScreenContent(
                 )
             }
         }
-        is DevicesScreenUiState.Error -> {
+        is UiState.Error -> {
             item {
                 ErrorText(text = stringResource(uiState.messageId))
             }
@@ -146,22 +146,22 @@ private fun LazyListScope.devicesScreenContent(
 }
 
 private fun LazyGridScope.devicesScreenContent(
-    uiState: DevicesScreenUiState,
+    uiState: UiState,
     onDeviceClicked: (Long) -> Unit,
     onRemoveDeviceClicked: (Long) -> Unit,
 ) {
     when (uiState) {
-        DevicesScreenUiState.Loading -> {
+        UiState.Loading -> {
             item {
                 DefaultProgressIndicator()
             }
         }
-        is DevicesScreenUiState.Success -> {
+        is UiState.Success -> {
             items(uiState.devices, key = { it.id }) {
                 DeviceItem(device = it, onClicked = onDeviceClicked, onRemoveClicked = onRemoveDeviceClicked)
             }
         }
-        is DevicesScreenUiState.Error -> {
+        is UiState.Error -> {
             item {
                 Text(text = stringResource(uiState.messageId))
             }

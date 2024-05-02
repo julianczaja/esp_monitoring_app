@@ -25,20 +25,20 @@ class DevicesScreenViewModel @Inject constructor(
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
 
-    val devicesUiState: StateFlow<DevicesScreenUiState> = deviceRepository.getAllDevices()
-        .map<List<Device>, DevicesScreenUiState>(DevicesScreenUiState::Success)
+    val uiState: StateFlow<UiState> = deviceRepository.getAllDevices()
+        .map<List<Device>, UiState>(UiState::Success)
         .flowOn(ioDispatcher)
-        .catch { emit(DevicesScreenUiState.Error(it.getErrorMessageId())) }
+        .catch { emit(UiState.Error(it.getErrorMessageId())) }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = DevicesScreenUiState.Loading
+            initialValue = UiState.Loading
         )
 
     @Immutable
-    sealed interface DevicesScreenUiState {
-        data class Success(val devices: List<Device>) : DevicesScreenUiState
-        data object Loading : DevicesScreenUiState
-        data class Error(@StringRes val messageId: Int) : DevicesScreenUiState
+    sealed interface UiState {
+        data class Success(val devices: List<Device>) : UiState
+        data object Loading : UiState
+        data class Error(@StringRes val messageId: Int) : UiState
     }
 }

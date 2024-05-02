@@ -31,23 +31,23 @@ class PhotoPreviewDialogViewModel @Inject constructor(
     private val deviceIdArgs: DeviceIdArgs = DeviceIdArgs(savedStateHandle)
     private val photoFileNameArgs: PhotoFileNameArgs = PhotoFileNameArgs(savedStateHandle)
 
-    val uiState: StateFlow<PhotoPreviewUiState> = photoPreviewUiState()
-        .catch { PhotoPreviewUiState.Error(it.getErrorMessageId()) }
+    val uiState: StateFlow<UiState> = photoPreviewUiState()
+        .catch { UiState.Error(it.getErrorMessageId()) }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = PhotoPreviewUiState.Loading
+            initialValue = UiState.Loading
         )
 
     private fun photoPreviewUiState() = combine(deviceStream(), photosStream()) { device, photos ->
         if (device != null && photos.isNotEmpty()) {
-            PhotoPreviewUiState.Success(
+            UiState.Success(
                 device = device,
                 photos = photos,
                 initialPhotoIndex = photos.indexOfFirst { it.fileName == photoFileNameArgs.fileName }
             )
         } else {
-            PhotoPreviewUiState.Error(InternalAppException().getErrorMessageId())
+            UiState.Error(InternalAppException().getErrorMessageId())
         }
     }
 
@@ -56,14 +56,14 @@ class PhotoPreviewDialogViewModel @Inject constructor(
     private fun photosStream() = photoRepository.getAllPhotosLocal(deviceIdArgs.deviceId)
 
     @Immutable
-    sealed interface PhotoPreviewUiState {
+    sealed interface UiState {
         data class Success(
             val device: Device,
             val photos: List<Photo>,
             val initialPhotoIndex: Int,
-        ) : PhotoPreviewUiState
+        ) : UiState
 
-        data object Loading : PhotoPreviewUiState
-        data class Error(@StringRes val messageId: Int) : PhotoPreviewUiState
+        data object Loading : UiState
+        data class Error(@StringRes val messageId: Int) : UiState
     }
 }

@@ -29,7 +29,8 @@ import com.julianczaja.esp_monitoring_app.components.DialogOneButton
 import com.julianczaja.esp_monitoring_app.components.DialogTwoButtons
 import com.julianczaja.esp_monitoring_app.components.ErrorText
 import com.julianczaja.esp_monitoring_app.domain.model.Device
-import com.julianczaja.esp_monitoring_app.presentation.removedevice.RemoveDeviceDialogViewModel.RemoveDeviceScreenUiState
+import com.julianczaja.esp_monitoring_app.presentation.removedevice.RemoveDeviceDialogViewModel.Event
+import com.julianczaja.esp_monitoring_app.presentation.removedevice.RemoveDeviceDialogViewModel.UiState
 import com.julianczaja.esp_monitoring_app.presentation.theme.AppTheme
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 
@@ -44,7 +45,7 @@ fun RemoveDeviceDialog(
     LaunchedEffect(true) {
         viewModel.eventFlow.collect { event ->
             when (event) {
-                RemoveDeviceDialogViewModel.Event.DEVICE_REMOVED -> onDismiss()
+                Event.DEVICE_REMOVED -> onDismiss()
             }
         }
     }
@@ -60,28 +61,28 @@ fun RemoveDeviceDialog(
 
 @Composable
 private fun RemoveNewDeviceDialogContent(
-    uiState: RemoveDeviceScreenUiState,
+    uiState: UiState,
     onDismiss: () -> Unit,
     onRemoveClicked: (Device) -> Unit,
     convertExplanationStringToStyledText: (String, SpanStyle) -> AnnotatedString,
 ) {
     DefaultDialog(onDismiss) {
         when (uiState) {
-            is RemoveDeviceScreenUiState.Error -> RemoveNewDeviceDialogContentError(uiState, onDismiss)
-            is RemoveDeviceScreenUiState.Success -> RemoveNewDeviceDialogContentSuccess(
+            is UiState.Error -> RemoveNewDeviceDialogContentError(uiState, onDismiss)
+            is UiState.Success -> RemoveNewDeviceDialogContentSuccess(
                 uiState = uiState,
                 onDismiss = onDismiss,
                 onRemoveClick = onRemoveClicked,
                 convertExplanationStringToStyledText = convertExplanationStringToStyledText
             )
-            RemoveDeviceScreenUiState.Loading -> DefaultProgressIndicator()
+            UiState.Loading -> DefaultProgressIndicator()
         }
     }
 }
 
 @Composable
 private fun RemoveNewDeviceDialogContentSuccess(
-    uiState: RemoveDeviceScreenUiState.Success,
+    uiState: UiState.Success,
     onDismiss: () -> Unit,
     onRemoveClick: (Device) -> Unit,
     convertExplanationStringToStyledText: (String, SpanStyle) -> AnnotatedString,
@@ -119,7 +120,7 @@ private fun RemoveNewDeviceDialogContentSuccess(
 
 @Composable
 private fun RemoveNewDeviceDialogContentError(
-    uiState: RemoveDeviceScreenUiState.Error,
+    uiState: UiState.Error,
     onDismiss: () -> Unit,
 ) {
     Column(
@@ -142,7 +143,7 @@ fun RemoveNewDeviceDialogContentSuccessPreview() {
         val secondaryColor = MaterialTheme.colorScheme.secondary
         RemoveNewDeviceDialogContent(
             onDismiss = {},
-            uiState = RemoveDeviceScreenUiState.Success(Device(12L, "Device name")),
+            uiState = UiState.Success(Device(12L, "Device name")),
             onRemoveClicked = {},
             convertExplanationStringToStyledText = { _, _ ->
                 buildAnnotatedString {
@@ -160,7 +161,7 @@ fun RemoveNewDeviceDialogContentErrorPreview() {
     AppTheme {
         RemoveNewDeviceDialogContent(
             onDismiss = {},
-            uiState = RemoveDeviceScreenUiState.Error(R.string.internal_app_error_message),
+            uiState = UiState.Error(R.string.internal_app_error_message),
             onRemoveClicked = {},
             convertExplanationStringToStyledText = { _, _ -> AnnotatedString("") }
         )
@@ -173,7 +174,7 @@ fun RemoveNewDeviceDialogContentLoadingPreview() {
     AppTheme {
         RemoveNewDeviceDialogContent(
             onDismiss = {},
-            uiState = RemoveDeviceScreenUiState.Loading,
+            uiState = UiState.Loading,
             onRemoveClicked = {},
             convertExplanationStringToStyledText = { _, _ -> AnnotatedString("") }
         )

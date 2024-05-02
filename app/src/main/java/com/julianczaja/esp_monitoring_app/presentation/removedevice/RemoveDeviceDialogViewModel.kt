@@ -31,32 +31,28 @@ class RemoveDeviceDialogViewModel @Inject constructor(
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
 
-    enum class Event {
-        DEVICE_REMOVED,
-    }
-
     private val deviceIdArgs: DeviceIdArgs = DeviceIdArgs(savedStateHandle)
 
     val eventFlow = MutableSharedFlow<Event>()
 
-    private val _uiState = MutableStateFlow<RemoveDeviceScreenUiState>(RemoveDeviceScreenUiState.Loading)
+    private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
     val uiState = _uiState.asStateFlow()
 
     init {
         viewModelScope.launch(ioDispatcher) {
             val device = deviceRepository.getDeviceById(deviceIdArgs.deviceId).first()
             if (device != null) {
-                _uiState.update { RemoveDeviceScreenUiState.Success(device) }
+                _uiState.update { UiState.Success(device) }
             } else {
-                _uiState.update { RemoveDeviceScreenUiState.Error(R.string.internal_app_error_message) }
+                _uiState.update { UiState.Error(R.string.internal_app_error_message) }
             }
         }
     }
 
     fun removeDevice(device: Device) = viewModelScope.launch {
-        _uiState.update { RemoveDeviceScreenUiState.Loading }
+        _uiState.update { UiState.Loading }
         deviceRepository.remove(device)
-            .onFailure { e -> _uiState.update { RemoveDeviceScreenUiState.Error(e.getErrorMessageId()) } }
+            .onFailure { e -> _uiState.update { UiState.Error(e.getErrorMessageId()) } }
             .onSuccess { eventFlow.emit(Event.DEVICE_REMOVED) }
     }
 
@@ -69,10 +65,14 @@ class RemoveDeviceDialogViewModel @Inject constructor(
         }
     }
 
+    enum class Event {
+        DEVICE_REMOVED,
+    }
+
     @Immutable
-    sealed interface RemoveDeviceScreenUiState {
-        data class Success(val device: Device) : RemoveDeviceScreenUiState
-        data object Loading : RemoveDeviceScreenUiState
-        data class Error(@StringRes val messageId: Int) : RemoveDeviceScreenUiState
+    sealed interface UiState {
+        data class Success(val device: Device) : UiState
+        data object Loading : UiState
+        data class Error(@StringRes val messageId: Int) : UiState
     }
 }

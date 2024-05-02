@@ -30,15 +30,11 @@ class RemovePhotoDialogViewModel @Inject constructor(
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
 
-    enum class Event {
-        PHOTO_REMOVED,
-    }
-
     private val photoFileNameArgs = PhotoFileNameArgs(savedStateHandle)
 
     val eventFlow = MutableSharedFlow<Event>()
 
-    private val _uiState = MutableStateFlow<RemovePhotoScreenUiState>(RemovePhotoScreenUiState.Loading)
+    private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
     val uiState = _uiState.asStateFlow()
 
     init {
@@ -50,20 +46,20 @@ class RemovePhotoDialogViewModel @Inject constructor(
 
     private fun updateUiState(photo: Photo?) {
         if (photo != null) {
-            _uiState.update { RemovePhotoScreenUiState.Success(photo) }
+            _uiState.update { UiState.Success(photo) }
         } else {
-            _uiState.update { RemovePhotoScreenUiState.Error(R.string.internal_app_error_message) }
+            _uiState.update { UiState.Error(R.string.internal_app_error_message) }
         }
     }
 
     fun removePhoto(photo: Photo) = viewModelScope.launch(ioDispatcher) {
-        _uiState.update { RemovePhotoScreenUiState.Loading }
+        _uiState.update { UiState.Loading }
 
         photoRepository.removePhotoByFileNameRemote(photo.fileName)
-            .onFailure { e -> _uiState.update { RemovePhotoScreenUiState.Error(e.getErrorMessageId()) } }
+            .onFailure { e -> _uiState.update { UiState.Error(e.getErrorMessageId()) } }
             .onSuccess {
                 photoRepository.removePhotoByFileNameLocal(photo.fileName)
-                    .onFailure { e -> _uiState.update { RemovePhotoScreenUiState.Error(e.getErrorMessageId()) } }
+                    .onFailure { e -> _uiState.update { UiState.Error(e.getErrorMessageId()) } }
                     .onSuccess { eventFlow.emit(Event.PHOTO_REMOVED) }
             }
     }
@@ -76,11 +72,15 @@ class RemovePhotoDialogViewModel @Inject constructor(
             addStyle(spanStyle, start = from, end = to)
         }
     }
-}
 
-@Immutable
-sealed interface RemovePhotoScreenUiState {
-    data class Success(val photo: Photo) : RemovePhotoScreenUiState
-    data object Loading : RemovePhotoScreenUiState
-    data class Error(@StringRes val messageId: Int) : RemovePhotoScreenUiState
+    enum class Event {
+        PHOTO_REMOVED,
+    }
+
+    @Immutable
+    sealed interface UiState {
+        data class Success(val photo: Photo) : UiState
+        data object Loading : UiState
+        data class Error(@StringRes val messageId: Int) : UiState
+    }
 }

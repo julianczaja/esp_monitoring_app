@@ -22,10 +22,6 @@ class AddDeviceDialogViewModel @Inject constructor(
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
 
-    enum class Event {
-        DEVICE_ADDED,
-    }
-
     val eventFlow = MutableSharedFlow<Event>()
 
     private val _name = MutableStateFlow("")
@@ -94,5 +90,9 @@ class AddDeviceDialogViewModel @Inject constructor(
         }
 
         return Device(deviceId, name.value)
+    }
+
+    enum class Event {
+        DEVICE_ADDED,
     }
 }

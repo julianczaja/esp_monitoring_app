@@ -6,7 +6,7 @@ import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.data.repository.FakeDeviceRepositoryImpl
 import com.julianczaja.esp_monitoring_app.domain.model.Device
 import com.julianczaja.esp_monitoring_app.domain.repository.DeviceRepository
-import com.julianczaja.esp_monitoring_app.presentation.devices.DevicesScreenViewModel.DevicesScreenUiState
+import com.julianczaja.esp_monitoring_app.presentation.devices.DevicesScreenViewModel.UiState
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
@@ -29,9 +29,9 @@ class DevicesScreenViewModelTest {
 
     @Test
     fun `UI State is loading on start`() = runTest {
-        viewModel.devicesUiState.test {
+        viewModel.uiState.test {
             val uiState = awaitItem()
-            assertThat(uiState).isInstanceOf(DevicesScreenUiState.Loading::class.java)
+            assertThat(uiState).isInstanceOf(UiState.Loading::class.java)
         }
     }
 
@@ -40,27 +40,27 @@ class DevicesScreenViewModelTest {
         (deviceRepository as FakeDeviceRepositoryImpl).getAllDevicesThrowError = true
         viewModel = DevicesScreenViewModel(deviceRepository, dispatcherRule.testDispatcher)
 
-        viewModel.devicesUiState.test {
+        viewModel.uiState.test {
             val uiState = awaitItem()
-            assertThat(uiState).isInstanceOf(DevicesScreenUiState.Error::class.java)
-            assertThat((uiState as DevicesScreenUiState.Error).messageId).isEqualTo(R.string.unknown_error_message)
+            assertThat(uiState).isInstanceOf(UiState.Error::class.java)
+            assertThat((uiState as UiState.Error).messageId).isEqualTo(R.string.unknown_error_message)
         }
     }
 
     @Test
     fun `UI State success when device is added`() = runTest {
         val fakeDevice = Device(1L, "Device 1")
-        var uiState: DevicesScreenUiState
+        var uiState: UiState
 
-        viewModel.devicesUiState.test {
+        viewModel.uiState.test {
             uiState = awaitItem()
-            assertThat(uiState).isInstanceOf(DevicesScreenUiState.Loading::class.java)
+            assertThat(uiState).isInstanceOf(UiState.Loading::class.java)
 
             deviceRepository.addNew(fakeDevice)
             uiState = awaitItem()
-            assertThat(uiState).isInstanceOf(DevicesScreenUiState.Success::class.java)
-            assertThat((uiState as DevicesScreenUiState.Success).devices.size).isEqualTo(1)
-            assertThat((uiState as DevicesScreenUiState.Success).devices.first()).isEqualTo(fakeDevice)
+            assertThat(uiState).isInstanceOf(UiState.Success::class.java)
+            assertThat((uiState as UiState.Success).devices.size).isEqualTo(1)
+            assertThat((uiState as UiState.Success).devices.first()).isEqualTo(fakeDevice)
         }
     }
 }

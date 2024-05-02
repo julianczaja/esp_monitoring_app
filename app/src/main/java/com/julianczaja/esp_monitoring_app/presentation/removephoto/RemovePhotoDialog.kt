@@ -30,6 +30,8 @@ import com.julianczaja.esp_monitoring_app.components.DialogOneButton
 import com.julianczaja.esp_monitoring_app.components.DialogTwoButtons
 import com.julianczaja.esp_monitoring_app.components.ErrorText
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
+import com.julianczaja.esp_monitoring_app.presentation.removephoto.RemovePhotoDialogViewModel.Event
+import com.julianczaja.esp_monitoring_app.presentation.removephoto.RemovePhotoDialogViewModel.UiState
 import com.julianczaja.esp_monitoring_app.presentation.theme.AppTheme
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 import java.time.LocalDateTime
@@ -45,7 +47,7 @@ fun RemovePhotoDialog(
     LaunchedEffect(true) {
         viewModel.eventFlow.collect { event ->
             when (event) {
-                RemovePhotoDialogViewModel.Event.PHOTO_REMOVED -> onDismiss()
+                Event.PHOTO_REMOVED -> onDismiss()
             }
         }
     }
@@ -61,29 +63,29 @@ fun RemovePhotoDialog(
 
 @Composable
 private fun RemoveNewPhotoDialogContent(
-    uiState: RemovePhotoScreenUiState,
+    uiState: UiState,
     onDismiss: () -> Unit,
     onRemoveClicked: (Photo) -> Unit,
     convertExplanationStringToStyledText: (String, SpanStyle) -> AnnotatedString,
 ) {
     DefaultDialog(onDismiss) {
         when (uiState) {
-            is RemovePhotoScreenUiState.Error -> RemoveNewPhotoDialogContentError(uiState, onDismiss)
-            is RemovePhotoScreenUiState.Success -> RemoveNewPhotoDialogContentSuccess(
+            is UiState.Error -> RemoveNewPhotoDialogContentError(uiState, onDismiss)
+            is UiState.Success -> RemoveNewPhotoDialogContentSuccess(
                 uiState = uiState,
                 onDismiss = onDismiss,
                 onRemoveClick = onRemoveClicked,
                 convertExplanationStringToStyledText = convertExplanationStringToStyledText
             )
 
-            RemovePhotoScreenUiState.Loading -> DefaultProgressIndicator()
+            UiState.Loading -> DefaultProgressIndicator()
         }
     }
 }
 
 @Composable
 private fun RemoveNewPhotoDialogContentSuccess(
-    uiState: RemovePhotoScreenUiState.Success,
+    uiState: UiState.Success,
     onDismiss: () -> Unit,
     onRemoveClick: (Photo) -> Unit,
     convertExplanationStringToStyledText: (String, SpanStyle) -> AnnotatedString,
@@ -121,7 +123,7 @@ private fun RemoveNewPhotoDialogContentSuccess(
 
 @Composable
 private fun RemoveNewPhotoDialogContentError(
-    uiState: RemovePhotoScreenUiState.Error,
+    uiState: UiState.Error,
     onDismiss: () -> Unit,
 ) {
     Column(
@@ -149,7 +151,7 @@ fun RemoveNewPhotoDialogContentSuccessPreview() {
         val secondaryColor = MaterialTheme.colorScheme.secondary
         RemoveNewPhotoDialogContent(
             onDismiss = {},
-            uiState = RemovePhotoScreenUiState.Success(
+            uiState = UiState.Success(
                 Photo(
                     12L,
                     LocalDateTime.now(),
@@ -175,7 +177,7 @@ fun RemoveNewPhotoDialogContentErrorPreview() {
     AppTheme {
         RemoveNewPhotoDialogContent(
             onDismiss = {},
-            uiState = RemovePhotoScreenUiState.Error(R.string.internal_app_error_message),
+            uiState = UiState.Error(R.string.internal_app_error_message),
             onRemoveClicked = {},
             convertExplanationStringToStyledText = { _, _ -> AnnotatedString("") }
         )
@@ -188,7 +190,7 @@ fun RemoveNewPhotoDialogContentLoadingPreview() {
     AppTheme {
         RemoveNewPhotoDialogContent(
             onDismiss = {},
-            uiState = RemovePhotoScreenUiState.Loading,
+            uiState = UiState.Loading,
             onRemoveClicked = {},
             convertExplanationStringToStyledText = { _, _ -> AnnotatedString("") }
         )

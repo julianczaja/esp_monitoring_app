@@ -35,17 +35,13 @@ import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.SliderPositions
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
@@ -55,8 +51,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.julianczaja.esp_monitoring_app.domain.model.EspCameraFrameSize
 import com.julianczaja.esp_monitoring_app.domain.model.EspCameraSpecialEffect
 import com.julianczaja.esp_monitoring_app.domain.model.EspCameraWhiteBalanceMode
-import com.julianczaja.esp_monitoring_app.presentation.devicesettings.DeviceSettingsScreenViewModel.DeviceSettingsScreenUiState
-import com.julianczaja.esp_monitoring_app.presentation.devicesettings.DeviceSettingsScreenViewModel.DeviceSettingsState
+import com.julianczaja.esp_monitoring_app.presentation.devicesettings.DeviceSettingsScreenViewModel.UiState
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 import timber.log.Timber
 
@@ -65,38 +60,22 @@ import timber.log.Timber
 fun PagerScope.DeviceSettingsScreen(
     viewModel: DeviceSettingsScreenViewModel = hiltViewModel(),
 ) {
-    val uiState by viewModel.deviceSettingsUiState.collectAsStateWithLifecycle()
-    DeviceSettingsScreenContent(uiState, viewModel::updateDeviceSettings)
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    DeviceSettingsScreenContent(uiState)
 }
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun PagerScope.DeviceSettingsScreenContent(
-    uiState: DeviceSettingsScreenUiState,
-    updateSettings: () -> Unit,
+    uiState: UiState,
 ) {
-    val pullRefreshState = rememberPullToRefreshState()
-    LaunchedEffect(uiState.isRefreshing) {
-        if (!uiState.isRefreshing) {
-            pullRefreshState.endRefresh()
-        }
-    }
-    if (pullRefreshState.isRefreshing) {
-        LaunchedEffect(true) {
-            updateSettings()
-        }
-    }
-
-
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .nestedScroll(pullRefreshState.nestedScrollConnection)
+        modifier = Modifier.fillMaxSize()
     ) {
-        when (uiState.deviceSettingsState) {
-            is DeviceSettingsState.Error -> DeviceSettingsErrorScreen(uiState.deviceSettingsState.messageId)
-            DeviceSettingsState.Loading -> DeviceSettingsLoadingScreen()
-            is DeviceSettingsState.Success -> {
+        when (uiState) {
+            is UiState.Error -> DeviceSettingsErrorScreen(uiState.messageId)
+            UiState.Loading -> DeviceSettingsLoadingScreen()
+            is UiState.Success -> {
 
                 Column(
                     verticalArrangement = Arrangement.spacedBy(
@@ -126,76 +105,76 @@ private fun PagerScope.DeviceSettingsScreenContent(
                     DefaultDropdownMenuBox(
                         title = "Frame size",
                         items = EspCameraFrameSize.entries.map { it.description },
-                        selectedIndex = uiState.deviceSettingsState.deviceSettings.frameSize.ordinal,
+                        selectedIndex = uiState.deviceSettings.frameSize.ordinal,
                         onItemClicked = { EspCameraFrameSize.entries[it] }
                     )
                     DefaultDropdownMenuBox(
                         title = "Special effect",
                         items = EspCameraSpecialEffect.entries.map { it.description },
-                        selectedIndex = uiState.deviceSettingsState.deviceSettings.specialEffect.ordinal,
+                        selectedIndex = uiState.deviceSettings.specialEffect.ordinal,
                         onItemClicked = { EspCameraSpecialEffect.entries[it] }
                     )
                     DefaultDropdownMenuBox(
                         title = "White balance mode",
                         items = EspCameraWhiteBalanceMode.entries.map { it.description },
-                        selectedIndex = uiState.deviceSettingsState.deviceSettings.whiteBalanceMode.ordinal,
+                        selectedIndex = uiState.deviceSettings.whiteBalanceMode.ordinal,
                         onItemClicked = { EspCameraWhiteBalanceMode.entries[it] }
                     )
                     DefaultDropdownMenuBox(
                         title = "White balance mode",
                         items = EspCameraWhiteBalanceMode.entries.map { it.description },
-                        selectedIndex = uiState.deviceSettingsState.deviceSettings.whiteBalanceMode.ordinal,
+                        selectedIndex = uiState.deviceSettings.whiteBalanceMode.ordinal,
                         onItemClicked = { EspCameraWhiteBalanceMode.entries[it] }
                     )
                     DefaultDropdownMenuBox(
                         title = "White balance mode",
                         items = EspCameraWhiteBalanceMode.entries.map { it.description },
-                        selectedIndex = uiState.deviceSettingsState.deviceSettings.whiteBalanceMode.ordinal,
+                        selectedIndex = uiState.deviceSettings.whiteBalanceMode.ordinal,
                         onItemClicked = { EspCameraWhiteBalanceMode.entries[it] }
                     )
                     DefaultIntSliderRow(
                         label = "Brightness",
-                        value = uiState.deviceSettingsState.deviceSettings.brightness,
+                        value = uiState.deviceSettings.brightness,
                         steps = 3,
                         valueRange = -2..2,
                         onValueChange = { newValue -> }
                     )
                     DefaultIntSliderRow(
                         label = "Contrast",
-                        value = uiState.deviceSettingsState.deviceSettings.contrast,
+                        value = uiState.deviceSettings.contrast,
                         steps = 3,
                         valueRange = -2..2,
                         onValueChange = { newValue -> }
                     )
                     DefaultIntSliderRow(
                         label = "Saturation",
-                        value = uiState.deviceSettingsState.deviceSettings.saturation,
+                        value = uiState.deviceSettings.saturation,
                         steps = 3,
                         valueRange = -2..2,
                         onValueChange = { newValue -> }
                     )
                     DefaultIntSliderRow(
                         label = "Quality",
-                        value = uiState.deviceSettingsState.deviceSettings.jpegQuality,
+                        value = uiState.deviceSettings.jpegQuality,
                         steps = 10,
                         valueRange = 10..63,
                         onValueChange = { newValue -> }
                     )
                     SwitchWithLabel(
                         label = "Flash LED",
-                        isChecked = uiState.deviceSettingsState.deviceSettings.flashOn,
+                        isChecked = uiState.deviceSettings.flashOn,
                         onCheckedChange = { newValue -> },
                         modifier = Modifier.fillMaxWidth(.7f)
                     )
                     SwitchWithLabel(
                         label = "Vertical flip",
-                        isChecked = uiState.deviceSettingsState.deviceSettings.flashOn,
+                        isChecked = uiState.deviceSettings.flashOn,
                         onCheckedChange = { newValue -> },
                         modifier = Modifier.fillMaxWidth(.7f)
                     )
                     SwitchWithLabel(
                         label = "Horizontal mirror",
-                        isChecked = uiState.deviceSettingsState.deviceSettings.horizontalMirror,
+                        isChecked = uiState.deviceSettings.horizontalMirror,
                         onCheckedChange = { newValue -> },
                         modifier = Modifier.fillMaxWidth(.7f)
                     )
@@ -204,10 +183,6 @@ private fun PagerScope.DeviceSettingsScreenContent(
 
             }
         }
-        PullToRefreshContainer(
-            modifier = Modifier.align(Alignment.TopCenter),
-            state = pullRefreshState,
-        )
     }
 }
 

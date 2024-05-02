@@ -21,6 +21,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.components.DefaultDialog
 import com.julianczaja.esp_monitoring_app.components.DialogTwoButtons
+import com.julianczaja.esp_monitoring_app.presentation.adddevice.AddDeviceDialogViewModel.Event
 import com.julianczaja.esp_monitoring_app.presentation.theme.AppTheme
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 
@@ -38,7 +39,7 @@ fun AddNewDeviceDialog(
     LaunchedEffect(true) {
         viewModel.eventFlow.collect { event ->
             when (event) {
-                AddDeviceDialogViewModel.Event.DEVICE_ADDED -> onDismiss()
+                Event.DEVICE_ADDED -> onDismiss()
             }
         }
     }
