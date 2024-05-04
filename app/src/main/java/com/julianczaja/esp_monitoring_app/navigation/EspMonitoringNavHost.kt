@@ -5,6 +5,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import com.julianczaja.esp_monitoring_app.presentation.addeditdevice.AddEditDeviceScreen
+import com.julianczaja.esp_monitoring_app.presentation.devices.DevicesScreen
 
 @Composable
 fun EspMonitoringNavHost(
@@ -12,25 +15,28 @@ fun EspMonitoringNavHost(
     navController: NavHostController,
     snackbarHostState: SnackbarHostState,
     onBackClick: () -> Unit,
-    startDestination: String = devicesNavigationRoute,
 ) {
     NavHost(
         modifier = modifier,
         navController = navController,
-        startDestination = startDestination
+        startDestination = DevicesScreen
     ) {
-        devicesScreen(
-            navigateToDevice = navController::navigateToDevice,
-            navigateToRemoveDevice = navController::navigateToRemoveDeviceDialog
-        )
+        composable<DevicesScreen> {
+            DevicesScreen(
+                navController::navigateToDevice,
+                navController::navigateToRemoveDeviceDialog,
+                navController::navigateToAddEditDeviceScreen,
+                navController::navigateToAddEditDeviceScreen
+            )
+        }
         deviceScreen(
             snackbarHostState = snackbarHostState,
             navigateToPhotoPreview = navController::navigateToPhotoPreview,
             navigateToRemovePhotoDialog = navController::navigateToRemovePhotoDialog
         )
-        addNewDeviceDialog(
-            onDismiss = onBackClick
-        )
+        composable<AddEditDeviceScreen> {
+            AddEditDeviceScreen(onDismiss = onBackClick)
+        }
         removeDeviceDialog(
             onDismiss = onBackClick
         )

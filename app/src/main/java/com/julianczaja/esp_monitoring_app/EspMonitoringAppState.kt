@@ -10,7 +10,6 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.julianczaja.esp_monitoring_app.navigation.DeviceIdArgs
 import com.julianczaja.esp_monitoring_app.navigation.deviceNavigationRoute
-import com.julianczaja.esp_monitoring_app.navigation.devicesNavigationRoute
 
 
 @Composable
@@ -31,9 +30,6 @@ class EspMonitoringAppState(
 
     val shouldShowNavigationIcon: Boolean
         @Composable get() = currentDestination?.route == "$deviceNavigationRoute/{${DeviceIdArgs.KEY}}"
-
-    val shouldShowFab: Boolean
-        @Composable get() = currentDestination?.route == devicesNavigationRoute
 
     fun onBackClick() {
         navController.popBackStack()

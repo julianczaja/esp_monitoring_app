@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -23,10 +24,12 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -37,6 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
@@ -58,13 +62,17 @@ const val DEFAULT_DEVICE_ITEM_MIN_HEIGHT = 150
 fun DevicesScreen(
     navigateToDevice: (Long) -> Unit,
     navigateToRemoveDevice: (Long) -> Unit,
+    navigateToAddDevice: () -> Unit,
+    navigateToEditDevice: (Device) -> Unit,
     viewModel: DevicesScreenViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     DevicesScreenContent(
         uiState = uiState,
         onDeviceClicked = navigateToDevice,
-        onRemoveDeviceClicked = navigateToRemoveDevice
+        onRemoveDeviceClicked = navigateToRemoveDevice,
+        onAddDeviceClicked = navigateToAddDevice,
+        onEditDeviceClicked = navigateToEditDevice
     )
 }
 
@@ -73,12 +81,40 @@ fun DevicesScreenContent(
     uiState: UiState,
     onDeviceClicked: (Long) -> Unit,
     onRemoveDeviceClicked: (Long) -> Unit,
+    onAddDeviceClicked: () -> Unit,
+    onEditDeviceClicked: (Device) -> Unit,
 ) {
     val configuration = LocalConfiguration.current
 
-    when (configuration.orientation) {
-        Configuration.ORIENTATION_LANDSCAPE -> DevicesScreenLandscape(uiState, onDeviceClicked, onRemoveDeviceClicked)
-        else -> DevicesScreenPortrait(uiState, onDeviceClicked, onRemoveDeviceClicked)
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = onAddDeviceClicked,
+                modifier = Modifier.safeDrawingPadding()
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_baseline_add_24),
+                    contentDescription = null
+                )
+            }
+        }
+    ) {
+        when (configuration.orientation) {
+            Configuration.ORIENTATION_LANDSCAPE -> DevicesScreenLandscape(
+                uiState = uiState,
+                onDeviceClicked = onDeviceClicked,
+                onRemoveDeviceClicked = onRemoveDeviceClicked,
+                onEditDeviceClicked = onEditDeviceClicked
+            )
+
+            else -> DevicesScreenPortrait(
+                uiState = uiState,
+                onDeviceClicked = onDeviceClicked,
+                onRemoveDeviceClicked = onRemoveDeviceClicked,
+                onEditDeviceClicked = onEditDeviceClicked
+            )
+        }
     }
 }
 
@@ -87,6 +123,7 @@ private fun DevicesScreenPortrait(
     uiState: UiState,
     onDeviceClicked: (Long) -> Unit,
     onRemoveDeviceClicked: (Long) -> Unit,
+    onEditDeviceClicked: (Device) -> Unit,
 ) {
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium),
@@ -95,7 +132,7 @@ private fun DevicesScreenPortrait(
             .fillMaxSize()
             .padding(MaterialTheme.spacing.medium),
     ) {
-        devicesScreenContent(uiState, onDeviceClicked, onRemoveDeviceClicked)
+        devicesScreenContent(uiState, onDeviceClicked, onRemoveDeviceClicked, onEditDeviceClicked)
     }
 }
 
@@ -104,6 +141,7 @@ private fun DevicesScreenLandscape(
     uiState: UiState,
     onDeviceClicked: (Long) -> Unit,
     onRemoveDeviceClicked: (Long) -> Unit,
+    onEditDeviceClicked: (Device) -> Unit,
 ) {
     LazyVerticalGrid(
         columns = GridCells.Adaptive(DEFAULT_DEVICE_ITEM_MIN_HEIGHT.dp),
@@ -113,7 +151,7 @@ private fun DevicesScreenLandscape(
             .fillMaxSize()
             .padding(MaterialTheme.spacing.medium),
     ) {
-        devicesScreenContent(uiState, onDeviceClicked, onRemoveDeviceClicked)
+        devicesScreenContent(uiState, onDeviceClicked, onRemoveDeviceClicked, onEditDeviceClicked)
     }
 }
 
@@ -121,6 +159,7 @@ private fun LazyListScope.devicesScreenContent(
     uiState: UiState,
     onDeviceClicked: (Long) -> Unit,
     onRemoveDeviceClicked: (Long) -> Unit,
+    onEditDeviceClicked: (Device) -> Unit,
 ) {
     when (uiState) {
         UiState.Loading -> {
@@ -128,15 +167,18 @@ private fun LazyListScope.devicesScreenContent(
                 DefaultProgressIndicator()
             }
         }
+
         is UiState.Success -> {
             items(uiState.devices, key = { it.id }) {
                 DeviceItem(
                     device = it,
                     onClicked = onDeviceClicked,
-                    onRemoveClicked = onRemoveDeviceClicked
+                    onRemoveClicked = onRemoveDeviceClicked,
+                    onEditClicked = onEditDeviceClicked
                 )
             }
         }
+
         is UiState.Error -> {
             item {
                 ErrorText(text = stringResource(uiState.messageId))
@@ -149,6 +191,7 @@ private fun LazyGridScope.devicesScreenContent(
     uiState: UiState,
     onDeviceClicked: (Long) -> Unit,
     onRemoveDeviceClicked: (Long) -> Unit,
+    onEditDeviceClicked: (Device) -> Unit,
 ) {
     when (uiState) {
         UiState.Loading -> {
@@ -156,11 +199,18 @@ private fun LazyGridScope.devicesScreenContent(
                 DefaultProgressIndicator()
             }
         }
+
         is UiState.Success -> {
             items(uiState.devices, key = { it.id }) {
-                DeviceItem(device = it, onClicked = onDeviceClicked, onRemoveClicked = onRemoveDeviceClicked)
+                DeviceItem(
+                    device = it,
+                    onClicked = onDeviceClicked,
+                    onRemoveClicked = onRemoveDeviceClicked,
+                    onEditClicked = onEditDeviceClicked
+                )
             }
         }
+
         is UiState.Error -> {
             item {
                 Text(text = stringResource(uiState.messageId))
@@ -177,12 +227,13 @@ private fun DeviceItem(
     minHeight: Dp = DEFAULT_DEVICE_ITEM_MIN_HEIGHT.dp,
     onClicked: (Long) -> Unit,
     onRemoveClicked: (Long) -> Unit,
+    onEditClicked: (Device) -> Unit,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
     val menuItems = arrayOf(
-        stringResource(R.string.remove_device_menu_item_remove) to { onRemoveClicked(device.id) }
+        stringResource(R.string.remove_device_menu_item_remove) to { onRemoveClicked(device.id) },
+        stringResource(R.string.edit) to { onEditClicked(device) }
     )
-
     Card(
         modifier = modifier
             .clickable(onClick = { onClicked(device.id) })
@@ -254,7 +305,8 @@ private fun DeviceItemPreview() {
         DeviceItem(
             device = Device(123L, "Device name"),
             onClicked = {},
-            onRemoveClicked = {}
+            onRemoveClicked = {},
+            onEditClicked = {}
         )
     }
 }

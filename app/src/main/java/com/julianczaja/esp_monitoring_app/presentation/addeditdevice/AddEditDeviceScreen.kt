@@ -1,4 +1,4 @@
-package com.julianczaja.esp_monitoring_app.presentation.adddevice
+package com.julianczaja.esp_monitoring_app.presentation.addeditdevice
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -21,15 +21,15 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.components.DefaultDialog
 import com.julianczaja.esp_monitoring_app.components.DialogTwoButtons
-import com.julianczaja.esp_monitoring_app.presentation.adddevice.AddDeviceDialogViewModel.Event
+import com.julianczaja.esp_monitoring_app.presentation.addeditdevice.AddEditDeviceScreenViewModel.Event
 import com.julianczaja.esp_monitoring_app.presentation.theme.AppTheme
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 
 
 @Composable
-fun AddNewDeviceDialog(
+fun AddEditDeviceScreen(
     onDismiss: () -> Unit,
-    viewModel: AddDeviceDialogViewModel = hiltViewModel(),
+    viewModel: AddEditDeviceScreenViewModel = hiltViewModel(),
 ) {
     val id by viewModel.id.collectAsStateWithLifecycle()
     val idError by viewModel.idError.collectAsStateWithLifecycle()
@@ -44,7 +44,7 @@ fun AddNewDeviceDialog(
         }
     }
 
-    AddNewDeviceDialogContent(
+    AddEditDeviceScreenContent(
         onDismiss = onDismiss,
         id = id,
         idError = idError,
@@ -57,7 +57,7 @@ fun AddNewDeviceDialog(
 }
 
 @Composable
-fun AddNewDeviceDialogContent(
+fun AddEditDeviceScreenContent(
     onDismiss: () -> Unit,
     id: String,
     idError: Int?,
@@ -122,9 +122,9 @@ fun AddNewDeviceDialogContent(
 
 @Preview
 @Composable
-private fun AddNewDeviceDialogContentPreview() {
+private fun AddEditDeviceScreenContentPreview() {
     AppTheme {
-        AddNewDeviceDialogContent(
+        AddEditDeviceScreenContent(
             onDismiss = {},
             id = "12",
             idError = null,
@@ -139,9 +139,9 @@ private fun AddNewDeviceDialogContentPreview() {
 
 @Preview
 @Composable
-private fun AddNewDeviceDialogContentWithErrorsPreview() {
+private fun AddEditDeviceScreenContentWithErrorsPreview() {
     AppTheme {
-        AddNewDeviceDialogContent(
+        AddEditDeviceScreenContent(
             onDismiss = {},
             id = "12",
             idError = R.string.add_device_error_id_exists,

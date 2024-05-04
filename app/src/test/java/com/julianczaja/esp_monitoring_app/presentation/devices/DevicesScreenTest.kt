@@ -36,7 +36,8 @@ class DevicesScreenTest {
             DevicesScreenContent(
                 uiState = UiState.Success(listOf(Device(1L, deviceName))),
                 onDeviceClicked = {},
-                onRemoveDeviceClicked = {}
+                onRemoveDeviceClicked = {},
+                onEditDeviceClicked = {}
             )
         }
         composeTestRule
@@ -62,7 +63,8 @@ class DevicesScreenTest {
             DevicesScreenContent(
                 uiState = UiState.Loading,
                 onDeviceClicked = {},
-                onRemoveDeviceClicked = {}
+                onRemoveDeviceClicked = {},
+                onEditDeviceClicked = {}
             )
         }
         composeTestRule
@@ -80,7 +82,8 @@ class DevicesScreenTest {
             DevicesScreenContent(
                 uiState = UiState.Error(R.string.unknown_error_message),
                 onDeviceClicked = {},
-                onRemoveDeviceClicked = {}
+                onRemoveDeviceClicked = {},
+                onEditDeviceClicked = {}
             )
         }
         composeTestRule

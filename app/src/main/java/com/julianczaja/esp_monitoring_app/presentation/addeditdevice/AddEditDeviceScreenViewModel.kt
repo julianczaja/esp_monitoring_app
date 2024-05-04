@@ -1,11 +1,15 @@
-package com.julianczaja.esp_monitoring_app.presentation.adddevice
+package com.julianczaja.esp_monitoring_app.presentation.addeditdevice
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.di.IoDispatcher
 import com.julianczaja.esp_monitoring_app.domain.model.Device
 import com.julianczaja.esp_monitoring_app.domain.repository.DeviceRepository
+import com.julianczaja.esp_monitoring_app.navigation.AddEditDeviceScreen
+import com.julianczaja.esp_monitoring_app.navigation.DeviceIdArgs
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -17,10 +21,18 @@ import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
-class AddDeviceDialogViewModel @Inject constructor(
+class AddEditDeviceScreenViewModel @Inject constructor(
+    savedStateHandle: SavedStateHandle,
     private val deviceRepository: DeviceRepository,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
+
+    val mode = when (savedStateHandle.toRoute<AddEditDeviceScreen>().deviceId) {
+        DeviceIdArgs.NO_VALUE -> Mode.Add
+        else -> {
+            Mode.Edit
+        }
+    }
 
     val eventFlow = MutableSharedFlow<Event>()
 
@@ -91,6 +103,8 @@ class AddDeviceDialogViewModel @Inject constructor(
 
         return Device(deviceId, name.value)
     }
+
+    enum class Mode { Edit, Add }
 
     enum class Event {
         DEVICE_ADDED,

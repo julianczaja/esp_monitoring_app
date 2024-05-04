@@ -14,43 +14,31 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.dialog
 import androidx.navigation.navArgument
-import com.julianczaja.esp_monitoring_app.presentation.adddevice.AddNewDeviceDialog
+import com.julianczaja.esp_monitoring_app.domain.model.Device
 import com.julianczaja.esp_monitoring_app.presentation.device.DeviceScreen
-import com.julianczaja.esp_monitoring_app.presentation.devices.DevicesScreen
 import com.julianczaja.esp_monitoring_app.presentation.photopreview.PhotoPreviewDialog
 import com.julianczaja.esp_monitoring_app.presentation.removedevice.RemoveDeviceDialog
 import com.julianczaja.esp_monitoring_app.presentation.removephoto.RemovePhotoDialog
+import kotlinx.serialization.Serializable
 
 
 // Devices
-const val devicesNavigationRoute = "devices_route"
+@Serializable
+object DevicesScreen
 
 fun NavController.navigateToDevices(navOptions: NavOptions? = null) {
-    this.navigate(devicesNavigationRoute, navOptions)
+    this.navigate(DevicesScreen, navOptions)
 }
 
-fun NavGraphBuilder.devicesScreen(
-    navigateToDevice: (Long) -> Unit,
-    navigateToRemoveDevice: (Long) -> Unit,
+// Add or edit device
+@Serializable
+data class AddEditDeviceScreen(val deviceId: Long)
+
+fun NavController.navigateToAddEditDeviceScreen(
+    device: Device? = null,
+    navOptions: NavOptions? = null
 ) {
-    composable(route = devicesNavigationRoute) {
-        DevicesScreen(navigateToDevice, navigateToRemoveDevice)
-    }
-}
-
-// Add new device
-const val addNewDeviceDialogNavigationRoute = "add_new_device_route"
-
-fun NavController.navigateToAddNewDeviceDialog(navOptions: NavOptions? = null) {
-    this.navigate(addNewDeviceDialogNavigationRoute, navOptions)
-}
-
-fun NavGraphBuilder.addNewDeviceDialog(
-    onDismiss: () -> Unit,
-) {
-    dialog(route = addNewDeviceDialogNavigationRoute) {
-        AddNewDeviceDialog(onDismiss)
-    }
+    navigate(AddEditDeviceScreen(device?.id ?: DeviceIdArgs.NO_VALUE), navOptions)
 }
 
 // Remove device
@@ -116,7 +104,7 @@ fun NavGraphBuilder.deviceScreen(
             )
         },
         exitTransition = {
-             slideOutOfContainer(
+            slideOutOfContainer(
                 animationSpec = tween(300, easing = EaseOut),
                 towards = AnimatedContentTransitionScope.SlideDirection.End
             )
@@ -154,9 +142,10 @@ data class DeviceIdArgs(val deviceId: Long) {
     companion object {
         const val KEY = "deviceId"
         val NAV_TYPE = NavType.LongType
+        const val NO_VALUE = -1L
     }
 
-    constructor(savedStateHandle: SavedStateHandle) : this(savedStateHandle.get<Long>(KEY) ?: -1L)
+    constructor(savedStateHandle: SavedStateHandle) : this(savedStateHandle.get<Long>(KEY) ?: NO_VALUE)
 }
 
 
