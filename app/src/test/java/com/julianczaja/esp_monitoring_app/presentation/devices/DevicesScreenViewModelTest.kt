@@ -37,7 +37,7 @@ class DevicesScreenViewModelTest {
 
     @Test
     fun `UI State error when repository thrown exception`() = runTest {
-        (deviceRepository as FakeDeviceRepositoryImpl).getAllDevicesThrowError = true
+        (deviceRepository as FakeDeviceRepositoryImpl).getAllDevicesThrowsError = true
         viewModel = DevicesScreenViewModel(deviceRepository, dispatcherRule.testDispatcher)
 
         viewModel.uiState.test {
