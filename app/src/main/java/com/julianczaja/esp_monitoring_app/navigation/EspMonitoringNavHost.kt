@@ -23,10 +23,10 @@ fun EspMonitoringNavHost(
     ) {
         composable<DevicesScreen> {
             DevicesScreen(
-                navController::navigateToDevice,
-                navController::navigateToRemoveDeviceDialog,
-                navController::navigateToAddEditDeviceScreen,
-                navController::navigateToAddEditDeviceScreen
+                navigateToDevice = navController::navigateToDevice,
+                navigateToRemoveDevice = navController::navigateToRemoveDeviceDialog,
+                navigateToAddDevice = navController::navigateToAddEditDeviceScreen,
+                navigateToEditDevice = navController::navigateToAddEditDeviceScreen
             )
         }
         deviceScreen(
@@ -35,7 +35,10 @@ fun EspMonitoringNavHost(
             navigateToRemovePhotoDialog = navController::navigateToRemovePhotoDialog
         )
         composable<AddEditDeviceScreen> {
-            AddEditDeviceScreen(onDismiss = onBackClick)
+            AddEditDeviceScreen(
+                snackbarHostState = snackbarHostState,
+                onDismiss = onBackClick
+            )
         }
         removeDeviceDialog(
             onDismiss = onBackClick

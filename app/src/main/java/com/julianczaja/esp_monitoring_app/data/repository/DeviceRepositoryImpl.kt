@@ -16,7 +16,8 @@ class DeviceRepositoryImpl @Inject constructor(
     private val deviceDao: DeviceDao,
 ) : DeviceRepository {
 
-    override fun getAllDevices(): Flow<List<Device>> = deviceDao.getAll().map { devices -> devices.map { it.toDevice() } }
+    override fun getAllDevices(): Flow<List<Device>> =
+        deviceDao.getAll().map { devices -> devices.map { it.toDevice() } }
 
     override fun getDeviceById(id: Long): Flow<Device?> = deviceDao.getById(id).mapNotNull { it?.toDevice() }
 
@@ -26,6 +27,13 @@ class DeviceRepositoryImpl @Inject constructor(
 
     override suspend fun addNew(device: Device): Result<Unit> = try {
         deviceDao.insert(device.toDeviceEntity())
+        Result.success(Unit)
+    } catch (e: Exception) {
+        Result.failure(e)
+    }
+
+    override suspend fun update(device: Device): Result<Unit> = try {
+        deviceDao.update(device.toDeviceEntity())
         Result.success(Unit)
     } catch (e: Exception) {
         Result.failure(e)

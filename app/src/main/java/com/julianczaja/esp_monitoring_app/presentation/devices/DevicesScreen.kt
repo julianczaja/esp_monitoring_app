@@ -99,7 +99,7 @@ fun DevicesScreenContent(
                 )
             }
         }
-    ) {
+    ) { _ ->
         when (configuration.orientation) {
             Configuration.ORIENTATION_LANDSCAPE -> DevicesScreenLandscape(
                 uiState = uiState,
@@ -232,7 +232,7 @@ private fun DeviceItem(
     var menuExpanded by remember { mutableStateOf(false) }
     val menuItems = arrayOf(
         stringResource(R.string.remove_device_menu_item_remove) to { onRemoveClicked(device.id) },
-        stringResource(R.string.edit) to { onEditClicked(device) }
+        stringResource(R.string.edit_label) to { onEditClicked(device) }
     )
     Card(
         modifier = modifier

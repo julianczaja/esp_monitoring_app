@@ -16,5 +16,7 @@ interface DeviceRepository {
 
     suspend fun addNew(device: Device): Result<Unit>
 
+    suspend fun update(device: Device): Result<Unit>
+
     suspend fun remove(device: Device): Result<Unit>
 }

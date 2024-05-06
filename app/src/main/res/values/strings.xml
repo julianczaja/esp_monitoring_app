@@ -2,10 +2,15 @@
     <string name="add_device_error_id_exists">Device with this ID already exists</string>
     <string name="add_device_error_name_exists">Device with this name already exists</string>
     <string name="add_device_error_wrong_id">Wrong device ID</string>
+    <string name="add_device_error_below_zero">Device ID must be >= 0</string>
     <string name="add_device_error_wrong_name">Wrong device name</string>
+    <string name="add_device_error_name_too_long">Device name can be 20 characters long</string>
+    <string name="add_label">Add</string>
     <string name="add_new_device_label">Add new device</string>
     <string name="app_name">Esp monitoring</string>
     <string name="cancel_label">Cancel</string>
+    <string name="edit_device_label">Edit device</string>
+    <string name="edit_label">Edit</string>
     <string name="device_id_label">ID</string>
     <string name="device_id_label_with_format">ID: %d</string>
     <string name="device_name_label">Name</string>
@@ -24,7 +29,9 @@
     <string name="saved_tab_label">Saved</string>
     <string name="settings_tab_label">Settings</string>
     <string name="unknown_error_message">Unknown error</string>
+    <string name="update_label">Update</string>
     <string name="work_in_progress">\uD83D\uDD25 Work in progress \uD83D\uDD25</string>
     <string name="you_are_offline">You are offline</string>
-    <string name="edit">Edit</string>
+    <string name="cant_add_device">Error - can\'t add device.</string>
+    <string name="cant_update_device">Error - can\'t update device.</string>
 </resources>
