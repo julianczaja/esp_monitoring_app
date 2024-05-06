@@ -49,11 +49,11 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.julianczaja.esp_monitoring_app.R
+import com.julianczaja.esp_monitoring_app.components.AppBackground
 import com.julianczaja.esp_monitoring_app.components.PhotoCoilImage
 import com.julianczaja.esp_monitoring_app.components.header
 import com.julianczaja.esp_monitoring_app.data.utils.toPrettyString
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
-import com.julianczaja.esp_monitoring_app.components.AppBackground
 import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DevicePhotosScreenViewModel.Event
 import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DevicePhotosScreenViewModel.UiState
 import com.julianczaja.esp_monitoring_app.presentation.theme.AppTheme
@@ -108,16 +108,14 @@ private fun DevicePhotosScreenContent(
 ) {
     val pullRefreshState = rememberPullToRefreshState(enabled = { uiState.isOnline })
 
-    LaunchedEffect(uiState.isRefreshing) {
-        if (uiState.isRefreshing) {
-            pullRefreshState.startRefresh()
-        } else {
-            pullRefreshState.endRefresh()
-        }
-    }
     if (pullRefreshState.isRefreshing) {
         LaunchedEffect(true) {
             updatePhotos()
+        }
+    }
+    if (!uiState.isRefreshing) {
+        LaunchedEffect(true) {
+            pullRefreshState.endRefresh()
         }
     }
 
