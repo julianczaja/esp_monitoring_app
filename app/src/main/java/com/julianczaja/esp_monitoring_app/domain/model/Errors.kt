@@ -19,12 +19,14 @@ import java.time.format.DateTimeParseException
 
 
 class NoInternetConnectionException : Exception()
+class NotFoundException : Exception()
 class GenericInternetException : Exception()
 class GenericServerException : Exception()
 class InternalAppException : Exception()
 
 fun Throwable.getErrorMessageId(): Int = when (this) {
     is NoInternetConnectionException -> R.string.no_internet_connection_error_message
+    is NotFoundException -> R.string.not_found_error_message
     is GenericServerException -> R.string.generic_server_error_message
     is GenericInternetException -> R.string.generic_internet_error_message
     is InternalAppException -> R.string.internal_app_error_message
@@ -69,6 +71,7 @@ class ResultCall<R>(private val delegate: Call<R>) : Call<Result<R>> {
             private fun Response<R>.toResult(): Result<R> {
                 if (!isSuccessful) {
                     return when (this.code()) {
+                        404 -> Result.failure(NotFoundException())
                         500 -> Result.failure(GenericServerException())
                         else -> Result.failure(GenericInternetException())
                     }
