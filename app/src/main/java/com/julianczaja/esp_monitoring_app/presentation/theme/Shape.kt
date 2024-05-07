@@ -11,6 +11,7 @@ import androidx.compose.ui.unit.dp
 @Immutable
 data class Shape(
     val dialogCorners: Dp = 28.dp,
+    val photoCorners: Dp = 8.dp,
 )
 
 internal val LocalShape = staticCompositionLocalOf { Shape() }

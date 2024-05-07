@@ -3,10 +3,11 @@ package com.julianczaja.esp_monitoring_app.presentation.devicephotos
 import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
-import com.julianczaja.esp_monitoring_app.navigation.DeviceIdArgs
 import com.julianczaja.esp_monitoring_app.data.NetworkManager
 import com.julianczaja.esp_monitoring_app.data.repository.FakePhotoRepositoryImpl
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
+import com.julianczaja.esp_monitoring_app.domain.model.SelectablePhoto
+import com.julianczaja.esp_monitoring_app.navigation.DeviceIdArgs
 import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DevicePhotosScreenViewModel.UiState
 import com.julianczaja.esp_monitoring_app.presentation.devices.MainDispatcherRule
 import io.mockk.coVerify
@@ -78,7 +79,7 @@ class DevicePhotosScreenViewModelTest {
     }
 
     @Test
-    fun `local photos should be mapped to dateGroupedPhotos`() = runTest {
+    fun `local photos should be mapped to dateGroupedSelectablePhotos`() = runTest {
         val photo = Photo(
             deviceId = deviceId,
             dateTime = LocalDateTime.of(2022, 1, 1, 1, 1, 1),
@@ -87,15 +88,16 @@ class DevicePhotosScreenViewModelTest {
             size = "100x500"
         )
         val localPhotos = listOf(photo)
-        val dateGroupedPhotos = mapOf(photo.dateTime.toLocalDate() to listOf(photo))
+        val dateGroupedSelectablePhotos = mapOf(
+            photo.dateTime.toLocalDate() to listOf(SelectablePhoto(photo, false))
+        )
 
         viewModel.devicePhotosUiState.test {
             var uiState: UiState = awaitItem()
-            assertThat(uiState.dateGroupedPhotos).isEqualTo(emptyMap<LocalDate, List<Photo>>())
-
+            assertThat(uiState.dateGroupedSelectablePhotos).isEqualTo(emptyMap<LocalDate, List<SelectablePhoto>>())
             photoRepository.emitAllPhotosLocalData(localPhotos)
             uiState = awaitItem()
-            assertThat(uiState.dateGroupedPhotos).isEqualTo(dateGroupedPhotos)
+            assertThat(uiState.dateGroupedSelectablePhotos).isEqualTo(dateGroupedSelectablePhotos)
         }
         verify(exactly = 1) { photoRepository.getAllPhotosLocal(deviceId) }
     }
