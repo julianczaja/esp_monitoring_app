@@ -5,9 +5,10 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.julianczaja.esp_monitoring_app.navigation.DeviceIdArgs
+import androidx.navigation.toRoute
 import com.julianczaja.esp_monitoring_app.di.IoDispatcher
 import com.julianczaja.esp_monitoring_app.domain.model.DeviceSettings
+import com.julianczaja.esp_monitoring_app.navigation.DeviceScreen
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
@@ -25,7 +26,7 @@ class DeviceSettingsScreenViewModel @Inject constructor(
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
 
-    private val deviceIdArgs: DeviceIdArgs = DeviceIdArgs(savedStateHandle)
+     private val deviceId = savedStateHandle.toRoute<DeviceScreen>().deviceId
 
     private val apiError = MutableStateFlow<Int?>(null)
 
@@ -49,7 +50,7 @@ class DeviceSettingsScreenViewModel @Inject constructor(
 
     fun updateDeviceSettings() {}
 
-    private fun deviceSettingsStream() = flowOf(DeviceSettings(deviceIdArgs.deviceId)) // it will be changed in future
+    private fun deviceSettingsStream() = flowOf(DeviceSettings(deviceId)) // it will be changed in future
 
     @Immutable
     sealed interface UiState {

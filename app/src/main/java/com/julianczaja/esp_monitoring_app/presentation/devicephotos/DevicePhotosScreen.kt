@@ -141,7 +141,7 @@ private fun DevicePhotosScreenContent(
             updatePhotos()
         }
     }
-    if (!uiState.isRefreshing) {
+    if (!uiState.isLoading) {
         LaunchedEffect(true) {
             pullRefreshState.endRefresh()
         }
@@ -448,7 +448,7 @@ private fun DevicePhotosStateItemsPreview() {
         DevicePhotosScreenContent(
             uiState = UiState(
                 dateGroupedSelectablePhotos = dateGroupedSelectablePhotos,
-                isRefreshing = false,
+                isLoading = false,
                 isOnline = false,
                 isSelectionMode = false,
             ),
@@ -465,7 +465,7 @@ private fun DevicePhotosStateSuccessNoItemsPreview() {
         DevicePhotosScreenContent(
             UiState(
                 dateGroupedSelectablePhotos = emptyMap(),
-                isRefreshing = false,
+                isLoading = false,
                 isOnline = true,
                 isSelectionMode = false,
             ),

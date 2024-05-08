@@ -12,7 +12,7 @@ abstract class PhotoDao : EntityDao<PhotoEntity>() {
     abstract fun getAll(deviceId: Long): Flow<List<PhotoEntity>>
 
     @Query("SELECT * FROM photo where fileName = :fileName")
-    abstract fun getByFileName(fileName: String): PhotoEntity?
+    abstract fun getByFileName(fileName: String): Flow<PhotoEntity?>
 
     @Query("DELETE FROM photo where deviceId = :deviceId")
     abstract fun deleteAll(deviceId: Long)

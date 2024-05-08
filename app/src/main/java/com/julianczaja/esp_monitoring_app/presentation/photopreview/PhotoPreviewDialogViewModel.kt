@@ -5,31 +5,35 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.julianczaja.esp_monitoring_app.navigation.DeviceIdArgs
-import com.julianczaja.esp_monitoring_app.navigation.PhotoFileNameArgs
-import com.julianczaja.esp_monitoring_app.domain.model.Device
+import androidx.navigation.toRoute
+import com.julianczaja.esp_monitoring_app.di.IoDispatcher
 import com.julianczaja.esp_monitoring_app.domain.model.InternalAppException
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.domain.model.getErrorMessageId
-import com.julianczaja.esp_monitoring_app.domain.repository.DeviceRepository
 import com.julianczaja.esp_monitoring_app.domain.repository.PhotoRepository
+import com.julianczaja.esp_monitoring_app.navigation.DeviceIdArgs
+import com.julianczaja.esp_monitoring_app.navigation.PhotoPreviewDialog
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
 @HiltViewModel
 class PhotoPreviewDialogViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    private val deviceRepository: DeviceRepository,
     private val photoRepository: PhotoRepository,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
 
-    private val deviceIdArgs: DeviceIdArgs = DeviceIdArgs(savedStateHandle)
-    private val photoFileNameArgs: PhotoFileNameArgs = PhotoFileNameArgs(savedStateHandle)
+    private val deviceId = savedStateHandle.toRoute<PhotoPreviewDialog>().deviceId
+    private val photoFileName = savedStateHandle.toRoute<PhotoPreviewDialog>().photoFileName
 
     val uiState: StateFlow<UiState> = photoPreviewUiState()
         .catch { UiState.Error(it.getErrorMessageId()) }
@@ -39,26 +43,29 @@ class PhotoPreviewDialogViewModel @Inject constructor(
             initialValue = UiState.Loading
         )
 
-    private fun photoPreviewUiState() = combine(deviceStream(), photosStream()) { device, photos ->
-        if (device != null && photos.isNotEmpty()) {
-            UiState.Success(
-                device = device,
-                photos = photos,
-                initialPhotoIndex = photos.indexOfFirst { it.fileName == photoFileNameArgs.fileName }
-            )
-        } else {
-            UiState.Error(InternalAppException().getErrorMessageId())
+    private fun photoPreviewUiState() = photosStream()
+        .map { photos ->
+            if (photos.isNotEmpty()) {
+               UiState.Success(
+                    photos = photos,
+                    initialPhotoIndex = photos.indexOfFirst { it.fileName == photoFileName }
+                )
+            } else {
+                UiState.Error(InternalAppException().getErrorMessageId())
+            }
         }
+        .flowOn(ioDispatcher)
+
+    private fun photosStream(): Flow<List<Photo>> = if (deviceId != DeviceIdArgs.NO_VALUE) {
+        photoRepository.getAllPhotosLocal(deviceId)
+    } else {
+        photoRepository.getPhotoByFileNameLocal(photoFileName)
+            .mapNotNull { photo -> photo?.let { listOf(it) } } // FIXME
     }
-
-    private fun deviceStream() = deviceRepository.getDeviceById(deviceIdArgs.deviceId)
-
-    private fun photosStream() = photoRepository.getAllPhotosLocal(deviceIdArgs.deviceId)
 
     @Immutable
     sealed interface UiState {
         data class Success(
-            val device: Device,
             val photos: List<Photo>,
             val initialPhotoIndex: Int,
         ) : UiState

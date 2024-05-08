@@ -4,10 +4,12 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.di.IoDispatcher
 import com.julianczaja.esp_monitoring_app.domain.model.Device
 import com.julianczaja.esp_monitoring_app.domain.repository.DeviceRepository
+import com.julianczaja.esp_monitoring_app.navigation.AddEditDeviceScreen
 import com.julianczaja.esp_monitoring_app.navigation.DeviceIdArgs
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
@@ -29,8 +31,7 @@ class AddEditDeviceScreenViewModel @Inject constructor(
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
 
-    private val _deviceId = savedStateHandle.get<Long>(DeviceIdArgs.KEY) ?: DeviceIdArgs.NO_VALUE
-    // private val _deviceId = savedStateHandle.toRoute<AddEditDeviceScreen>().deviceId // correct, but bugged in tests
+     private val _deviceId = savedStateHandle.toRoute<AddEditDeviceScreen>().deviceId
 
     private var localDevice: Device? = null
 

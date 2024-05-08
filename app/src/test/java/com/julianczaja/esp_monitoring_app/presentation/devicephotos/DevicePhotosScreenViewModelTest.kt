@@ -56,7 +56,7 @@ class DevicePhotosScreenViewModelTest {
     fun `isRefreshing should be false on start`() = runTest {
         viewModel.devicePhotosUiState.test {
             val uiState = awaitItem()
-            assertThat(uiState.isRefreshing).isEqualTo(false)
+            assertThat(uiState.isLoading).isEqualTo(false)
         }
         coVerify(exactly = 0) { photoRepository.updateAllPhotosRemote(deviceId) }
     }
@@ -68,12 +68,12 @@ class DevicePhotosScreenViewModelTest {
 
         viewModel.devicePhotosUiState.test {
             var uiState = awaitItem()
-            assertThat(uiState.isRefreshing).isEqualTo(false)
+            assertThat(uiState.isLoading).isEqualTo(false)
             viewModel.updatePhotos()
             uiState = awaitItem()
-            assertThat(uiState.isRefreshing).isEqualTo(true)
+            assertThat(uiState.isLoading).isEqualTo(true)
             uiState = awaitItem()
-            assertThat(uiState.isRefreshing).isEqualTo(false)
+            assertThat(uiState.isLoading).isEqualTo(false)
         }
         coVerify(exactly = 1) { photoRepository.updateAllPhotosRemote(deviceId) }
     }

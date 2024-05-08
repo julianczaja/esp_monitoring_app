@@ -18,7 +18,8 @@ class PhotoRepositoryImpl @Inject constructor(
     override fun getAllPhotosLocal(deviceId: Long): Flow<List<Photo>> =
         photoDao.getAll(deviceId).map { photos -> photos.map { it.toPhoto() } }
 
-    override fun getPhotoByFileNameLocal(fileName: String): Photo? = photoDao.getByFileName(fileName)?.toPhoto()
+    override fun getPhotoByFileNameLocal(fileName: String): Flow<Photo?> =
+        photoDao.getByFileName(fileName).map { photo -> photo?.toPhoto() }
 
     override suspend fun removePhotoByFileNameLocal(fileName: String): Result<Unit> = try {
         photoDao.deleteByFileName(fileName)

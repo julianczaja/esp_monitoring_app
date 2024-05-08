@@ -4,13 +4,14 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
 import com.julianczaja.esp_monitoring_app.data.NetworkManager
 import com.julianczaja.esp_monitoring_app.di.IoDispatcher
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.domain.model.SelectablePhoto
 import com.julianczaja.esp_monitoring_app.domain.model.getErrorMessageId
 import com.julianczaja.esp_monitoring_app.domain.repository.PhotoRepository
-import com.julianczaja.esp_monitoring_app.navigation.DeviceIdArgs
+import com.julianczaja.esp_monitoring_app.navigation.DeviceScreen
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
@@ -35,11 +36,13 @@ class DevicePhotosScreenViewModel @Inject constructor(
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
 
-    private val deviceIdArgs: DeviceIdArgs = DeviceIdArgs(savedStateHandle)
+    private val deviceId = savedStateHandle.toRoute<DeviceScreen>().deviceId
 
     private val _selectedPhotos = MutableStateFlow<List<Photo>>(emptyList())
 
     private var _isSelectionMode = false
+
+    private val _isSaving = MutableStateFlow(false)
 
     private val _isRefreshing = MutableStateFlow(false)
 
@@ -53,7 +56,7 @@ class DevicePhotosScreenViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = UiState(
                 dateGroupedSelectablePhotos = emptyMap(),
-                isRefreshing = false,
+                isLoading = false,
                 isOnline = true,
                 isSelectionMode = false
             )
@@ -61,15 +64,16 @@ class DevicePhotosScreenViewModel @Inject constructor(
 
     private fun devicePhotosUiState(): Flow<UiState> =
         combine(
-            photoRepository.getAllPhotosLocal(deviceIdArgs.deviceId),
+            photoRepository.getAllPhotosLocal(deviceId),
             _isRefreshing,
+            _isSaving,
             _isOnline,
             _selectedPhotos
-        ) { photos, isRefreshing, isOnline, selectedPhotos ->
+        ) { photos, isRefreshing, isSaving, isOnline, selectedPhotos ->
             _isSelectionMode = selectedPhotos.isNotEmpty()
             UiState(
                 dateGroupedSelectablePhotos = groupPhotosByDayDesc(photos),
-                isRefreshing = isRefreshing,
+                isLoading = isRefreshing || isSaving,
                 isOnline = isOnline,
                 isSelectionMode = _isSelectionMode,
             )
@@ -81,7 +85,7 @@ class DevicePhotosScreenViewModel @Inject constructor(
         _isRefreshing.update { true }
 
         viewModelScope.launch(ioDispatcher) {
-            photoRepository.updateAllPhotosRemote(deviceIdArgs.deviceId)
+            photoRepository.updateAllPhotosRemote(deviceId)
                 .onFailure {
                     eventFlow.emit(Event.ShowError(it.getErrorMessageId()))
                     _isRefreshing.update { false }
@@ -133,7 +137,7 @@ class DevicePhotosScreenViewModel @Inject constructor(
     @Immutable
     data class UiState(
         val dateGroupedSelectablePhotos: Map<LocalDate, List<SelectablePhoto>>,
-        val isRefreshing: Boolean,
+        val isLoading: Boolean,
         val isOnline: Boolean,
         val isSelectionMode: Boolean
     )

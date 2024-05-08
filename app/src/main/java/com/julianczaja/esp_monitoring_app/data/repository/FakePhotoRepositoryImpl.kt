@@ -3,6 +3,7 @@ package com.julianczaja.esp_monitoring_app.data.repository
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.domain.repository.PhotoRepository
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 
 
@@ -17,7 +18,7 @@ class FakePhotoRepositoryImpl : PhotoRepository {
 
     override fun getAllPhotosLocal(deviceId: Long) = _allPhotosLocalFlow
 
-    override fun getPhotoByFileNameLocal(fileName: String): Photo? {
+    override fun getPhotoByFileNameLocal(fileName: String): Flow<Photo?> {
         TODO("Not yet implemented")
     }
 

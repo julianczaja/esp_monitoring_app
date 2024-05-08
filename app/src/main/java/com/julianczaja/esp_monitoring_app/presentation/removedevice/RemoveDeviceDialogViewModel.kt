@@ -8,12 +8,13 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.julianczaja.esp_monitoring_app.navigation.DeviceIdArgs
+import androidx.navigation.toRoute
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.di.IoDispatcher
 import com.julianczaja.esp_monitoring_app.domain.model.Device
 import com.julianczaja.esp_monitoring_app.domain.model.getErrorMessageId
 import com.julianczaja.esp_monitoring_app.domain.repository.DeviceRepository
+import com.julianczaja.esp_monitoring_app.navigation.RemoveDeviceDialog
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -31,7 +32,7 @@ class RemoveDeviceDialogViewModel @Inject constructor(
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
 
-    private val deviceIdArgs: DeviceIdArgs = DeviceIdArgs(savedStateHandle)
+     private val deviceId = savedStateHandle.toRoute<RemoveDeviceDialog>().deviceId
 
     val eventFlow = MutableSharedFlow<Event>()
 
@@ -40,7 +41,7 @@ class RemoveDeviceDialogViewModel @Inject constructor(
 
     init {
         viewModelScope.launch(ioDispatcher) {
-            val device = deviceRepository.getDeviceById(deviceIdArgs.deviceId).first()
+            val device = deviceRepository.getDeviceById(deviceId).first()
             if (device != null) {
                 _uiState.update { UiState.Success(device) }
             } else {

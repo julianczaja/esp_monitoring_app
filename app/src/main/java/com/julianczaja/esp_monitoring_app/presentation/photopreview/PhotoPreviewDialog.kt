@@ -1,7 +1,6 @@
 package com.julianczaja.esp_monitoring_app.presentation.photopreview
 
 import android.content.res.Configuration
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -102,7 +101,6 @@ fun PhotoPreviewDialogContent(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PhotoPreview(
     uiState: UiState.Success,

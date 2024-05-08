@@ -8,17 +8,19 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.julianczaja.esp_monitoring_app.navigation.PhotoFileNameArgs
+import androidx.navigation.toRoute
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.di.IoDispatcher
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.domain.model.getErrorMessageId
 import com.julianczaja.esp_monitoring_app.domain.repository.PhotoRepository
+import com.julianczaja.esp_monitoring_app.navigation.RemovePhotoDialog
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -30,7 +32,8 @@ class RemovePhotoDialogViewModel @Inject constructor(
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
 
-    private val photoFileNameArgs = PhotoFileNameArgs(savedStateHandle)
+    private val photoFileName = savedStateHandle.toRoute<RemovePhotoDialog>().photoFileName
+
 
     val eventFlow = MutableSharedFlow<Event>()
 
@@ -39,7 +42,7 @@ class RemovePhotoDialogViewModel @Inject constructor(
 
     init {
         viewModelScope.launch(ioDispatcher) {
-            val photo = photoRepository.getPhotoByFileNameLocal(photoFileNameArgs.fileName)
+            val photo = photoRepository.getPhotoByFileNameLocal(photoFileName).first()
             updateUiState(photo)
         }
     }
