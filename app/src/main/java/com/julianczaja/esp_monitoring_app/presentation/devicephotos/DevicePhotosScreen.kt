@@ -107,6 +107,12 @@ fun DevicePhotosScreen(
                     duration = SnackbarDuration.Short
                 )
 
+                is Event.ShowSavedInfo -> snackbarHostState.showSnackbar(
+                    message = context.getString(R.string.save_photo_result_message)
+                        .format(event.savedCount, event.totalCount),
+                    duration = SnackbarDuration.Short
+                )
+
                 is Event.NavigateToPhotoPreview -> navigateToPhotoPreview(event.photo.deviceId, event.photo.fileName)
             }
         }

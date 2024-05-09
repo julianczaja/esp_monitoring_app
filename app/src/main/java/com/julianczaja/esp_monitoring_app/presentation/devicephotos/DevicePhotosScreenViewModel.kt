@@ -121,17 +121,24 @@ class DevicePhotosScreenViewModel @Inject constructor(
     fun saveSelectedPhotos() {
         _isSaving.update { true }
 
+        val selectedPhotos = _selectedPhotos.value
+        val totalCount =  selectedPhotos.size
+        var savedCount = 0
+
+        resetSelectedPhotos()
+
         viewModelScope.launch(ioDispatcher) {
-            _selectedPhotos.value.forEach { photo ->
+            selectedPhotos.forEach { photo ->
                 photoRepository.downloadPhotoAndSaveToExternalStorage(photo)
                     .onSuccess {
                         Timber.i("Saved ${photo.fileName}")
+                        savedCount += 1
                     }
                     .onFailure {
                         Timber.i("Error while saving ${photo.fileName}: $it")
-                        _isSaving.update { false }
                     }
             }
+            eventFlow.emit(Event.ShowSavedInfo(totalCount, savedCount))
             _isSaving.update { false }
         }
     }
@@ -146,6 +153,7 @@ class DevicePhotosScreenViewModel @Inject constructor(
 
     sealed class Event {
         data class NavigateToPhotoPreview(val photo: Photo) : Event()
+        data class ShowSavedInfo(val totalCount: Int, val savedCount: Int) : Event()
         data class ShowError(val messageId: Int) : Event()
     }
 

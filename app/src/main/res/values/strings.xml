@@ -27,6 +27,7 @@
     <string name="remove_device_menu_item_remove">Remove</string>
     <string name="remove_device_title">Remove device?</string>
     <string name="remove_photo_title">Remove photo?</string>
+    <string name="save_photo_result_message">%d/%d photos saved</string>
     <string name="saved_tab_label">Saved</string>
     <string name="settings_tab_label">Settings</string>
     <string name="unknown_error_message">Unknown error</string>
