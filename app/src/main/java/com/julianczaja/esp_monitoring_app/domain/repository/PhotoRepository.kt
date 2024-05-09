@@ -1,5 +1,6 @@
 package com.julianczaja.esp_monitoring_app.domain.repository
 
+import android.net.Uri
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import kotlinx.coroutines.flow.Flow
 
@@ -15,4 +16,8 @@ interface PhotoRepository {
     suspend fun removePhotoByFileNameRemote(fileName: String): Result<Unit>
 
     suspend fun updateAllPhotosRemote(deviceId: Long, from: Long? = null, to: Long? = null): Result<Unit>
+
+    suspend fun downloadPhotoAndSaveToExternalStorage(photo: Photo): Result<Unit>
+
+    suspend fun readAllSavedPhotosFromExternalStorage(deviceId: Long): Result<List<Uri>>
 }

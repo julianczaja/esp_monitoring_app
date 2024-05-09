@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import java.time.LocalDate
 import javax.inject.Inject
 
@@ -118,7 +119,21 @@ class DevicePhotosScreenViewModel @Inject constructor(
     }
 
     fun saveSelectedPhotos() {
-        TODO("Not yet implemented")
+        _isSaving.update { true }
+
+        viewModelScope.launch(ioDispatcher) {
+            _selectedPhotos.value.forEach { photo ->
+                photoRepository.downloadPhotoAndSaveToExternalStorage(photo)
+                    .onSuccess {
+                        Timber.i("Saved ${photo.fileName}")
+                    }
+                    .onFailure {
+                        Timber.i("Error while saving ${photo.fileName}: $it")
+                        _isSaving.update { false }
+                    }
+            }
+            _isSaving.update { false }
+        }
     }
 
     fun removeSelectedPhotos() {

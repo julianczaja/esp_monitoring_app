@@ -339,7 +339,7 @@ private fun LazyGridItemScope.SelectableDevicePhoto(
     ) {
         PhotoCoilImage(
             modifier = Modifier.align(Alignment.Center),
-            url = selectablePhoto.photo.url,
+            data = selectablePhoto.photo.url,
             height = minSize,
         )
         if (isSelectionMode) {
