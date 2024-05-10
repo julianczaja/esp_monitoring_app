@@ -1,16 +1,12 @@
 package com.julianczaja.esp_monitoring_app.data.utils
 
-import android.Manifest
-import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
 import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Context
-import android.content.pm.PackageManager
 import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
-import androidx.core.content.ContextCompat
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -108,17 +104,5 @@ suspend fun scanPhotoUri(context: Context, uri: Uri, mimeType: String = PHOTO_MI
                 continuation.resume(scannedUri)
             }
         }
-    }
-}
-
-fun canReadInMediaStore(context: Context) = ContextCompat.checkSelfPermission(
-    context, Manifest.permission.READ_EXTERNAL_STORAGE
-) == PackageManager.PERMISSION_GRANTED
-
-fun canWriteInMediaStore(context: Context): Boolean {
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-        true
-    } else {
-        ContextCompat.checkSelfPermission(context, WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
     }
 }

@@ -1,7 +1,6 @@
 package com.julianczaja.esp_monitoring_app.presentation.devicesettings
 
 import androidx.annotation.StringRes
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -16,7 +15,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.pager.PagerScope
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -55,18 +53,16 @@ import com.julianczaja.esp_monitoring_app.presentation.devicesettings.DeviceSett
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 import timber.log.Timber
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun PagerScope.DeviceSettingsScreen(
+fun DeviceSettingsScreen(
     viewModel: DeviceSettingsScreenViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     DeviceSettingsScreenContent(uiState)
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun PagerScope.DeviceSettingsScreenContent(
+private fun DeviceSettingsScreenContent(
     uiState: UiState,
 ) {
     Box(

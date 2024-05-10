@@ -10,8 +10,6 @@ import com.julianczaja.esp_monitoring_app.data.local.database.dao.PhotoDao
 import com.julianczaja.esp_monitoring_app.data.local.database.entity.toPhoto
 import com.julianczaja.esp_monitoring_app.data.remote.RetrofitEspMonitoringApi
 import com.julianczaja.esp_monitoring_app.data.utils.PHOTOS_DIR_PATH_FORMAT
-import com.julianczaja.esp_monitoring_app.data.utils.canReadInMediaStore
-import com.julianczaja.esp_monitoring_app.data.utils.canWriteInMediaStore
 import com.julianczaja.esp_monitoring_app.data.utils.checkIfPhotoExists
 import com.julianczaja.esp_monitoring_app.data.utils.createPhotoUri
 import com.julianczaja.esp_monitoring_app.data.utils.scanPhotoUri
@@ -61,13 +59,6 @@ class PhotoRepositoryImpl @Inject constructor(
             return Result.failure(Exception("External storage not mounted"))
         }
 
-        val canWriteInMediaStore = canWriteInMediaStore(context)
-        val canReadInMediaStore = canReadInMediaStore(context)
-
-        if (!canReadInMediaStore || !canWriteInMediaStore) {
-            Timber.e("Permissions needed (canWriteInMediaStore=$canWriteInMediaStore, canReadInMediaStore=$canReadInMediaStore)")
-        }
-
         val contentResolver = context.contentResolver
 
         if (checkIfPhotoExists(context, photo)) {
@@ -96,11 +87,6 @@ class PhotoRepositoryImpl @Inject constructor(
     override suspend fun readAllSavedPhotosFromExternalStorage(deviceId: Long): Result<List<Uri>> {
         if (Environment.getExternalStorageState() != Environment.MEDIA_MOUNTED) {
             return Result.failure(Exception("External storage not mounted"))
-        }
-
-        val canReadInMediaStore = canReadInMediaStore(context)
-        if (!canReadInMediaStore) {
-            Timber.e("Permissions needed (canReadInMediaStore=false)")
         }
 
         val photos = mutableListOf<Uri>()

@@ -1,6 +1,41 @@
 package com.julianczaja.esp_monitoring_app.data.utils
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.provider.Settings
+import androidx.activity.ComponentActivity
+import androidx.core.app.ActivityCompat
+import com.julianczaja.esp_monitoring_app.domain.model.PermissionState
+import timber.log.Timber
+
 
 fun Boolean.toInt() = if (this) 1 else 0
 
 fun Int.toBoolean() = this > 0
+
+fun Context.getActivity(): ComponentActivity = when (this) {
+    is ComponentActivity -> this
+    is ContextWrapper -> baseContext.getActivity()
+    else -> throw IllegalStateException("Permissions should be called in the context of an Activity")
+}
+
+fun Activity.openAppSettings() {
+    Intent(
+        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+        Uri.fromParts("package", packageName, null)
+    ).also(::startActivity)
+}
+
+fun Activity.getPermissionState(permission: String): PermissionState =
+    when (checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED) {
+        true -> PermissionState.GRANTED
+        false -> if (ActivityCompat.shouldShowRequestPermissionRationale(this, permission)) {
+            PermissionState.RATIONALE_NEEDED
+        } else {
+            PermissionState.DENIED
+        }
+    }.also { Timber.e("getPermissionState($permission) returning $it") }

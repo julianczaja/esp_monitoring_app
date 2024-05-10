@@ -1,6 +1,8 @@
 package com.julianczaja.esp_monitoring_app.presentation.devicephotos
 
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -63,9 +65,16 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.components.AppBackground
 import com.julianczaja.esp_monitoring_app.components.CircularCheckbox
+import com.julianczaja.esp_monitoring_app.components.PermissionRationaleDialog
 import com.julianczaja.esp_monitoring_app.components.PhotoCoilImage
 import com.julianczaja.esp_monitoring_app.components.header
+import com.julianczaja.esp_monitoring_app.data.utils.checkPermissionAndDoAction
+import com.julianczaja.esp_monitoring_app.data.utils.getActivity
+import com.julianczaja.esp_monitoring_app.data.utils.getPermissionState
+import com.julianczaja.esp_monitoring_app.data.utils.getReadExternalStoragePermissionName
+import com.julianczaja.esp_monitoring_app.data.utils.openAppSettings
 import com.julianczaja.esp_monitoring_app.data.utils.toPrettyString
+import com.julianczaja.esp_monitoring_app.domain.model.PermissionState
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.domain.model.SelectablePhoto
 import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DevicePhotosScreenViewModel.Event
@@ -88,7 +97,21 @@ fun DevicePhotosScreen(
 ) {
     val uiState by viewModel.devicePhotosUiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val storagePermissionName = getReadExternalStoragePermissionName()
+    var storagePermissionState by rememberSaveable { mutableStateOf<PermissionState?>(null) }
     var updatePhotosCalled by rememberSaveable { mutableStateOf(false) }
+
+    val readExternalStoragePermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            when (isGranted) {
+                true -> viewModel.saveSelectedPhotos()
+                false -> {
+                    storagePermissionState = context.getActivity().getPermissionState(storagePermissionName)
+                }
+            }
+        }
+    )
 
     BackHandler(
         enabled = uiState.isSelectionMode,
@@ -118,11 +141,36 @@ fun DevicePhotosScreen(
         }
     }
 
+    storagePermissionState?.let { permissionState ->
+        PermissionRationaleDialog(
+            title = R.string.storage_permission_needed_title,
+            bodyRationale = R.string.storage_permission_rationale_body,
+            bodyDenied = R.string.storage_permission_denied_body,
+            permissionState = permissionState,
+            onRequestPermission = {
+                if (permissionState == PermissionState.RATIONALE_NEEDED) {
+                    readExternalStoragePermissionLauncher.launch(storagePermissionName)
+                } else {
+                    context.getActivity().openAppSettings()
+                }
+                storagePermissionState = null
+            },
+            onDismiss = { storagePermissionState = null }
+        )
+    }
+
     DevicePhotosScreenContent(
         uiState = uiState,
         updatePhotos = viewModel::updatePhotos,
         resetSelections = viewModel::resetSelectedPhotos,
-        saveSelectedPhotos = viewModel::saveSelectedPhotos,
+        saveSelectedPhotos = {
+            checkPermissionAndDoAction(
+                context = context,
+                permission = storagePermissionName,
+                onGranted = viewModel::saveSelectedPhotos,
+                onDenied = { readExternalStoragePermissionLauncher.launch(storagePermissionName) }
+            )
+        },
         removeSelectedPhotos = viewModel::removeSelectedPhotos,
         onPhotoClick = viewModel::onPhotoClick,
         onPhotoLongClick = viewModel::onPhotoLongClick

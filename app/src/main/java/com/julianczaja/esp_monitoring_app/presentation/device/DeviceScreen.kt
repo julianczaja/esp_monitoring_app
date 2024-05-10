@@ -1,6 +1,5 @@
 package com.julianczaja.esp_monitoring_app.presentation.device
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager
@@ -19,12 +18,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.zIndex
 import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DevicePhotosScreen
-import com.julianczaja.esp_monitoring_app.presentation.devicesavedphotos.DeviceSavedScreen
+import com.julianczaja.esp_monitoring_app.presentation.devicesavedphotos.DeviceSavedPhotosScreen
 import com.julianczaja.esp_monitoring_app.presentation.devicesettings.DeviceSettingsScreen
 import kotlinx.coroutines.launch
 
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun DeviceScreen(
     snackbarHostState: SnackbarHostState,
@@ -71,12 +69,16 @@ fun DeviceScreen(
         ) { page ->
             when (page) {
                 DevicePage.Photos.index -> DevicePhotosScreen(
-                    snackbarHostState,
-                    navigateToPhotoPreview,
-                    navigateToRemovePhotoDialog
+                    snackbarHostState = snackbarHostState,
+                    navigateToPhotoPreview = navigateToPhotoPreview,
+                    navigateToRemovePhotoDialog = navigateToRemovePhotoDialog
                 )
 
-                DevicePage.Saved.index -> DeviceSavedScreen()
+                DevicePage.Saved.index -> DeviceSavedPhotosScreen(
+                    snackbarHostState = snackbarHostState,
+                    navigateToPhotoPreview = navigateToPhotoPreview
+                )
+
                 DevicePage.Settings.index -> DeviceSettingsScreen()
             }
         }

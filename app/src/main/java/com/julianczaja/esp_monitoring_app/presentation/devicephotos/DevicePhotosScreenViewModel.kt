@@ -122,7 +122,7 @@ class DevicePhotosScreenViewModel @Inject constructor(
         _isSaving.update { true }
 
         val selectedPhotos = _selectedPhotos.value
-        val totalCount =  selectedPhotos.size
+        val totalCount = selectedPhotos.size
         var savedCount = 0
 
         resetSelectedPhotos()
