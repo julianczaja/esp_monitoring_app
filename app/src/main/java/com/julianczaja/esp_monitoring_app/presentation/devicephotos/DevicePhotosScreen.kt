@@ -101,7 +101,7 @@ fun DevicePhotosScreen(
                 )
 
                 is Event.ShowSavedInfo -> snackbarHostState.showSnackbar(
-                    message = context.getString(R.string.save_photo_result_message)
+                    message = context.getString(R.string.save_photo_to_external_storage_result_message)
                         .format(event.savedCount, event.totalCount),
                     duration = SnackbarDuration.Short
                 )

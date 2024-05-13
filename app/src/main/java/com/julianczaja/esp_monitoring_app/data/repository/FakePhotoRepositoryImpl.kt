@@ -1,6 +1,5 @@
 package com.julianczaja.esp_monitoring_app.data.repository
 
-import android.net.Uri
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.domain.repository.PhotoRepository
 import kotlinx.coroutines.delay
@@ -38,6 +37,10 @@ class FakePhotoRepositoryImpl : PhotoRepository {
     }
 
     override suspend fun readAllSavedPhotosFromExternalStorage(deviceId: Long): Result<List<Photo>> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun removeSavedPhotoFromExternalStorage(photo: Photo): Result<Unit> {
         TODO("Not yet implemented")
     }
 

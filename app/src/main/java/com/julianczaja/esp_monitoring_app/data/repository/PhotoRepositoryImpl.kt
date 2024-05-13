@@ -4,6 +4,7 @@ import android.content.ContentUris
 import android.content.Context
 import android.graphics.Bitmap
 import android.media.ExifInterface
+import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
 import com.julianczaja.esp_monitoring_app.data.local.database.dao.PhotoDao
@@ -156,6 +157,23 @@ class PhotoRepositoryImpl @Inject constructor(
             Result.success(photos)
         } catch (e: Exception) {
             Result.failure(e)
+        }
+    }
+
+    override suspend fun removeSavedPhotoFromExternalStorage(photo: Photo): Result<Unit> {
+        try {
+            val selection = "${MediaStore.Images.Media.DISPLAY_NAME} = ?"
+            val selectionArgs = arrayOf(photo.fileName)
+
+            context.contentResolver.delete(
+                Uri.parse(photo.url),
+                selection,
+                selectionArgs
+            )
+            return Result.success(Unit)
+        } catch (e: Exception) {
+            // TODO: Handle RecoverableSecurityException
+            return Result.failure(Exception("Can't remove ${photo.url}: $e"))
         }
     }
 

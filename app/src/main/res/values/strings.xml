@@ -26,10 +26,11 @@
     <string name="photos_tab_label">Photos</string>
     <string name="remove_device_explanation">This will remove device \"%1$s\" (id: %2$d) and all its photos from phone memory. Photos still will be stored on server.</string>
     <string name="remove_photo_explanation">This will remove photo \"%s\" also from server. This action is not recoverable.</string>
+    <string name="remove_photo_from_external_storage_result_message">%1$d/%2$d photos removed</string>
     <string name="remove_device_menu_item_remove">Remove</string>
     <string name="remove_device_title">Remove device?</string>
     <string name="remove_photo_title">Remove photo?</string>
-    <string name="save_photo_result_message">%1$d/%2$d photos saved</string>
+    <string name="save_photo_to_external_storage_result_message">%1$d/%2$d photos saved</string>
     <string name="saved_tab_label">Saved</string>
     <string name="settings_tab_label">Settings</string>
     <string name="grant_permission_button_label">Grant permission</string>

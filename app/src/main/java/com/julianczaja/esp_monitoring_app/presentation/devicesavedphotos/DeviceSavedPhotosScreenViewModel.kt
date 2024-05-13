@@ -100,21 +100,35 @@ class DeviceSavedPhotosScreenViewModel @Inject constructor(
         _selectedPhotos.update { emptyList() }
     }
 
-    fun removeSelectedPhotos() {
-        TODO("Not yet implemented")
+    fun removeSelectedPhotos() = viewModelScope.launch(ioDispatcher) {
+        _isLoading.emit(true)
+
+        val selectedPhotos = _selectedPhotos.value
+        val removedPhotos = mutableSetOf<Photo>()
+        val totalCount = selectedPhotos.size
+
+        selectedPhotos.forEach { photo ->
+            photoRepository.removeSavedPhotoFromExternalStorage(photo)
+                .onSuccess {
+                    Timber.i("Removed ${photo.fileName}")
+                    removedPhotos.add(photo)
+                }
+                .onFailure {
+                    Timber.e("Error while removing ${photo.fileName}: $it")
+                }
+        }
+        _selectedPhotos.update { it - removedPhotos }
+        updateSavedPhotos()
+        eventFlow.emit(Event.ShowRemovedInfo(totalCount, removedPhotos.size))
+
+        _isLoading.emit(false)
     }
 
     private fun readSavedPhotos() = viewModelScope.launch(ioDispatcher) {
         _isLoading.emit(true)
         photoRepository.readAllSavedPhotosFromExternalStorage(deviceId)
-            .onSuccess {
-                Timber.e("readAllSavedPhotosInInternalStorage success: $it")
-                _savedPhotos.emit(it)
-            }
-            .onFailure {
-                Timber.e("readAllSavedPhotosInInternalStorage failure: $it")
-                eventFlow.emit(Event.ShowError(R.string.internal_app_error_message))
-            }
+            .onSuccess { _savedPhotos.emit(it) }
+            .onFailure { eventFlow.emit(Event.ShowError(R.string.internal_app_error_message)) }
         _isLoading.emit(false)
     }
 
@@ -125,6 +139,7 @@ class DeviceSavedPhotosScreenViewModel @Inject constructor(
     sealed class Event {
         data class NavigateToPhotoPreview(val photo: Photo) : Event()
         data class ShowError(val messageId: Int) : Event()
+        data class ShowRemovedInfo(val totalCount: Int, val removedCount: Int) : Event()
     }
 
     @Immutable

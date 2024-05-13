@@ -125,7 +125,6 @@ class DevicePhotosScreenViewModel @Inject constructor(
         val totalCount = selectedPhotos.size
         var savedCount = 0
 
-        resetSelectedPhotos()
 
         viewModelScope.launch(ioDispatcher) {
             selectedPhotos.forEach { photo ->
@@ -135,9 +134,10 @@ class DevicePhotosScreenViewModel @Inject constructor(
                         savedCount += 1
                     }
                     .onFailure {
-                        Timber.i("Error while saving ${photo.fileName}: $it")
+                        Timber.e("Error while saving ${photo.fileName}: $it")
                     }
             }
+            resetSelectedPhotos()
             eventFlow.emit(Event.ShowSavedInfo(totalCount, savedCount))
             _isSaving.update { false }
         }

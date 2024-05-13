@@ -86,6 +86,11 @@ fun DeviceSavedPhotosScreen(
                 )
 
                 is Event.NavigateToPhotoPreview -> navigateToPhotoPreview(DeviceIdArgs.NO_VALUE, event.photo.fileName)
+                is Event.ShowRemovedInfo -> snackbarHostState.showSnackbar(
+                    message = context.getString(R.string.remove_photo_from_external_storage_result_message)
+                        .format(event.removedCount, event.totalCount),
+                    duration = SnackbarDuration.Short
+                )
             }
         }
     }
