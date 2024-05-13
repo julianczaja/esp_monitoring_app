@@ -55,8 +55,7 @@ fun DeviceSavedPhotosScreen(
     viewModel: DeviceSavedPhotosScreenViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
-    val savedPhotos by viewModel.savedPhotos.collectAsStateWithLifecycle()
-    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val storagePermissionName = getReadExternalStoragePermissionName()
     var storagePermissionState by rememberSaveable { mutableStateOf<PermissionState?>(null) }
 
@@ -110,8 +109,9 @@ fun DeviceSavedPhotosScreen(
     }
 
     DeviceSavedPhotosScreenContent(
-        savedPhotos = savedPhotos,
-        isLoading = isLoading,
+        savedPhotos = uiState.dateGroupedSelectablePhotos,
+        isLoading = uiState.isLoading,
+        isSelectionMode = uiState.isSelectionMode,
         onRefreshTriggered = {
             checkPermissionAndDoAction(
                 context = context,
@@ -119,7 +119,11 @@ fun DeviceSavedPhotosScreen(
                 onGranted = viewModel::updateSavedPhotos,
                 onDenied = { readExternalStoragePermissionLauncher.launch(storagePermissionName) }
             )
-        }
+        },
+        resetSelections = viewModel::resetSelectedPhotos,
+        removeSelectedPhotos = viewModel::removeSelectedPhotos,
+        onPhotoClick = viewModel::onPhotoClick,
+        onPhotoLongClick = viewModel::onPhotoLongClick
     )
 }
 
@@ -130,7 +134,12 @@ fun DeviceSavedPhotosScreenContent(
     modifier: Modifier = Modifier,
     savedPhotos: Map<LocalDate, List<SelectablePhoto>>,
     isLoading: Boolean,
+    isSelectionMode: Boolean,
     onRefreshTriggered: () -> Unit,
+    resetSelections: () -> Unit,
+    removeSelectedPhotos: () -> Unit,
+    onPhotoClick: (SelectablePhoto) -> Unit,
+    onPhotoLongClick: (SelectablePhoto) -> Unit,
 ) {
     val pullRefreshState = rememberPullToRefreshState()
     if (pullRefreshState.isRefreshing) {
@@ -150,18 +159,17 @@ fun DeviceSavedPhotosScreenContent(
     ) {
         Column {
             SelectedEditBar(
-                isSelectionMode = false, // fixme
-                removeSelectedPhotos = {},
-                saveSelectedPhotos = {},
-                resetSelections = {}
+                isSelectionMode = isSelectionMode,
+                removeSelectedPhotos = removeSelectedPhotos,
+                resetSelections = resetSelections
             )
             when (savedPhotos.isEmpty()) {
                 true -> EmptyScreen(modifier.fillMaxSize())
                 false -> SelectablePhotosLazyGrid(
                     dateGroupedSelectablePhotos = savedPhotos,
-                    isSelectionMode = false, // fixme
-                    onPhotoClick = {},
-                    onPhotoLongClick = {}
+                    isSelectionMode = isSelectionMode,
+                    onPhotoClick = onPhotoClick,
+                    onPhotoLongClick = onPhotoLongClick
                 )
             }
         }

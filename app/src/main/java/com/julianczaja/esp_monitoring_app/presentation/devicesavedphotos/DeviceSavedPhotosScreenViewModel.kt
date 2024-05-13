@@ -1,5 +1,6 @@
 package com.julianczaja.esp_monitoring_app.presentation.devicesavedphotos
 
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -8,13 +9,21 @@ import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.di.IoDispatcher
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.domain.model.SelectablePhoto
+import com.julianczaja.esp_monitoring_app.domain.model.getErrorMessageId
 import com.julianczaja.esp_monitoring_app.domain.repository.PhotoRepository
 import com.julianczaja.esp_monitoring_app.navigation.DeviceScreen
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.time.LocalDate
@@ -29,16 +38,70 @@ class DeviceSavedPhotosScreenViewModel @Inject constructor(
 
     private val deviceId = savedStateHandle.toRoute<DeviceScreen>().deviceId
 
-    private val _savedPhotos = MutableStateFlow<Map<LocalDate, List<SelectablePhoto>>>(emptyMap())
-    val savedPhotos = _savedPhotos.asStateFlow()
+    private var _isSelectionMode = false
+
+    private val _selectedPhotos = MutableStateFlow<List<Photo>>(emptyList())
+
+    private val _savedPhotos = MutableStateFlow<List<Photo>>(emptyList())
 
     private val _isLoading = MutableStateFlow(false)
-    val isLoading = _isLoading.asStateFlow()
 
     val eventFlow = MutableSharedFlow<Event>()
 
+    val uiState: StateFlow<UiState> = devicePhotosUiState()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = UiState(
+                dateGroupedSelectablePhotos = emptyMap(),
+                isLoading = false,
+                isSelectionMode = false
+            )
+        )
+
+    private fun devicePhotosUiState(): Flow<UiState> =
+        combine(
+            _savedPhotos,
+            _selectedPhotos,
+            _isLoading,
+        ) { savedPhotos, selectedPhotos, isLoading ->
+            _isSelectionMode = selectedPhotos.isNotEmpty()
+            UiState(
+                dateGroupedSelectablePhotos = groupPhotosByDayDesc(savedPhotos),
+                isLoading = isLoading,
+                isSelectionMode = _isSelectionMode,
+            )
+        }
+            .flowOn(ioDispatcher)
+            .catch { eventFlow.emit(Event.ShowError(it.getErrorMessageId())) }
+
     fun updateSavedPhotos() {
         readSavedPhotos()
+    }
+
+    fun onPhotoClick(selectablePhoto: SelectablePhoto) {
+        when (_isSelectionMode) {
+            true -> onPhotoLongClick(selectablePhoto)
+            false -> viewModelScope.launch { eventFlow.emit(Event.NavigateToPhotoPreview(selectablePhoto.photo)) }
+        }
+    }
+
+    fun onPhotoLongClick(selectablePhoto: SelectablePhoto) {
+        _selectedPhotos.update { photos ->
+            if (!photos.contains(selectablePhoto.photo)) {
+                photos + selectablePhoto.photo
+            } else {
+                photos - selectablePhoto.photo
+            }
+        }
+    }
+
+    fun resetSelectedPhotos() {
+        _selectedPhotos.update { emptyList() }
+    }
+
+    fun removeSelectedPhotos() {
+        TODO("Not yet implemented")
     }
 
     private fun readSavedPhotos() = viewModelScope.launch(ioDispatcher) {
@@ -46,7 +109,7 @@ class DeviceSavedPhotosScreenViewModel @Inject constructor(
         photoRepository.readAllSavedPhotosFromExternalStorage(deviceId)
             .onSuccess {
                 Timber.e("readAllSavedPhotosInInternalStorage success: $it")
-                _savedPhotos.emit(groupPhotosByDayDesc(it))
+                _savedPhotos.emit(it)
             }
             .onFailure {
                 Timber.e("readAllSavedPhotosInInternalStorage failure: $it")
@@ -56,11 +119,18 @@ class DeviceSavedPhotosScreenViewModel @Inject constructor(
     }
 
     private fun groupPhotosByDayDesc(photos: List<Photo>) = photos
-        .map { SelectablePhoto(photo = it, isSelected = false) } // TODO: Implement selection mode
+        .map { SelectablePhoto(photo = it, isSelected = _selectedPhotos.value.contains(it)) }
         .groupBy { it.photo.dateTime.toLocalDate() }
 
     sealed class Event {
         data class NavigateToPhotoPreview(val photo: Photo) : Event()
         data class ShowError(val messageId: Int) : Event()
     }
+
+    @Immutable
+    data class UiState(
+        val dateGroupedSelectablePhotos: Map<LocalDate, List<SelectablePhoto>>,
+        val isLoading: Boolean,
+        val isSelectionMode: Boolean
+    )
 }

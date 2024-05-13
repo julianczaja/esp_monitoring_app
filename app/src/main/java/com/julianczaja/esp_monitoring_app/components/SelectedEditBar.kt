@@ -28,7 +28,7 @@ import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 fun ColumnScope.SelectedEditBar(
     isSelectionMode: Boolean,
     removeSelectedPhotos: () -> Unit,
-    saveSelectedPhotos: () -> Unit,
+    saveSelectedPhotos: (() -> Unit)? = null,
     resetSelections: () -> Unit
 ) {
     AnimatedVisibility(visible = isSelectionMode) {
@@ -46,11 +46,13 @@ fun ColumnScope.SelectedEditBar(
                         contentDescription = null
                     )
                 }
-                IconButton(onClick = saveSelectedPhotos) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_baseline_save_24),
-                        contentDescription = null
-                    )
+                saveSelectedPhotos?.let { action ->
+                    IconButton(onClick = action) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_baseline_save_24),
+                            contentDescription = null
+                        )
+                    }
                 }
                 IconButton(onClick = resetSelections) {
                     Icon(
