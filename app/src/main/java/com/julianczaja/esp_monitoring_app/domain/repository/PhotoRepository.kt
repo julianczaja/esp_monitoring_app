@@ -19,5 +19,5 @@ interface PhotoRepository {
 
     suspend fun downloadPhotoAndSaveToExternalStorage(photo: Photo): Result<Unit>
 
-    suspend fun readAllSavedPhotosFromExternalStorage(deviceId: Long): Result<List<Uri>>
+    suspend fun readAllSavedPhotosFromExternalStorage(deviceId: Long): Result<List<Photo>>
 }

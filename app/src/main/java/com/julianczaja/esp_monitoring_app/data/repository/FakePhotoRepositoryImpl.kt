@@ -37,7 +37,7 @@ class FakePhotoRepositoryImpl : PhotoRepository {
         TODO("Not yet implemented")
     }
 
-    override suspend fun readAllSavedPhotosFromExternalStorage(deviceId: Long): Result<List<Uri>> {
+    override suspend fun readAllSavedPhotosFromExternalStorage(deviceId: Long): Result<List<Photo>> {
         TODO("Not yet implemented")
     }
 

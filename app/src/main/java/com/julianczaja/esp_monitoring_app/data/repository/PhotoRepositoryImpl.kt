@@ -3,16 +3,19 @@ package com.julianczaja.esp_monitoring_app.data.repository
 import android.content.ContentUris
 import android.content.Context
 import android.graphics.Bitmap
-import android.net.Uri
+import android.media.ExifInterface
 import android.os.Environment
 import android.provider.MediaStore
 import com.julianczaja.esp_monitoring_app.data.local.database.dao.PhotoDao
 import com.julianczaja.esp_monitoring_app.data.local.database.entity.toPhoto
 import com.julianczaja.esp_monitoring_app.data.remote.RetrofitEspMonitoringApi
+import com.julianczaja.esp_monitoring_app.data.utils.EXIF_UTC_OFFSET
 import com.julianczaja.esp_monitoring_app.data.utils.PHOTOS_DIR_PATH_FORMAT
 import com.julianczaja.esp_monitoring_app.data.utils.checkIfPhotoExists
 import com.julianczaja.esp_monitoring_app.data.utils.createPhotoUri
+import com.julianczaja.esp_monitoring_app.data.utils.millisToDefaultFormatLocalDateTime
 import com.julianczaja.esp_monitoring_app.data.utils.scanPhotoUri
+import com.julianczaja.esp_monitoring_app.data.utils.toExifString
 import com.julianczaja.esp_monitoring_app.domain.BitmapDownloader
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.domain.model.toPhotoEntity
@@ -75,6 +78,14 @@ class PhotoRepositoryImpl @Inject constructor(
             contentResolver.openOutputStream(photoUri)?.use {
                 bitmap.compress(Bitmap.CompressFormat.JPEG, 100, it)
             }
+            contentResolver.openFileDescriptor(photoUri, "rw")?.use {
+                ExifInterface(it.fileDescriptor)
+                    .apply {
+                        setAttribute(ExifInterface.TAG_DATETIME_ORIGINAL, photo.dateTime.toExifString())
+                        setAttribute(ExifInterface.TAG_OFFSET_TIME_ORIGINAL, EXIF_UTC_OFFSET)
+                        saveAttributes()
+                    }
+            }
             scanPhotoUri(context, photoUri)
         } catch (e: IOException) {
             e.printStackTrace()
@@ -84,17 +95,21 @@ class PhotoRepositoryImpl @Inject constructor(
         return Result.success(Unit)
     }
 
-    override suspend fun readAllSavedPhotosFromExternalStorage(deviceId: Long): Result<List<Uri>> {
+    override suspend fun readAllSavedPhotosFromExternalStorage(deviceId: Long): Result<List<Photo>> {
         if (Environment.getExternalStorageState() != Environment.MEDIA_MOUNTED) {
             return Result.failure(Exception("External storage not mounted"))
         }
 
-        val photos = mutableListOf<Uri>()
+        val photos = mutableListOf<Photo>()
         val contentResolver = context.contentResolver
 
         val directory = PHOTOS_DIR_PATH_FORMAT.format(deviceId)
         val projection = arrayOf(
             MediaStore.Images.Media.DATA,
+            MediaStore.Images.Media.DISPLAY_NAME,
+            MediaStore.Images.Media.WIDTH,
+            MediaStore.Images.Media.HEIGHT,
+            MediaStore.Images.Media.DATE_TAKEN,
             MediaStore.Images.Media._ID,
         )
         val selection = "${MediaStore.Images.Media.DATA} LIKE ?"
@@ -108,17 +123,34 @@ class PhotoRepositoryImpl @Inject constructor(
                 selectionArgs,
                 null
             )?.use { cursor ->
-                val dataColumnIndex = cursor.getColumnIndex(MediaStore.Images.Media.DATA)
-                // val nameColumnIndex = cursor.getColumnIndex(MediaStore.Images.Media.DISPLAY_NAME)
-                val idColumnIndex = cursor.getColumnIndex(MediaStore.Images.Media._ID)
+                val nameColumnIndex = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DISPLAY_NAME)
+                val widthColumnIndex = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.WIDTH)
+                val heightColumnIndex = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.HEIGHT)
+                val dateColumnIndex = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_TAKEN)
+                val idColumnIndex = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID)
+
                 while (cursor.moveToNext()) {
-                    val photoPath = cursor.getString(dataColumnIndex)
-                    // val fileName = cursor.getString(nameColumnIndex)
+                    val fileName = cursor.getString(nameColumnIndex)
+                    val width = cursor.getString(widthColumnIndex)
+                    val height = cursor.getString(heightColumnIndex)
+                    val date = cursor.getLong(dateColumnIndex)
                     val id = cursor.getLong(idColumnIndex)
                     val contentUri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id)
 
-                    Timber.e("Found id: $id, uri=$contentUri, photoPath: $photoPath")
-                    photos.add(contentUri)
+                    try {
+                        val photo = Photo(
+                            deviceId = deviceId,
+                            dateTime = date.millisToDefaultFormatLocalDateTime(),
+                            fileName = fileName,
+                            size = "${width}x${height}",
+                            url = contentUri.toString()
+                        )
+                        photos.add(photo)
+                    } catch (e: Exception) {
+                        Timber.e(
+                            "Can't parse photo from (fileName=$fileName, width=$width, height=$height, date=$date, id=$id)"
+                        )
+                    }
                 }
             }
             Result.success(photos)

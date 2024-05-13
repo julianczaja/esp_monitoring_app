@@ -12,7 +12,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import timber.log.Timber
-import java.time.ZoneOffset
 import kotlin.coroutines.resume
 
 // https://github.com/android/storage-samples/blob/main/ScopedStorage/app/src/main/java/com/samples/storage/scopedstorage/common/MediaStoreUtils.kt
@@ -65,9 +64,7 @@ suspend fun createPhotoUri(context: Context, photo: Photo): Uri? {
     return withContext(Dispatchers.IO) {
         val content = ContentValues().apply {
             put(MediaStore.Images.Media.DISPLAY_NAME, photo.fileName)
-            put(MediaStore.Images.Media.DATE_ADDED, photo.dateTime.toInstant(ZoneOffset.UTC).toEpochMilli())
-            put(MediaStore.Images.Media.DATE_TAKEN, photo.dateTime.toInstant(ZoneOffset.UTC).toEpochMilli())
-            put(MediaStore.Images.Media.DATE_MODIFIED, photo.dateTime.toInstant(ZoneOffset.UTC).toEpochMilli())
+            put(MediaStore.Images.Media.DATE_TAKEN, photo.dateTime.toEpochMillis())
             put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
             put(MediaStore.Images.Media.RELATIVE_PATH, PHOTOS_DIR_PATH_FORMAT.format(photo.deviceId))
         }

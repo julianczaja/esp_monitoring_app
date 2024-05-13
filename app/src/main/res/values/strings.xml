@@ -19,7 +19,8 @@
     <string name="internal_app_error_message">Something went wrong</string>
     <string name="not_found_error_message">Not found</string>
     <string name="no_internet_connection_error_message">No internet connection</string>
-    <string name="no_photos">There are no photos taken by this device :(</string>
+    <string name="no_photos_taken_by_this_device">This device hasn\'t taken any photos yet</string>
+    <string name="no_photos_saved_from_this_device">No photos from this device have been saved yet</string>
     <string name="ok_label">OK</string>
     <string name="open_settings_label">Open settings</string>
     <string name="photos_tab_label">Photos</string>

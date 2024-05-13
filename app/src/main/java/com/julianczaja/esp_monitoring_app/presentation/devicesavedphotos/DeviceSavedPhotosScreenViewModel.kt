@@ -1,6 +1,5 @@
 package com.julianczaja.esp_monitoring_app.presentation.devicesavedphotos
 
-import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -8,6 +7,7 @@ import androidx.navigation.toRoute
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.di.IoDispatcher
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
+import com.julianczaja.esp_monitoring_app.domain.model.SelectablePhoto
 import com.julianczaja.esp_monitoring_app.domain.repository.PhotoRepository
 import com.julianczaja.esp_monitoring_app.navigation.DeviceScreen
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.time.LocalDate
 import javax.inject.Inject
 
 @HiltViewModel
@@ -28,7 +29,7 @@ class DeviceSavedPhotosScreenViewModel @Inject constructor(
 
     private val deviceId = savedStateHandle.toRoute<DeviceScreen>().deviceId
 
-    private val _savedPhotos = MutableStateFlow<List<Uri>>(emptyList())
+    private val _savedPhotos = MutableStateFlow<Map<LocalDate, List<SelectablePhoto>>>(emptyMap())
     val savedPhotos = _savedPhotos.asStateFlow()
 
     private val _isLoading = MutableStateFlow(false)
@@ -45,7 +46,7 @@ class DeviceSavedPhotosScreenViewModel @Inject constructor(
         photoRepository.readAllSavedPhotosFromExternalStorage(deviceId)
             .onSuccess {
                 Timber.e("readAllSavedPhotosInInternalStorage success: $it")
-                _savedPhotos.emit(it)
+                _savedPhotos.emit(groupPhotosByDayDesc(it))
             }
             .onFailure {
                 Timber.e("readAllSavedPhotosInInternalStorage failure: $it")
@@ -53,6 +54,10 @@ class DeviceSavedPhotosScreenViewModel @Inject constructor(
             }
         _isLoading.emit(false)
     }
+
+    private fun groupPhotosByDayDesc(photos: List<Photo>) = photos
+        .map { SelectablePhoto(photo = it, isSelected = false) } // TODO: Implement selection mode
+        .groupBy { it.photo.dateTime.toLocalDate() }
 
     sealed class Event {
         data class NavigateToPhotoPreview(val photo: Photo) : Event()

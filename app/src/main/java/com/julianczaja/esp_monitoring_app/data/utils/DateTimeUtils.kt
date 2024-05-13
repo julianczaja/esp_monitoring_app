@@ -5,16 +5,19 @@ import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import java.time.Instant
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatterBuilder
 import java.time.temporal.ChronoField
 
-private val localDateTimePrettyFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm:ss")
-private val localTimePrettyFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
+const val EXIF_UTC_OFFSET = "+00:00"
 
-private val defaultFormatter: DateTimeFormatter = DateTimeFormatterBuilder()
+private val localDateTimeExifFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss")
+private val localDateTimePrettyFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm:ss")
+private val localDateTimeDefaultFormatter: DateTimeFormatter = DateTimeFormatterBuilder()
     .appendValue(ChronoField.YEAR_OF_ERA, 4)
     .appendValue(ChronoField.MONTH_OF_YEAR, 2)
     .appendValue(ChronoField.DAY_OF_MONTH, 2)
@@ -24,11 +27,20 @@ private val defaultFormatter: DateTimeFormatter = DateTimeFormatterBuilder()
     .appendValue(ChronoField.MILLI_OF_SECOND, 3)
     .toFormatter()
 
-fun String.toDefaultFormatLocalDateTime(): LocalDateTime = LocalDateTime.parse(this, defaultFormatter)
+private val localTimePrettyFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
 
-fun LocalDateTime.toDefaultFormatString(): String = defaultFormatter.format(this)
+fun LocalDateTime.toEpochMillis(): Long = toInstant(ZoneOffset.UTC).toEpochMilli()
+
+fun Long.millisToDefaultFormatLocalDateTime(): LocalDateTime =
+    LocalDateTime.ofInstant(Instant.ofEpochMilli(this), ZoneOffset.UTC)
+
+fun String.toDefaultFormatLocalDateTime(): LocalDateTime = LocalDateTime.parse(this, localDateTimeDefaultFormatter)
+
+fun LocalDateTime.toDefaultFormatString(): String = localDateTimeDefaultFormatter.format(this)
 
 fun LocalDateTime.toPrettyString(): String = this.format(localDateTimePrettyFormatter)
+
+fun LocalDateTime.toExifString(): String = this.format(localDateTimeExifFormatter)
 
 fun LocalTime.toPrettyString(): String = this.format(localTimePrettyFormatter)
 
