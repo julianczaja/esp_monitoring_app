@@ -1,4 +1,4 @@
-package com.julianczaja.esp_monitoring_app.presentation.removephoto
+package com.julianczaja.esp_monitoring_app.presentation.removephotos
 
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable
@@ -11,29 +11,26 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.di.IoDispatcher
-import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.domain.model.getErrorMessageId
 import com.julianczaja.esp_monitoring_app.domain.repository.PhotoRepository
-import com.julianczaja.esp_monitoring_app.navigation.RemovePhotoDialog
+import com.julianczaja.esp_monitoring_app.navigation.RemovePhotosDialog
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class RemovePhotoDialogViewModel @Inject constructor(
+class RemovePhotosDialogViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val photoRepository: PhotoRepository,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
 
-    private val photoFileName = savedStateHandle.toRoute<RemovePhotoDialog>().photoFileName
-
+    private val params = savedStateHandle.toRoute<RemovePhotosDialog>().params
 
     val eventFlow = MutableSharedFlow<Event>()
 
@@ -41,48 +38,53 @@ class RemovePhotoDialogViewModel @Inject constructor(
     val uiState = _uiState.asStateFlow()
 
     init {
-        viewModelScope.launch(ioDispatcher) {
-            val photo = photoRepository.getPhotoByFileNameLocal(photoFileName).first()
-            updateUiState(photo)
-        }
-    }
-
-    private fun updateUiState(photo: Photo?) {
-        if (photo != null) {
-            _uiState.update { UiState.Success(photo) }
+        if (params.photosFileNames.isNotEmpty()) {
+            _uiState.update { UiState.Success(params.photosFileNames) }
         } else {
             _uiState.update { UiState.Error(R.string.internal_app_error_message) }
         }
     }
 
-    fun removePhoto(photo: Photo) = viewModelScope.launch(ioDispatcher) {
+    fun removePhotos() = viewModelScope.launch(ioDispatcher) {
         _uiState.update { UiState.Loading }
 
-        photoRepository.removePhotoByFileNameRemote(photo.fileName)
-            .onFailure { e -> _uiState.update { UiState.Error(e.getErrorMessageId()) } }
-            .onSuccess {
-                photoRepository.removePhotoByFileNameLocal(photo.fileName)
-                    .onFailure { e -> _uiState.update { UiState.Error(e.getErrorMessageId()) } }
-                    .onSuccess { eventFlow.emit(Event.PHOTO_REMOVED) }
-            }
+        var isError = false
+
+        params.photosFileNames.forEach { photoFileName ->
+            photoRepository.removePhotoByFileNameRemote(photoFileName)
+                .onFailure { e ->
+                    _uiState.update { UiState.Error(e.getErrorMessageId()) }
+                    isError = true
+                    return@forEach
+                }
+                .onSuccess {
+                    photoRepository.removePhotoByFileNameLocal(photoFileName)
+                        .onFailure { e ->
+                            _uiState.update { UiState.Error(e.getErrorMessageId()) }
+                            isError = true
+                            return@forEach
+                        }
+                }
+        }
+        if (!isError) eventFlow.emit(Event.PHOTOS_REMOVED)
     }
 
     fun convertExplanationStringToStyledText(explanationText: String, spanStyle: SpanStyle): AnnotatedString {
         return buildAnnotatedString {
-            append(explanationText)
-            val from = explanationText.indexOf("\"", startIndex = 0) + 1
-            val to = explanationText.indexOf("\"", startIndex = from + 1)
+            val from = explanationText.indexOf("*")
+            val to = explanationText.indexOf("*", startIndex = from + 1)
+            append(explanationText.replace("*", ""))
             addStyle(spanStyle, start = from, end = to)
         }
     }
 
     enum class Event {
-        PHOTO_REMOVED,
+        PHOTOS_REMOVED,
     }
 
     @Immutable
     sealed interface UiState {
-        data class Success(val photo: Photo) : UiState
+        data class Success(val photosFileNames: List<String>) : UiState
         data object Loading : UiState
         data class Error(@StringRes val messageId: Int) : UiState
     }

@@ -144,7 +144,10 @@ class DevicePhotosScreenViewModel @Inject constructor(
     }
 
     fun removeSelectedPhotos() {
-        TODO("Not yet implemented")
+        viewModelScope.launch {
+            eventFlow.emit(Event.NavigateToRemovePhotosDialog(_selectedPhotos.value.map { it.fileName }))
+            resetSelectedPhotos()
+        }
     }
 
     private fun groupPhotosByDayDesc(photos: List<Photo>) = photos
@@ -153,6 +156,7 @@ class DevicePhotosScreenViewModel @Inject constructor(
 
     sealed class Event {
         data class NavigateToPhotoPreview(val photo: Photo) : Event()
+        data class NavigateToRemovePhotosDialog(val photos: List<String>) : Event()
         data class ShowSavedInfo(val totalCount: Int, val savedCount: Int) : Event()
         data class ShowError(val messageId: Int) : Event()
     }

@@ -27,7 +27,7 @@ import kotlinx.coroutines.launch
 fun DeviceScreen(
     snackbarHostState: SnackbarHostState,
     navigateToPhotoPreview: (Long, String) -> Unit,
-    navigateToRemovePhotoDialog: (String) -> Unit,
+    navigateToRemovePhotosDialog: (List<String>) -> Unit,
 ) {
     val coroutineScope = rememberCoroutineScope()
     val pages = listOf(DevicePage.Photos, DevicePage.Saved, DevicePage.Settings)
@@ -71,7 +71,7 @@ fun DeviceScreen(
                 DevicePage.Photos.index -> DevicePhotosScreen(
                     snackbarHostState = snackbarHostState,
                     navigateToPhotoPreview = navigateToPhotoPreview,
-                    navigateToRemovePhotoDialog = navigateToRemovePhotoDialog
+                    navigateToRemovePhotosDialog = navigateToRemovePhotosDialog
                 )
 
                 DevicePage.Saved.index -> DeviceSavedPhotosScreen(

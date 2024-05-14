@@ -1,4 +1,4 @@
-package com.julianczaja.esp_monitoring_app.presentation.removephoto
+package com.julianczaja.esp_monitoring_app.presentation.removephotos
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -29,43 +29,41 @@ import com.julianczaja.esp_monitoring_app.components.DefaultProgressIndicator
 import com.julianczaja.esp_monitoring_app.components.DialogOneButton
 import com.julianczaja.esp_monitoring_app.components.DialogTwoButtons
 import com.julianczaja.esp_monitoring_app.components.ErrorText
-import com.julianczaja.esp_monitoring_app.domain.model.Photo
-import com.julianczaja.esp_monitoring_app.presentation.removephoto.RemovePhotoDialogViewModel.Event
-import com.julianczaja.esp_monitoring_app.presentation.removephoto.RemovePhotoDialogViewModel.UiState
+import com.julianczaja.esp_monitoring_app.presentation.removephotos.RemovePhotosDialogViewModel.Event
+import com.julianczaja.esp_monitoring_app.presentation.removephotos.RemovePhotosDialogViewModel.UiState
 import com.julianczaja.esp_monitoring_app.presentation.theme.AppTheme
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
-import java.time.LocalDateTime
 
 
 @Composable
-fun RemovePhotoDialog(
+fun RemovePhotosDialog(
     onDismiss: () -> Unit,
-    viewModel: RemovePhotoDialogViewModel = hiltViewModel(),
+    viewModel: RemovePhotosDialogViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(true) {
         viewModel.eventFlow.collect { event ->
             when (event) {
-                Event.PHOTO_REMOVED -> onDismiss()
+                Event.PHOTOS_REMOVED -> onDismiss()
             }
         }
     }
 
-    RemoveNewPhotoDialogContent(
+    RemovePhotosDialogContent(
         uiState = uiState,
         onDismiss = onDismiss,
-        onRemoveClicked = viewModel::removePhoto,
+        onRemoveClicked = viewModel::removePhotos,
         convertExplanationStringToStyledText = viewModel::convertExplanationStringToStyledText
     )
 }
 
 
 @Composable
-private fun RemoveNewPhotoDialogContent(
+private fun RemovePhotosDialogContent(
     uiState: UiState,
     onDismiss: () -> Unit,
-    onRemoveClicked: (Photo) -> Unit,
+    onRemoveClicked: () -> Unit,
     convertExplanationStringToStyledText: (String, SpanStyle) -> AnnotatedString,
 ) {
     DefaultDialog(onDismiss) {
@@ -87,9 +85,17 @@ private fun RemoveNewPhotoDialogContent(
 private fun RemoveNewPhotoDialogContentSuccess(
     uiState: UiState.Success,
     onDismiss: () -> Unit,
-    onRemoveClick: (Photo) -> Unit,
+    onRemoveClick: () -> Unit,
     convertExplanationStringToStyledText: (String, SpanStyle) -> AnnotatedString,
 ) {
+    val titleText = when (uiState.photosFileNames.size) {
+        1 -> stringResource(R.string.remove_photo_title)
+        else -> stringResource(R.string.remove_photos_title)
+    }
+    val explanationText = when (uiState.photosFileNames.size) {
+        1 -> stringResource(R.string.remove_photo_explanation, uiState.photosFileNames.first())
+        else -> stringResource(R.string.remove_photos_explanation, uiState.photosFileNames.size)
+    }
     Column(
         verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -101,21 +107,20 @@ private fun RemoveNewPhotoDialogContentSuccess(
             contentDescription = null
         )
         Text(
-            text = stringResource(R.string.remove_photo_title),
+            text = titleText,
             style = MaterialTheme.typography.headlineSmall,
             modifier = Modifier.padding(top = MaterialTheme.spacing.large)
         )
         Text(
             text = convertExplanationStringToStyledText(
-                stringResource(id = R.string.remove_photo_explanation, uiState.photo.fileName),
-                SpanStyle(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.secondary)
+                explanationText, SpanStyle(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.secondary)
             ),
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.padding(top = MaterialTheme.spacing.large)
         )
         DialogTwoButtons(
             onFirstButtonClicked = onDismiss,
-            onSecondButtonClicked = { onRemoveClick(uiState.photo) },
+            onSecondButtonClicked = onRemoveClick,
             modifier = Modifier.padding(top = MaterialTheme.spacing.veryLarge)
         )
     }
@@ -144,26 +149,46 @@ private fun RemoveNewPhotoDialogContentError(
     }
 }
 
+//region Preview
 @Preview
 @Composable
-fun RemoveNewPhotoDialogContentSuccessPreview() {
+fun RemovePhotosDialogContentSuccessPreviewMultiplePhotos() {
     AppTheme {
         val secondaryColor = MaterialTheme.colorScheme.secondary
-        RemoveNewPhotoDialogContent(
+        RemovePhotosDialogContent(
             onDismiss = {},
             uiState = UiState.Success(
-                Photo(
-                    12L,
-                    LocalDateTime.now(),
-                    "fileName.jpg",
-                    "1600x1200",
-                    "www.a.com"
+                listOf(
+                    "fileName1.jpg", "fileName2.jpg", "fileName3.jpg"
                 )
             ),
             onRemoveClicked = {},
             convertExplanationStringToStyledText = { _, _ ->
                 buildAnnotatedString {
-                    append("This will remove photo \"PhotoFileName\" also from server. This action is not recoverable.")
+                    append("This will remove 3 photos also from server. This action is not recoverable.")
+                    addStyle(SpanStyle(fontWeight = FontWeight.Bold, color = secondaryColor), 17, 18)
+                }
+            }
+        )
+    }
+}
+
+@Preview
+@Composable
+fun RemovePhotosDialogContentSuccessPreviewSinglePhoto() {
+    AppTheme {
+        val secondaryColor = MaterialTheme.colorScheme.secondary
+        RemovePhotosDialogContent(
+            onDismiss = {},
+            uiState = UiState.Success(
+                listOf(
+                    "fileName.jpg"
+                )
+            ),
+            onRemoveClicked = {},
+            convertExplanationStringToStyledText = { _, _ ->
+                buildAnnotatedString {
+                    append("This will remove photo \"fileName.jpg\" also from server. This action is not recoverable.")
                     addStyle(SpanStyle(fontWeight = FontWeight.Bold, color = secondaryColor), 23, 38)
                 }
             }
@@ -175,7 +200,7 @@ fun RemoveNewPhotoDialogContentSuccessPreview() {
 @Composable
 fun RemoveNewPhotoDialogContentErrorPreview() {
     AppTheme {
-        RemoveNewPhotoDialogContent(
+        RemovePhotosDialogContent(
             onDismiss = {},
             uiState = UiState.Error(R.string.internal_app_error_message),
             onRemoveClicked = {},
@@ -188,7 +213,7 @@ fun RemoveNewPhotoDialogContentErrorPreview() {
 @Composable
 fun RemoveNewPhotoDialogContentLoadingPreview() {
     AppTheme {
-        RemoveNewPhotoDialogContent(
+        RemovePhotosDialogContent(
             onDismiss = {},
             uiState = UiState.Loading,
             onRemoveClicked = {},
@@ -196,3 +221,4 @@ fun RemoveNewPhotoDialogContentLoadingPreview() {
         )
     }
 }
+//endregion

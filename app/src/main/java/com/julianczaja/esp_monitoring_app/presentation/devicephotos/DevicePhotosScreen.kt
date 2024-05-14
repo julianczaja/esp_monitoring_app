@@ -62,7 +62,7 @@ const val DEFAULT_PHOTO_HEIGHT = 150
 fun DevicePhotosScreen(
     snackbarHostState: SnackbarHostState,
     navigateToPhotoPreview: (Long, String) -> Unit,
-    navigateToRemovePhotoDialog: (String) -> Unit, // TODO: how to delete multiple photos?
+    navigateToRemovePhotosDialog: (List<String>) -> Unit,
     viewModel: DevicePhotosScreenViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.devicePhotosUiState.collectAsStateWithLifecycle()
@@ -107,6 +107,7 @@ fun DevicePhotosScreen(
                 )
 
                 is Event.NavigateToPhotoPreview -> navigateToPhotoPreview(event.photo.deviceId, event.photo.fileName)
+                is Event.NavigateToRemovePhotosDialog -> navigateToRemovePhotosDialog(event.photos)
             }
         }
     }

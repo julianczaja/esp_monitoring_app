@@ -16,7 +16,8 @@ import com.julianczaja.esp_monitoring_app.presentation.device.DeviceScreen
 import com.julianczaja.esp_monitoring_app.presentation.devices.DevicesScreen
 import com.julianczaja.esp_monitoring_app.presentation.photopreview.PhotoPreviewDialog
 import com.julianczaja.esp_monitoring_app.presentation.removedevice.RemoveDeviceDialog
-import com.julianczaja.esp_monitoring_app.presentation.removephoto.RemovePhotoDialog
+import com.julianczaja.esp_monitoring_app.presentation.removephotos.RemovePhotosDialog
+import kotlin.reflect.typeOf
 
 @Composable
 fun EspMonitoringNavHost(
@@ -55,7 +56,7 @@ fun EspMonitoringNavHost(
             DeviceScreen(
                 snackbarHostState = snackbarHostState,
                 navigateToPhotoPreview = navController::navigateToPhotoPreview,
-                navigateToRemovePhotoDialog = navController::navigateToRemovePhotoDialog
+                navigateToRemovePhotosDialog = navController::navigateToRemovePhotosDialog
             )
         }
         composable<AddEditDeviceScreen> {
@@ -74,8 +75,10 @@ fun EspMonitoringNavHost(
                 onDismiss = onBackClick
             )
         }
-        dialog<RemovePhotoDialog> {
-            RemovePhotoDialog(
+        dialog<RemovePhotosDialog>(
+            typeMap = mapOf(typeOf<RemovePhotosDialogParameters>() to parcelableType<RemovePhotosDialogParameters>())
+        ) {
+            RemovePhotosDialog(
                 onDismiss = onBackClick
             )
         }
