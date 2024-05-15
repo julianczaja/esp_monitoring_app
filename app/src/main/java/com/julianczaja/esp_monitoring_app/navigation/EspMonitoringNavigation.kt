@@ -78,6 +78,16 @@ fun NavController.navigateToPhotoPreview(deviceId: Long?, photoFileName: String)
     }
 }
 
+// App settings
+@Serializable
+object AppSettingsScreen
+
+fun NavController.navigateToAppSettings() {
+    navigate(AppSettingsScreen) {
+        launchSingleTop = true
+    }
+}
+
 // Args
 object DeviceIdArgs {
     const val KEY = "deviceId"

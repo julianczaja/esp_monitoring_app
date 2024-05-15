@@ -12,6 +12,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.dialog
 import com.julianczaja.esp_monitoring_app.presentation.addeditdevice.AddEditDeviceScreen
+import com.julianczaja.esp_monitoring_app.presentation.appsettings.AppSettingsScreen
 import com.julianczaja.esp_monitoring_app.presentation.device.DeviceScreen
 import com.julianczaja.esp_monitoring_app.presentation.devices.DevicesScreen
 import com.julianczaja.esp_monitoring_app.presentation.photopreview.PhotoPreviewDialog
@@ -80,6 +81,11 @@ fun EspMonitoringNavHost(
         ) {
             RemovePhotosDialog(
                 onDismiss = onBackClick
+            )
+        }
+        composable<AppSettingsScreen> {
+            AppSettingsScreen(
+                snackbarHostState = snackbarHostState
             )
         }
     }

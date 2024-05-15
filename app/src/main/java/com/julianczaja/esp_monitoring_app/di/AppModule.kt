@@ -1,9 +1,15 @@
 package com.julianczaja.esp_monitoring_app.di
 
+import HostSelectionInterceptor
 import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.preferencesDataStoreFile
 import androidx.room.Room
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import com.julianczaja.esp_monitoring_app.BuildConfig
+import com.julianczaja.esp_monitoring_app.common.Constants
 import com.julianczaja.esp_monitoring_app.data.CoilBitmapDownloader
 import com.julianczaja.esp_monitoring_app.data.NetworkManager
 import com.julianczaja.esp_monitoring_app.data.local.database.EspMonitoringDatabase
@@ -14,6 +20,7 @@ import com.julianczaja.esp_monitoring_app.data.repository.DeviceRepositoryImpl
 import com.julianczaja.esp_monitoring_app.data.repository.PhotoRepositoryImpl
 import com.julianczaja.esp_monitoring_app.domain.BitmapDownloader
 import com.julianczaja.esp_monitoring_app.domain.model.ResultCallAdapterFactory
+import com.julianczaja.esp_monitoring_app.domain.repository.AppSettingsRepository
 import com.julianczaja.esp_monitoring_app.domain.repository.DeviceRepository
 import com.julianczaja.esp_monitoring_app.domain.repository.PhotoRepository
 import dagger.Module
@@ -40,23 +47,20 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideRetrofitEspMonitoringApi(networkJson: Json): RetrofitEspMonitoringApi = Retrofit.Builder()
-        .apply {
-            if (BuildConfig.DEBUG) {
-//                baseUrl("http://192.168.1.11:8123/")
-                baseUrl("http://192.168.1.57:8123/")
-//                baseUrl("http://10.0.2.2:8123/") // FIXME
-            } else {
-                baseUrl("http://maluch.mikr.us:30188/")
-            }
-        }
-        .client(OkHttpClient().newBuilder()
-            .apply {
-                if (BuildConfig.DEBUG) {
-                    addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
+    fun provideRetrofitEspMonitoringApi(
+        appSettingsRepository: AppSettingsRepository,
+        networkJson: Json
+    ): RetrofitEspMonitoringApi = Retrofit.Builder()
+        .baseUrl(Constants.defaultBaseUrl)
+        .client(
+            OkHttpClient().newBuilder()
+                .addInterceptor(HostSelectionInterceptor(appSettingsRepository))
+                .apply {
+                    if (BuildConfig.DEBUG)
+                        addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
                 }
-            }
-            .build())
+                .build()
+        )
         .addCallAdapterFactory(ResultCallAdapterFactory())
         .addConverterFactory(
             @OptIn(ExperimentalSerializationApi::class)
@@ -104,4 +108,13 @@ object AppModule {
         api: RetrofitEspMonitoringApi,
         bitmapDownloader: BitmapDownloader
     ): PhotoRepository = PhotoRepositoryImpl(context, photoDao, api, bitmapDownloader)
+
+    @Provides
+    @Singleton
+    fun provideSettingsDataStore(@ApplicationContext applicationContext: Context): DataStore<Preferences> =
+        PreferenceDataStoreFactory.create(
+            produceFile = {
+                applicationContext.preferencesDataStoreFile(Constants.SETTINGS_DATA_STORE_NAME)
+            }
+        )
 }
