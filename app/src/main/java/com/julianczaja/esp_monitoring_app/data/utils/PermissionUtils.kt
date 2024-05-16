@@ -10,12 +10,12 @@ fun checkPermissionAndDoAction(
     context: Context,
     permission: String,
     onGranted: () -> Unit,
-    onDenied: () -> Unit,
+    onDenied: (() -> Unit)? = null,
 ) {
     if (context.checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED) {
         onGranted()
     } else {
-        onDenied()
+        onDenied?.invoke()
     }
 }
 

@@ -33,10 +33,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.components.AppBackground
+import com.julianczaja.esp_monitoring_app.components.GrantPermissionButton
 import com.julianczaja.esp_monitoring_app.components.PermissionRationaleDialog
 import com.julianczaja.esp_monitoring_app.components.SelectablePhotosLazyGrid
 import com.julianczaja.esp_monitoring_app.components.SelectedEditBar
-import com.julianczaja.esp_monitoring_app.data.utils.checkPermissionAndDoAction
 import com.julianczaja.esp_monitoring_app.data.utils.getActivity
 import com.julianczaja.esp_monitoring_app.data.utils.getPermissionState
 import com.julianczaja.esp_monitoring_app.data.utils.getReadExternalStoragePermissionName
@@ -56,28 +56,15 @@ fun DeviceSavedPhotosScreen(
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val storagePermissionName = getReadExternalStoragePermissionName()
-    var storagePermissionState by rememberSaveable { mutableStateOf<PermissionState?>(null) }
 
-    val readExternalStoragePermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission(),
-        onResult = { isGranted ->
-            when (isGranted) {
-                true -> viewModel.updateSavedPhotos()
-                false -> {
-                    storagePermissionState = context.getActivity().getPermissionState(storagePermissionName)
-                }
-            }
-        }
-    )
+    val storagePermissionName = getReadExternalStoragePermissionName()
+    var storagePermissionState by rememberSaveable {
+        mutableStateOf(
+            context.getActivity().getPermissionState(storagePermissionName)
+        )
+    }
 
     LaunchedEffect(true) {
-        checkPermissionAndDoAction(
-            context = context,
-            permission = storagePermissionName,
-            onGranted = viewModel::updateSavedPhotos,
-            onDenied = { readExternalStoragePermissionLauncher.launch(storagePermissionName) }
-        )
         viewModel.eventFlow.collect { event ->
             when (event) {
                 is Event.ShowError -> snackbarHostState.showSnackbar(
@@ -95,47 +82,83 @@ fun DeviceSavedPhotosScreen(
         }
     }
 
-    storagePermissionState?.let { permissionState ->
+    if (storagePermissionState == PermissionState.GRANTED) {
+        DeviceSavedPhotosScreenContent(
+            savedPhotos = uiState.dateGroupedSelectablePhotos,
+            isLoading = uiState.isLoading,
+            isSelectionMode = uiState.isSelectionMode,
+            onRefreshTriggered = viewModel::updateSavedPhotos,
+            resetSelections = viewModel::resetSelectedPhotos,
+            removeSelectedPhotos = viewModel::removeSelectedPhotos,
+            onPhotoClick = viewModel::onPhotoClick,
+            onPhotoLongClick = viewModel::onPhotoLongClick
+        )
+    } else {
+        PermissionsRequiredScreen(
+            storagePermissionState = storagePermissionState,
+            storagePermissionName = storagePermissionName,
+            onStoragePermissionChanged = { storagePermissionState = it }
+        )
+    }
+}
+
+@Composable
+private fun PermissionsRequiredScreen(
+    modifier: Modifier = Modifier,
+    storagePermissionState: PermissionState,
+    storagePermissionName: String,
+    onStoragePermissionChanged: (PermissionState) -> Unit,
+) {
+    val context = LocalContext.current
+    var shouldShowPermissionRationaleDialog by rememberSaveable { mutableStateOf(false) }
+
+    val storagePermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            when (isGranted) {
+                true -> {
+                    onStoragePermissionChanged(PermissionState.GRANTED)
+                    shouldShowPermissionRationaleDialog = false
+                }
+
+                false -> {
+                    onStoragePermissionChanged(context.getActivity().getPermissionState(storagePermissionName))
+                    shouldShowPermissionRationaleDialog = true
+                }
+            }
+        }
+    )
+
+    Box(modifier.fillMaxSize()) {
+        GrantPermissionButton(
+            modifier = modifier.align(Alignment.Center),
+            titleId = R.string.storage_permission_needed_title,
+            onButtonClicked = { storagePermissionLauncher.launch(storagePermissionName) }
+        )
+    }
+
+    if (shouldShowPermissionRationaleDialog) {
         PermissionRationaleDialog(
             title = R.string.storage_permission_needed_title,
             bodyRationale = R.string.storage_permission_rationale_body,
             bodyDenied = R.string.storage_permission_denied_body,
-            permissionState = permissionState,
+            permissionState = storagePermissionState,
             onRequestPermission = {
-                if (permissionState == PermissionState.RATIONALE_NEEDED) {
-                    readExternalStoragePermissionLauncher.launch(storagePermissionName)
+                if (storagePermissionState == PermissionState.RATIONALE_NEEDED) {
+                    storagePermissionLauncher.launch(storagePermissionName)
                 } else {
                     context.getActivity().openAppSettings()
                 }
-                storagePermissionState = null
             },
-            onDismiss = { storagePermissionState = null }
+            onDismiss = { shouldShowPermissionRationaleDialog = false }
         )
     }
-
-    DeviceSavedPhotosScreenContent(
-        savedPhotos = uiState.dateGroupedSelectablePhotos,
-        isLoading = uiState.isLoading,
-        isSelectionMode = uiState.isSelectionMode,
-        onRefreshTriggered = {
-            checkPermissionAndDoAction(
-                context = context,
-                permission = storagePermissionName,
-                onGranted = viewModel::updateSavedPhotos,
-                onDenied = { readExternalStoragePermissionLauncher.launch(storagePermissionName) }
-            )
-        },
-        resetSelections = viewModel::resetSelectedPhotos,
-        removeSelectedPhotos = viewModel::removeSelectedPhotos,
-        onPhotoClick = viewModel::onPhotoClick,
-        onPhotoLongClick = viewModel::onPhotoLongClick
-    )
 }
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DeviceSavedPhotosScreenContent(
+private fun DeviceSavedPhotosScreenContent(
     modifier: Modifier = Modifier,
     savedPhotos: Map<LocalDate, List<SelectablePhoto>>,
     isLoading: Boolean,
@@ -146,6 +169,10 @@ fun DeviceSavedPhotosScreenContent(
     onPhotoClick: (SelectablePhoto) -> Unit,
     onPhotoLongClick: (SelectablePhoto) -> Unit,
 ) {
+    LaunchedEffect(true) {
+        onRefreshTriggered.invoke()
+    }
+
     val pullRefreshState = rememberPullToRefreshState()
     if (pullRefreshState.isRefreshing) {
         LaunchedEffect(true) {
@@ -208,6 +235,18 @@ private fun EmptyScreen(modifier: Modifier = Modifier) {
 private fun DevicePhotosStateSuccessNoItemsPreview() {
     AppBackground {
         EmptyScreen()
+    }
+}
+
+@Preview(showSystemUi = true)
+@Composable
+private fun DevicePhotosPermissionRequiredPreview() {
+    AppBackground {
+        PermissionsRequiredScreen(
+            storagePermissionState = PermissionState.DENIED,
+            storagePermissionName = "",
+            onStoragePermissionChanged = {}
+        )
     }
 }
 //endregion
