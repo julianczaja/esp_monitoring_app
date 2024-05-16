@@ -1,5 +1,7 @@
 package com.julianczaja.esp_monitoring_app.presentation.devicesettings
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -37,18 +39,31 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.julianczaja.esp_monitoring_app.R
+import com.julianczaja.esp_monitoring_app.components.AppBackground
+import com.julianczaja.esp_monitoring_app.components.GrantPermissionButton
+import com.julianczaja.esp_monitoring_app.components.PermissionRationaleDialog
+import com.julianczaja.esp_monitoring_app.data.utils.getActivity
+import com.julianczaja.esp_monitoring_app.data.utils.getBluetoothPermissionNameOrEmpty
+import com.julianczaja.esp_monitoring_app.data.utils.getLocationPermissionName
+import com.julianczaja.esp_monitoring_app.data.utils.getPermissionState
+import com.julianczaja.esp_monitoring_app.data.utils.openAppSettings
 import com.julianczaja.esp_monitoring_app.domain.model.EspCameraFrameSize
 import com.julianczaja.esp_monitoring_app.domain.model.EspCameraSpecialEffect
 import com.julianczaja.esp_monitoring_app.domain.model.EspCameraWhiteBalanceMode
+import com.julianczaja.esp_monitoring_app.domain.model.PermissionState
 import com.julianczaja.esp_monitoring_app.presentation.devicesettings.DeviceSettingsScreenViewModel.UiState
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 import timber.log.Timber
@@ -57,8 +72,172 @@ import timber.log.Timber
 fun DeviceSettingsScreen(
     viewModel: DeviceSettingsScreenViewModel = hiltViewModel(),
 ) {
+    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    DeviceSettingsScreenContent(uiState)
+
+    val locationPermissionName = getLocationPermissionName()
+    var locationPermissionState by rememberSaveable {
+        mutableStateOf(
+            context.getActivity().getPermissionState(locationPermissionName)
+        )
+    }
+
+    val bluetoothPermissionName = getBluetoothPermissionNameOrEmpty()
+    var bluetoothPermissionState by rememberSaveable {
+        mutableStateOf(
+            when (bluetoothPermissionName.isEmpty()) {
+                true -> PermissionState.GRANTED
+                false -> context.getActivity().getPermissionState(bluetoothPermissionName)
+            }
+        )
+    }
+
+    if (bluetoothPermissionState == PermissionState.GRANTED && locationPermissionState == PermissionState.GRANTED) {
+        DeviceSettingsScreenContent(
+            uiState = uiState
+        )
+    } else {
+        PermissionsRequiredScreen(
+            locationPermissionState = locationPermissionState,
+            locationPermissionName = locationPermissionName,
+            onLocationPermissionChanged = { locationPermissionState = it },
+            bluetoothPermissionState = bluetoothPermissionState,
+            bluetoothPermissionName = bluetoothPermissionName,
+            onBluetoothPermissionChanged = { bluetoothPermissionState = it }
+        )
+    }
+}
+
+@Composable
+private fun PermissionsRequiredScreen(
+    modifier: Modifier = Modifier,
+    locationPermissionState: PermissionState,
+    locationPermissionName: String,
+    onLocationPermissionChanged: (PermissionState) -> Unit,
+    bluetoothPermissionState: PermissionState,
+    bluetoothPermissionName: String,
+    onBluetoothPermissionChanged: (PermissionState) -> Unit,
+) {
+    val context = LocalContext.current
+    var shouldShowLocationPermissionRationaleDialog by rememberSaveable { mutableStateOf(false) }
+    var shouldShowBluetoothPermissionRationaleDialog by rememberSaveable { mutableStateOf(false) }
+
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            when (isGranted) {
+                true -> {
+                    onLocationPermissionChanged(PermissionState.GRANTED)
+                    shouldShowLocationPermissionRationaleDialog = false
+                }
+
+                false -> {
+                    onLocationPermissionChanged(context.getActivity().getPermissionState(locationPermissionName))
+                    shouldShowLocationPermissionRationaleDialog = true
+                }
+            }
+        }
+    )
+
+    val bluetoothPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            when (isGranted) {
+                true -> {
+                    onBluetoothPermissionChanged(PermissionState.GRANTED)
+                    shouldShowBluetoothPermissionRationaleDialog = false
+                }
+
+                false -> {
+                    onBluetoothPermissionChanged(context.getActivity().getPermissionState(bluetoothPermissionName))
+                    shouldShowBluetoothPermissionRationaleDialog = true
+                }
+            }
+        }
+    )
+
+    if (shouldShowLocationPermissionRationaleDialog) {
+        LocationPermissionRationaleDialog(
+            permissionState = locationPermissionState,
+            onRequestPermission = {
+                if (locationPermissionState == PermissionState.RATIONALE_NEEDED) {
+                    locationPermissionLauncher.launch(locationPermissionName)
+                } else {
+                    context.getActivity().openAppSettings()
+                }
+            },
+            onDismiss = { shouldShowLocationPermissionRationaleDialog = false }
+        )
+    }
+
+    if (shouldShowBluetoothPermissionRationaleDialog) {
+        BluetoothPermissionRationaleDialog(
+            permissionState = bluetoothPermissionState,
+            onRequestPermission = {
+                if (bluetoothPermissionState == PermissionState.RATIONALE_NEEDED) {
+                    bluetoothPermissionLauncher.launch(bluetoothPermissionName)
+                } else {
+                    context.getActivity().openAppSettings()
+                }
+            },
+            onDismiss = { shouldShowBluetoothPermissionRationaleDialog = false }
+        )
+    }
+    Column(
+        verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.extraLarge, Alignment.CenterVertically),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        if (locationPermissionState != PermissionState.GRANTED) {
+            GrantPermissionButton(
+                titleId = R.string.location_permission_needed_title,
+                onButtonClicked = { locationPermissionLauncher.launch(locationPermissionName) }
+            )
+        }
+        if (locationPermissionState != PermissionState.GRANTED && bluetoothPermissionState != PermissionState.GRANTED) {
+            HorizontalDivider()
+        }
+        if (bluetoothPermissionState != PermissionState.GRANTED) {
+            GrantPermissionButton(
+                titleId = R.string.bluetooth_permission_needed_title,
+                onButtonClicked = { bluetoothPermissionLauncher.launch(bluetoothPermissionName) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun LocationPermissionRationaleDialog(
+    permissionState: PermissionState,
+    onRequestPermission: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    PermissionRationaleDialog(
+        title = R.string.location_permission_needed_title,
+        bodyRationale = R.string.location_permission_rationale_body,
+        bodyDenied = R.string.location_permission_denied_body,
+        permissionState = permissionState,
+        onRequestPermission = onRequestPermission,
+        onDismiss = onDismiss
+    )
+}
+
+@Composable
+private fun BluetoothPermissionRationaleDialog(
+    permissionState: PermissionState,
+    onRequestPermission: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    PermissionRationaleDialog(
+        title = R.string.bluetooth_permission_needed_title,
+        bodyRationale = R.string.bluetooth_permission_rationale_body,
+        bodyDenied = R.string.bluetooth_permission_denied_body,
+        permissionState = permissionState,
+        onRequestPermission = onRequestPermission,
+        onDismiss = onDismiss
+    )
 }
 
 @Composable
@@ -380,3 +559,76 @@ private fun DeviceSettingsLoadingScreen() {
         CircularProgressIndicator()
     }
 }
+
+//region Preview
+@Preview
+@Composable
+private fun PermissionsRequiredScreenTwoPermissionsPreview() {
+    AppBackground {
+        PermissionsRequiredScreen(
+            locationPermissionName = "",
+            locationPermissionState = PermissionState.DENIED,
+            onLocationPermissionChanged = {},
+            bluetoothPermissionName = "",
+            bluetoothPermissionState = PermissionState.DENIED,
+            onBluetoothPermissionChanged = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PermissionsRequiredScreenOnePermissionPreview() {
+    AppBackground {
+        PermissionsRequiredScreen(
+            locationPermissionName = "",
+            locationPermissionState = PermissionState.GRANTED,
+            onLocationPermissionChanged = {},
+            bluetoothPermissionName = "",
+            bluetoothPermissionState = PermissionState.DENIED,
+            onBluetoothPermissionChanged = {}
+        )
+    }
+}
+
+
+@Preview
+@Composable
+private fun LocationPermissionRationaleDialogPreview() {
+    LocationPermissionRationaleDialog(
+        permissionState = PermissionState.RATIONALE_NEEDED,
+        onRequestPermission = {},
+        onDismiss = {}
+    )
+}
+
+@Preview
+@Composable
+private fun LocationPermissionDeniedDialogPreview() {
+    LocationPermissionRationaleDialog(
+        permissionState = PermissionState.DENIED,
+        onRequestPermission = {},
+        onDismiss = {}
+    )
+}
+
+@Preview
+@Composable
+private fun BluetoothPermissionRationaleDialogPreview() {
+    BluetoothPermissionRationaleDialog(
+        permissionState = PermissionState.RATIONALE_NEEDED,
+        onRequestPermission = {},
+        onDismiss = {}
+    )
+}
+
+@Preview
+@Composable
+private fun BluetoothPermissionDeniedDialogPreview() {
+    BluetoothPermissionRationaleDialog(
+        permissionState = PermissionState.DENIED,
+        onRequestPermission = {},
+        onDismiss = {}
+    )
+}
+//endregion

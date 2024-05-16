@@ -24,3 +24,11 @@ fun getReadExternalStoragePermissionName() = if (Build.VERSION.SDK_INT < 33) {
 } else {
     Manifest.permission.READ_MEDIA_IMAGES
 }
+
+fun getLocationPermissionName() = Manifest.permission.ACCESS_FINE_LOCATION
+
+fun getBluetoothPermissionNameOrEmpty() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+    Manifest.permission.BLUETOOTH_CONNECT
+} else {
+    ""
+}
