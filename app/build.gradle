@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
@@ -5,6 +7,7 @@ plugins {
     id 'kotlin-parcelize'
     id 'com.google.dagger.hilt.android'
     id 'com.google.devtools.ksp'
+    id 'org.jetbrains.kotlin.plugin.compose'
 }
 
 android {
@@ -45,8 +48,14 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = '17'
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_17)
+        }
+    }
+    composeCompiler {
+        enableStrongSkippingMode = true
+        includeSourceInformation = true
     }
     testOptions {
         unitTests {
@@ -56,9 +65,6 @@ android {
     buildFeatures {
         compose true
         buildConfig = true
-    }
-    composeOptions {
-        kotlinCompilerExtensionVersion '1.5.14'
     }
     packagingOptions {
         resources {
@@ -119,6 +125,6 @@ dependencies {
     debugImplementation "androidx.compose.ui:ui-test-manifest:$compose_ui_version"
     testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:$coroutines_version"
     testImplementation "com.google.truth:truth:1.4.2"
-    testImplementation "io.mockk:mockk:1.13.10"
+    testImplementation "io.mockk:mockk:1.13.11"
     testImplementation 'app.cash.turbine:turbine:1.1.0'
 }
