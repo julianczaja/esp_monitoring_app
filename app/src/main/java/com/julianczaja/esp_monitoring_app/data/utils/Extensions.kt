@@ -1,6 +1,9 @@
 package com.julianczaja.esp_monitoring_app.data.utils
 
+import android.annotation.SuppressLint
 import android.app.Activity
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
@@ -39,3 +42,11 @@ fun Activity.getPermissionState(permission: String): PermissionState =
             PermissionState.DENIED
         }
     }.also { Timber.e("getPermissionState($permission) returning $it") }
+
+fun Context.isBluetoothEnabled(): Boolean {
+    val bluetoothManager: BluetoothManager = getSystemService(BluetoothManager::class.java)
+    return bluetoothManager.adapter.isEnabled
+}
+
+@SuppressLint("MissingPermission")
+fun Activity.promptEnableBluetooth() = startActivity(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
