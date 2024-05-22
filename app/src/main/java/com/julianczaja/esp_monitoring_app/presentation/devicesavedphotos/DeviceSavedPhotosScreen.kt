@@ -1,5 +1,6 @@
 package com.julianczaja.esp_monitoring_app.presentation.devicesavedphotos
 
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -172,6 +173,8 @@ private fun DeviceSavedPhotosScreenContent(
     LaunchedEffect(true) {
         onRefreshTriggered.invoke()
     }
+
+    BackHandler(enabled = isSelectionMode, onBack = resetSelections)
 
     val pullRefreshState = rememberPullToRefreshState()
     if (pullRefreshState.isRefreshing) {
