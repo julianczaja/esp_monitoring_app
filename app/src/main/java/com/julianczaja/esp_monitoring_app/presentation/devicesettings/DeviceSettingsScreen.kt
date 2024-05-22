@@ -4,12 +4,9 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -26,7 +23,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
@@ -51,6 +47,7 @@ import com.julianczaja.esp_monitoring_app.components.DropdownMenuBox
 import com.julianczaja.esp_monitoring_app.components.GrantPermissionButton
 import com.julianczaja.esp_monitoring_app.components.IntSliderRow
 import com.julianczaja.esp_monitoring_app.components.PermissionRationaleDialog
+import com.julianczaja.esp_monitoring_app.components.StateBar
 import com.julianczaja.esp_monitoring_app.components.SwitchWithLabel
 import com.julianczaja.esp_monitoring_app.data.utils.getActivity
 import com.julianczaja.esp_monitoring_app.data.utils.getBluetoothPermissionsNamesOrEmpty
@@ -60,6 +57,7 @@ import com.julianczaja.esp_monitoring_app.data.utils.getPermissionsState
 import com.julianczaja.esp_monitoring_app.data.utils.isBluetoothEnabled
 import com.julianczaja.esp_monitoring_app.data.utils.openAppSettings
 import com.julianczaja.esp_monitoring_app.data.utils.promptEnableBluetooth
+import com.julianczaja.esp_monitoring_app.data.utils.promptEnableLocation
 import com.julianczaja.esp_monitoring_app.domain.model.BleAdvertisement
 import com.julianczaja.esp_monitoring_app.domain.model.DeviceSettings
 import com.julianczaja.esp_monitoring_app.domain.model.DeviceStatus
@@ -80,6 +78,7 @@ fun DeviceSettingsScreen(
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val isBluetoothEnabled by viewModel.isBluetoothEnabled.collectAsStateWithLifecycle()
+    val isBleLocationEnabled by viewModel.isBleLocationEnabled.collectAsStateWithLifecycle()
 
     LaunchedEffect(true) {
         viewModel.eventFlow.collect { event ->
@@ -124,6 +123,7 @@ fun DeviceSettingsScreen(
         modifier = Modifier.fillMaxSize(),
         uiState = uiState,
         isBluetoothEnabled = isBluetoothEnabled,
+        isBleLocationEnabled = isBleLocationEnabled,
         locationPermissionState = locationPermissionState,
         locationPermissionName = locationPermissionName,
         onLocationPermissionChanged = { locationPermissionState = it },
@@ -148,6 +148,7 @@ private fun DeviceSettingsScreenContent(
     modifier: Modifier = Modifier,
     uiState: UiState,
     isBluetoothEnabled: Boolean,
+    isBleLocationEnabled: Boolean,
     locationPermissionState: PermissionState,
     locationPermissionName: String,
     onLocationPermissionChanged: (PermissionState) -> Unit,
@@ -174,6 +175,7 @@ private fun DeviceSettingsScreenContent(
             modifier = modifier,
             uiState = uiState,
             isBluetoothEnabled = isBluetoothEnabled,
+            isBleLocationEnabled = isBleLocationEnabled,
             onStartScanClicked = onStartScanClicked,
             onStopScanClicked = onStopScanClicked,
             onDeviceClicked = onDeviceClicked
@@ -329,15 +331,27 @@ fun DeviceSettingsScanScreen(
     modifier: Modifier = Modifier,
     uiState: UiState.Scan,
     isBluetoothEnabled: Boolean,
+    isBleLocationEnabled: Boolean,
     onStartScanClicked: () -> Unit,
     onStopScanClicked: () -> Unit,
     onDeviceClicked: (String) -> Unit
 ) {
+    val context = LocalContext.current
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        BluetoothStateBar(isBluetoothEnabled)
+        StateBar(
+            isVisible = !isBluetoothEnabled,
+            title = R.string.bluetooth_disabled_label,
+            onButtonClicked = { context.getActivity().promptEnableBluetooth() }
+        )
+        StateBar(
+            isVisible = !isBleLocationEnabled,
+            title = R.string.location_disabled_label,
+            onButtonClicked = { context.getActivity().promptEnableLocation() }
+        )
+
         AnimatedVisibility(visible = uiState.isScanning) {
             LinearProgressIndicator(
                 modifier = Modifier
@@ -349,6 +363,7 @@ fun DeviceSettingsScanScreen(
             modifier = Modifier
                 .fillMaxWidth(.5f)
                 .padding(top = MaterialTheme.spacing.small),
+            enabled = isBluetoothEnabled && isBleLocationEnabled,
             onClick = if (uiState.isScanning) onStopScanClicked else onStartScanClicked
         ) {
             Text(
@@ -363,38 +378,6 @@ fun DeviceSettingsScanScreen(
             items(uiState.bleAdvertisements) {
                 AdvertisementItem(it, onDeviceClicked)
             }
-        }
-    }
-}
-
-@Composable
-private fun ColumnScope.BluetoothStateBar(
-    isBluetoothEnabled: Boolean
-) {
-    val context = LocalContext.current
-
-    AnimatedVisibility(visible = !isBluetoothEnabled) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.errorContainer)
-        ) {
-            Row(
-                modifier = Modifier.padding(horizontal = MaterialTheme.spacing.medium),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = stringResource(id = R.string.bluetooth_disabled_label),
-                    color = MaterialTheme.colorScheme.onErrorContainer
-                )
-                TextButton(
-                    onClick = { context.getActivity().promptEnableBluetooth() }
-                ) {
-                    Text(stringResource(id = R.string.enable_label))
-                }
-            }
-            HorizontalDivider()
         }
     }
 }
@@ -581,6 +564,7 @@ private fun DeviceSettingsScanScreenPreview() {
                 )
             ),
             isBluetoothEnabled = false,
+            isBleLocationEnabled = false,
             onStopScanClicked = {},
             onStartScanClicked = {},
             onDeviceClicked = {}

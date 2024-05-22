@@ -59,3 +59,6 @@ fun Context.isBluetoothEnabled(): Boolean {
 
 @SuppressLint("MissingPermission")
 fun Activity.promptEnableBluetooth() = startActivity(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
+
+fun Activity.promptEnableLocation() = startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+

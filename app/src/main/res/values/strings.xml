@@ -48,6 +48,7 @@
     <string name="generic_server_error_message">Server error</string>
     <string name="grant_permission_button_label">Grant permission</string>
     <string name="internal_app_error_message">Something went wrong</string>
+    <string name="location_disabled_label">Location disabled</string>
     <string name="location_permission_denied_body">This feature requires access to your location. We won\'t use it in any way. You can grant permission in the app settings.</string>
     <string name="location_permission_needed_title">Location permission needed</string>
     <string name="location_permission_rationale_body">Location permissions are needed for BLE functionality in this app, ensuring accurate device connections for an optimal experience. We won\'t use it in any way.</string>

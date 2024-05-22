@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.common.Constants.SCAN_DURATION_MILLIS
+import com.julianczaja.esp_monitoring_app.data.BleLocationManager
 import com.julianczaja.esp_monitoring_app.data.BluetoothManager
 import com.julianczaja.esp_monitoring_app.di.IoDispatcher
 import com.julianczaja.esp_monitoring_app.domain.MonitoringDevice
@@ -51,6 +52,7 @@ import javax.inject.Inject
 class DeviceSettingsScreenViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     bluetoothManager: BluetoothManager,
+    bleLocationManager: BleLocationManager,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
 
@@ -60,6 +62,13 @@ class DeviceSettingsScreenViewModel @Inject constructor(
     val uiState: StateFlow<UiState> = _uiState
 
     val isBluetoothEnabled = bluetoothManager.isBluetoothEnabled
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000L),
+            initialValue = false
+        )
+
+    val isBleLocationEnabled = bleLocationManager.isLocationForBleEnabled
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000L),
