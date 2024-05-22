@@ -1,12 +1,15 @@
 package com.julianczaja.esp_monitoring_app.navigation
 
 import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.EaseIn
 import androidx.compose.animation.core.EaseOut
 import androidx.compose.animation.core.tween
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -41,18 +44,8 @@ fun EspMonitoringNavHost(
             )
         }
         composable<DeviceScreen>(
-            enterTransition = {
-                slideIntoContainer(
-                    animationSpec = tween(300, easing = EaseIn),
-                    towards = AnimatedContentTransitionScope.SlideDirection.Start
-                )
-            },
-            exitTransition = {
-                slideOutOfContainer(
-                    animationSpec = tween(300, easing = EaseOut),
-                    towards = AnimatedContentTransitionScope.SlideDirection.End
-                )
-            }
+            enterTransition = { defaultEnterTransition() },
+            exitTransition = { defaultExitTransition() }
         ) {
             DeviceScreen(
                 snackbarHostState = snackbarHostState,
@@ -60,7 +53,10 @@ fun EspMonitoringNavHost(
                 navigateToRemovePhotosDialog = navController::navigateToRemovePhotosDialog
             )
         }
-        composable<AddEditDeviceScreen> {
+        composable<AddEditDeviceScreen>(
+            enterTransition = { defaultEnterTransition() },
+            exitTransition = { defaultExitTransition() }
+        ) {
             AddEditDeviceScreen(
                 snackbarHostState = snackbarHostState,
                 onDismiss = onBackClick
@@ -83,10 +79,25 @@ fun EspMonitoringNavHost(
                 onDismiss = onBackClick
             )
         }
-        composable<AppSettingsScreen> {
+        composable<AppSettingsScreen>(
+            enterTransition = { defaultEnterTransition() },
+            exitTransition = { defaultExitTransition() }
+        ) {
             AppSettingsScreen(
                 snackbarHostState = snackbarHostState
             )
         }
     }
 }
+
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.defaultEnterTransition(): EnterTransition =
+    slideIntoContainer(
+        animationSpec = tween(300, easing = EaseIn),
+        towards = AnimatedContentTransitionScope.SlideDirection.Start
+    )
+
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.defaultExitTransition(): ExitTransition =
+    slideOutOfContainer(
+        animationSpec = tween(300, easing = EaseOut),
+        towards = AnimatedContentTransitionScope.SlideDirection.End
+    )
