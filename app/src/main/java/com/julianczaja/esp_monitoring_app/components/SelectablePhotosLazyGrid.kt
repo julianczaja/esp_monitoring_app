@@ -121,7 +121,7 @@ private fun LazyGridItemScope.SelectableDevicePhoto(
                 color = MaterialTheme.colorScheme.primary,
                 shape = CircleShape.copy(CornerSize(MaterialTheme.shape.photoCorners))
             )
-            .animateItemPlacement()
+            .animateItem()
             .clickable(onClick = { onClick(selectablePhoto) })
             .combinedClickable(
                 onClick = { onClick(selectablePhoto) },
