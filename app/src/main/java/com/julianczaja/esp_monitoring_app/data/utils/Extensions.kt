@@ -33,6 +33,15 @@ fun Activity.openAppSettings() {
     ).also(::startActivity)
 }
 
+fun Activity.getPermissionsState(permissions: Array<String>): PermissionState {
+    val permissionsStates = permissions.map { getPermissionState(it) }
+    return when {
+        permissionsStates.all { it == PermissionState.GRANTED } -> PermissionState.GRANTED
+        permissionsStates.any { it == PermissionState.RATIONALE_NEEDED } -> PermissionState.RATIONALE_NEEDED
+        else -> PermissionState.DENIED
+    }
+}
+
 fun Activity.getPermissionState(permission: String): PermissionState =
     when (checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED) {
         true -> PermissionState.GRANTED

@@ -49,9 +49,10 @@ import com.julianczaja.esp_monitoring_app.components.IntSliderRow
 import com.julianczaja.esp_monitoring_app.components.PermissionRationaleDialog
 import com.julianczaja.esp_monitoring_app.components.SwitchWithLabel
 import com.julianczaja.esp_monitoring_app.data.utils.getActivity
-import com.julianczaja.esp_monitoring_app.data.utils.getBluetoothPermissionNameOrEmpty
-import com.julianczaja.esp_monitoring_app.data.utils.getLocationPermissionName
+import com.julianczaja.esp_monitoring_app.data.utils.getBluetoothPermissionsNamesOrEmpty
+import com.julianczaja.esp_monitoring_app.data.utils.getLocationPermissionNameOrEmpty
 import com.julianczaja.esp_monitoring_app.data.utils.getPermissionState
+import com.julianczaja.esp_monitoring_app.data.utils.getPermissionsState
 import com.julianczaja.esp_monitoring_app.data.utils.isBluetoothEnabled
 import com.julianczaja.esp_monitoring_app.data.utils.openAppSettings
 import com.julianczaja.esp_monitoring_app.data.utils.promptEnableBluetooth
@@ -86,19 +87,22 @@ fun DeviceSettingsScreen(
         }
     }
 
-    val locationPermissionName = getLocationPermissionName()
+    val locationPermissionName = getLocationPermissionNameOrEmpty()
     var locationPermissionState by rememberSaveable {
         mutableStateOf(
-            context.getActivity().getPermissionState(locationPermissionName)
+            when (locationPermissionName.isEmpty()) {
+                true -> PermissionState.GRANTED
+                false -> context.getActivity().getPermissionState(locationPermissionName)
+            }
         )
     }
 
-    val bluetoothPermissionName = getBluetoothPermissionNameOrEmpty()
+    val bluetoothPermissionsNames = getBluetoothPermissionsNamesOrEmpty()
     var bluetoothPermissionState by rememberSaveable {
         mutableStateOf(
-            when (bluetoothPermissionName.isEmpty()) {
+            when (bluetoothPermissionsNames.isEmpty()) {
                 true -> PermissionState.GRANTED
-                false -> context.getActivity().getPermissionState(bluetoothPermissionName)
+                false -> context.getActivity().getPermissionsState(bluetoothPermissionsNames)
             }
         )
     }
@@ -118,7 +122,7 @@ fun DeviceSettingsScreen(
         locationPermissionName = locationPermissionName,
         onLocationPermissionChanged = { locationPermissionState = it },
         bluetoothPermissionState = bluetoothPermissionState,
-        bluetoothPermissionName = bluetoothPermissionName,
+        bluetoothPermissionsNames = bluetoothPermissionsNames,
         onBluetoothPermissionChanged = { bluetoothPermissionState = it },
         onStartScanClicked = {
             if (context.isBluetoothEnabled()) {
@@ -141,7 +145,7 @@ private fun DeviceSettingsScreenContent(
     locationPermissionName: String,
     onLocationPermissionChanged: (PermissionState) -> Unit,
     bluetoothPermissionState: PermissionState,
-    bluetoothPermissionName: String,
+    bluetoothPermissionsNames: Array<String>,
     onBluetoothPermissionChanged: (PermissionState) -> Unit,
     onStartScanClicked: () -> Unit,
     onStopScanClicked: () -> Unit,
@@ -155,7 +159,7 @@ private fun DeviceSettingsScreenContent(
             locationPermissionName = locationPermissionName,
             onLocationPermissionChanged = onLocationPermissionChanged,
             bluetoothPermissionState = bluetoothPermissionState,
-            bluetoothPermissionName = bluetoothPermissionName,
+            bluetoothPermissionsNames = bluetoothPermissionsNames,
             onBluetoothPermissionChanged = onBluetoothPermissionChanged
         )
 
@@ -183,7 +187,7 @@ private fun PermissionsRequiredScreen(
     locationPermissionName: String,
     onLocationPermissionChanged: (PermissionState) -> Unit,
     bluetoothPermissionState: PermissionState,
-    bluetoothPermissionName: String,
+    bluetoothPermissionsNames: Array<String>,
     onBluetoothPermissionChanged: (PermissionState) -> Unit,
 ) {
     val context = LocalContext.current
@@ -207,17 +211,19 @@ private fun PermissionsRequiredScreen(
         }
     )
 
-    val bluetoothPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission(),
-        onResult = { isGranted ->
-            when (isGranted) {
+    val bluetoothPermissionsLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions(),
+        onResult = { map ->
+            val allGranted = map.values.all { it }
+            when (allGranted) {
                 true -> {
                     onBluetoothPermissionChanged(PermissionState.GRANTED)
                     shouldShowBluetoothPermissionRationaleDialog = false
                 }
 
                 false -> {
-                    onBluetoothPermissionChanged(context.getActivity().getPermissionState(bluetoothPermissionName))
+                    val notGrantedName = map.entries.first { !it.value }.key
+                    onBluetoothPermissionChanged(context.getActivity().getPermissionState(notGrantedName))
                     shouldShowBluetoothPermissionRationaleDialog = true
                 }
             }
@@ -243,7 +249,7 @@ private fun PermissionsRequiredScreen(
             permissionState = bluetoothPermissionState,
             onRequestPermission = {
                 if (bluetoothPermissionState == PermissionState.RATIONALE_NEEDED) {
-                    bluetoothPermissionLauncher.launch(bluetoothPermissionName)
+                    bluetoothPermissionsLauncher.launch(bluetoothPermissionsNames)
                 } else {
                     context.getActivity().openAppSettings()
                 }
@@ -270,7 +276,7 @@ private fun PermissionsRequiredScreen(
         if (bluetoothPermissionState != PermissionState.GRANTED) {
             GrantPermissionButton(
                 titleId = R.string.bluetooth_permission_needed_title,
-                onButtonClicked = { bluetoothPermissionLauncher.launch(bluetoothPermissionName) }
+                onButtonClicked = { bluetoothPermissionsLauncher.launch(bluetoothPermissionsNames) }
             )
         }
     }
@@ -547,7 +553,7 @@ private fun PermissionsRequiredScreenTwoPermissionsPreview() {
             locationPermissionName = "",
             locationPermissionState = PermissionState.DENIED,
             onLocationPermissionChanged = {},
-            bluetoothPermissionName = "",
+            bluetoothPermissionsNames = emptyArray(),
             bluetoothPermissionState = PermissionState.DENIED,
             onBluetoothPermissionChanged = {}
         )
@@ -562,7 +568,7 @@ private fun PermissionsRequiredScreenOnePermissionPreview() {
             locationPermissionName = "",
             locationPermissionState = PermissionState.GRANTED,
             onLocationPermissionChanged = {},
-            bluetoothPermissionName = "",
+            bluetoothPermissionsNames = emptyArray(),
             bluetoothPermissionState = PermissionState.DENIED,
             onBluetoothPermissionChanged = {}
         )
