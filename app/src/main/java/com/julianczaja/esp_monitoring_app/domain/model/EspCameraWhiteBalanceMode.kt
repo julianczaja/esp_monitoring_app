@@ -1,10 +1,11 @@
 package com.julianczaja.esp_monitoring_app.domain.model
 
-// TODO: Extract strings
-enum class EspCameraWhiteBalanceMode(val description: String) {
-    Auto("Auto"),
-    Sunny("Sunny"),
-    Cloudy("Cloudy"),
-    Office("Office"),
-    Home("Home")
+import com.julianczaja.esp_monitoring_app.R
+
+enum class EspCameraWhiteBalanceMode(val descriptionResId: Int) {
+    Auto(R.string.white_balance_auto),
+    Sunny(R.string.white_balance_sunny),
+    Cloudy(R.string.white_balance_cloudy),
+    Office(R.string.white_balance_office),
+    Home(R.string.white_balance_home)
 }

@@ -1,6 +1,10 @@
 package com.julianczaja.esp_monitoring_app.domain.model
 
 import com.julianczaja.esp_monitoring_app.R
+import com.juul.kable.BluetoothDisabledException
+import com.juul.kable.ConnectionLostException
+import com.juul.kable.ConnectionRejectedException
+import com.juul.kable.NotConnectedException
 import kotlinx.serialization.SerializationException
 import okhttp3.Request
 import okhttp3.internal.http2.ConnectionShutdownException
@@ -30,6 +34,10 @@ fun Throwable.getErrorMessageId(): Int = when (this) {
     is GenericServerException -> R.string.generic_server_error_message
     is GenericInternetException -> R.string.generic_internet_error_message
     is InternalAppException -> R.string.internal_app_error_message
+    is ConnectionLostException -> R.string.bluetooth_connection_lost_error_message
+    is ConnectionRejectedException -> R.string.bluetooth_connection_rejected_error_message
+    is NotConnectedException -> R.string.bluetooth_connection_not_connected_error_message
+    is BluetoothDisabledException -> R.string.bluetooth_disabled_error_message
     else -> R.string.unknown_error_message
 }
 

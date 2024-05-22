@@ -12,15 +12,23 @@ fun checkPermissionAndDoAction(
     onGranted: () -> Unit,
     onDenied: (() -> Unit)? = null,
 ) {
-    if (context.checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED) {
-        onGranted()
-    } else {
-        onDenied?.invoke()
+    when (PackageManager.PERMISSION_GRANTED) {
+        context.checkSelfPermission(permission) -> onGranted()
+        else -> onDenied?.invoke()
     }
 }
 
-fun getReadExternalStoragePermissionName() = if (Build.VERSION.SDK_INT < 33) {
-    Manifest.permission.READ_EXTERNAL_STORAGE
-} else {
-    Manifest.permission.READ_MEDIA_IMAGES
+fun getReadExternalStoragePermissionName() = when {
+    Build.VERSION.SDK_INT < 33 -> Manifest.permission.READ_EXTERNAL_STORAGE
+    else -> Manifest.permission.READ_MEDIA_IMAGES
+}
+
+fun getLocationPermissionNameOrEmpty() = when {
+    Build.VERSION.SDK_INT >= 31 -> ""
+    else -> Manifest.permission.ACCESS_FINE_LOCATION
+}
+
+fun getBluetoothPermissionsNamesOrEmpty(): Array<String> = when {
+    Build.VERSION.SDK_INT >= 31 -> arrayOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT)
+    else -> emptyArray()
 }

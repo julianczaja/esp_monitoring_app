@@ -3,14 +3,10 @@ package com.julianczaja.esp_monitoring_app.presentation.devicephotos
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -41,6 +37,7 @@ import com.julianczaja.esp_monitoring_app.components.AppBackground
 import com.julianczaja.esp_monitoring_app.components.PermissionRationaleDialog
 import com.julianczaja.esp_monitoring_app.components.SelectablePhotosLazyGrid
 import com.julianczaja.esp_monitoring_app.components.SelectedEditBar
+import com.julianczaja.esp_monitoring_app.components.StateBar
 import com.julianczaja.esp_monitoring_app.data.utils.checkPermissionAndDoAction
 import com.julianczaja.esp_monitoring_app.data.utils.getActivity
 import com.julianczaja.esp_monitoring_app.data.utils.getPermissionState
@@ -180,7 +177,7 @@ private fun DevicePhotosScreenContent(
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
-            OfflineBar(uiState.isOnline)
+            StateBar(isVisible = !uiState.isOnline, title = R.string.you_are_offline)
             SelectedEditBar(uiState.isSelectionMode, removeSelectedPhotos, saveSelectedPhotos, resetSelections)
 
             when (uiState.dateGroupedSelectablePhotos.isEmpty()) {
@@ -197,23 +194,6 @@ private fun DevicePhotosScreenContent(
             modifier = Modifier.align(Alignment.TopCenter),
             state = pullRefreshState,
         )
-    }
-}
-
-@Composable
-private fun ColumnScope.OfflineBar(isOnline: Boolean) {
-    AnimatedVisibility(visible = !isOnline) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.errorContainer)
-        ) {
-            Text(
-                text = stringResource(R.string.you_are_offline),
-                color = MaterialTheme.colorScheme.onErrorContainer,
-                modifier = Modifier.align(Alignment.Center)
-            )
-        }
     }
 }
 

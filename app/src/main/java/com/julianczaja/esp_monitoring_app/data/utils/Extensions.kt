@@ -1,6 +1,9 @@
 package com.julianczaja.esp_monitoring_app.data.utils
 
+import android.annotation.SuppressLint
 import android.app.Activity
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
@@ -30,6 +33,15 @@ fun Activity.openAppSettings() {
     ).also(::startActivity)
 }
 
+fun Activity.getPermissionsState(permissions: Array<String>): PermissionState {
+    val permissionsStates = permissions.map { getPermissionState(it) }
+    return when {
+        permissionsStates.all { it == PermissionState.GRANTED } -> PermissionState.GRANTED
+        permissionsStates.any { it == PermissionState.RATIONALE_NEEDED } -> PermissionState.RATIONALE_NEEDED
+        else -> PermissionState.DENIED
+    }
+}
+
 fun Activity.getPermissionState(permission: String): PermissionState =
     when (checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED) {
         true -> PermissionState.GRANTED
@@ -39,3 +51,14 @@ fun Activity.getPermissionState(permission: String): PermissionState =
             PermissionState.DENIED
         }
     }.also { Timber.e("getPermissionState($permission) returning $it") }
+
+fun Context.isBluetoothEnabled(): Boolean {
+    val bluetoothManager: BluetoothManager = getSystemService(BluetoothManager::class.java)
+    return bluetoothManager.adapter.isEnabled
+}
+
+@SuppressLint("MissingPermission")
+fun Activity.promptEnableBluetooth() = startActivity(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
+
+fun Activity.promptEnableLocation() = startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+

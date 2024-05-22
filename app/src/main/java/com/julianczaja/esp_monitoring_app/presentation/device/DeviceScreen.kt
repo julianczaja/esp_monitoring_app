@@ -79,7 +79,9 @@ fun DeviceScreen(
                     navigateToPhotoPreview = navigateToPhotoPreview
                 )
 
-                DevicePage.Settings.index -> DeviceSettingsScreen()
+                DevicePage.Settings.index -> DeviceSettingsScreen(
+                    snackbarHostState = snackbarHostState
+                )
             }
         }
     }
