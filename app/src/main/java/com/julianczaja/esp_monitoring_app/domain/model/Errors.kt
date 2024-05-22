@@ -1,6 +1,7 @@
 package com.julianczaja.esp_monitoring_app.domain.model
 
 import com.julianczaja.esp_monitoring_app.R
+import com.juul.kable.BluetoothDisabledException
 import com.juul.kable.ConnectionLostException
 import com.juul.kable.ConnectionRejectedException
 import com.juul.kable.NotConnectedException
@@ -36,6 +37,7 @@ fun Throwable.getErrorMessageId(): Int = when (this) {
     is ConnectionLostException -> R.string.bluetooth_connection_lost_error_message
     is ConnectionRejectedException -> R.string.bluetooth_connection_rejected_error_message
     is NotConnectedException -> R.string.bluetooth_connection_not_connected_error_message
+    is BluetoothDisabledException -> R.string.bluetooth_disabled_error_message
     else -> R.string.unknown_error_message
 }
 

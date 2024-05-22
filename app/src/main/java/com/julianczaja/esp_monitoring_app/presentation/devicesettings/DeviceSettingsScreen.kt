@@ -4,9 +4,12 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -23,6 +26,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
@@ -75,6 +79,7 @@ fun DeviceSettingsScreen(
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val isBluetoothEnabled by viewModel.isBluetoothEnabled.collectAsStateWithLifecycle()
 
     LaunchedEffect(true) {
         viewModel.eventFlow.collect { event ->
@@ -118,6 +123,7 @@ fun DeviceSettingsScreen(
     DeviceSettingsScreenContent(
         modifier = Modifier.fillMaxSize(),
         uiState = uiState,
+        isBluetoothEnabled = isBluetoothEnabled,
         locationPermissionState = locationPermissionState,
         locationPermissionName = locationPermissionName,
         onLocationPermissionChanged = { locationPermissionState = it },
@@ -141,6 +147,7 @@ fun DeviceSettingsScreen(
 private fun DeviceSettingsScreenContent(
     modifier: Modifier = Modifier,
     uiState: UiState,
+    isBluetoothEnabled: Boolean,
     locationPermissionState: PermissionState,
     locationPermissionName: String,
     onLocationPermissionChanged: (PermissionState) -> Unit,
@@ -166,6 +173,7 @@ private fun DeviceSettingsScreenContent(
         is UiState.Scan -> DeviceSettingsScanScreen(
             modifier = modifier,
             uiState = uiState,
+            isBluetoothEnabled = isBluetoothEnabled,
             onStartScanClicked = onStartScanClicked,
             onStopScanClicked = onStopScanClicked,
             onDeviceClicked = onDeviceClicked
@@ -320,6 +328,7 @@ private fun BluetoothPermissionRationaleDialog(
 fun DeviceSettingsScanScreen(
     modifier: Modifier = Modifier,
     uiState: UiState.Scan,
+    isBluetoothEnabled: Boolean,
     onStartScanClicked: () -> Unit,
     onStopScanClicked: () -> Unit,
     onDeviceClicked: (String) -> Unit
@@ -328,6 +337,7 @@ fun DeviceSettingsScanScreen(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        BluetoothStateBar(isBluetoothEnabled)
         AnimatedVisibility(visible = uiState.isScanning) {
             LinearProgressIndicator(
                 modifier = Modifier
@@ -353,6 +363,38 @@ fun DeviceSettingsScanScreen(
             items(uiState.bleAdvertisements) {
                 AdvertisementItem(it, onDeviceClicked)
             }
+        }
+    }
+}
+
+@Composable
+private fun ColumnScope.BluetoothStateBar(
+    isBluetoothEnabled: Boolean
+) {
+    val context = LocalContext.current
+
+    AnimatedVisibility(visible = !isBluetoothEnabled) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.errorContainer)
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = MaterialTheme.spacing.medium),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = stringResource(id = R.string.bluetooth_disabled_label),
+                    color = MaterialTheme.colorScheme.onErrorContainer
+                )
+                TextButton(
+                    onClick = { context.getActivity().promptEnableBluetooth() }
+                ) {
+                    Text(stringResource(id = R.string.enable_label))
+                }
+            }
+            HorizontalDivider()
         }
     }
 }
@@ -538,6 +580,7 @@ private fun DeviceSettingsScanScreenPreview() {
                     BleAdvertisement("Aaaaaaaaaaaaaa", "address", true, false, -100),
                 )
             ),
+            isBluetoothEnabled = false,
             onStopScanClicked = {},
             onStartScanClicked = {},
             onDeviceClicked = {}

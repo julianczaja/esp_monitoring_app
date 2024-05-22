@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.common.Constants.SCAN_DURATION_MILLIS
+import com.julianczaja.esp_monitoring_app.data.BluetoothManager
 import com.julianczaja.esp_monitoring_app.di.IoDispatcher
 import com.julianczaja.esp_monitoring_app.domain.MonitoringDevice
 import com.julianczaja.esp_monitoring_app.domain.model.BleAdvertisement
@@ -31,12 +32,14 @@ import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
@@ -47,6 +50,7 @@ import javax.inject.Inject
 @HiltViewModel
 class DeviceSettingsScreenViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
+    bluetoothManager: BluetoothManager,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
 
@@ -54,6 +58,13 @@ class DeviceSettingsScreenViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow<UiState>(UiState.CheckPermission)
     val uiState: StateFlow<UiState> = _uiState
+
+    val isBluetoothEnabled = bluetoothManager.isBluetoothEnabled
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000L),
+            initialValue = false
+        )
 
     private var scanJob: Job? = null
     private var _monitoringDevice: MonitoringDevice? = null
@@ -70,7 +81,7 @@ class DeviceSettingsScreenViewModel @Inject constructor(
         Timber.d("updatePermissionsStatus: $permissionsStates")
         val allPermissionsGranted = permissionsStates.all { it == PermissionState.GRANTED }
         if (allPermissionsGranted) {
-            if (uiState.value is UiState.CheckPermission) {
+            if (_uiState.value is UiState.CheckPermission) {
                 _uiState.update { UiState.Scan(false, emptyList()) }
             }
         } else {
@@ -162,9 +173,7 @@ class DeviceSettingsScreenViewModel @Inject constructor(
                         isBusy = state == State.Connected && isBusy
                     )
                 }
-                if (state == State.Connected) {
-//                    monitoringDevice.init()
-                } else if (state is State.Disconnected) {
+                if (state is State.Disconnected) {
                     delay(500)
                     _uiState.update { UiState.Scan(isScanning = false, bleAdvertisements = emptyList()) }
                 }

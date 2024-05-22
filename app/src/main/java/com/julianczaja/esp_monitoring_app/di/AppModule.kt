@@ -10,6 +10,7 @@ import androidx.room.Room
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import com.julianczaja.esp_monitoring_app.BuildConfig
 import com.julianczaja.esp_monitoring_app.common.Constants
+import com.julianczaja.esp_monitoring_app.data.BluetoothManager
 import com.julianczaja.esp_monitoring_app.data.CoilBitmapDownloader
 import com.julianczaja.esp_monitoring_app.data.NetworkManager
 import com.julianczaja.esp_monitoring_app.data.local.database.EspMonitoringDatabase
@@ -72,6 +73,10 @@ object AppModule {
     @Provides
     @Singleton
     fun provideNetworkManager(@ApplicationContext context: Context) = NetworkManager(context)
+
+    @Provides
+    @Singleton
+    fun provideBluetoothManager(@ApplicationContext context: Context) = BluetoothManager(context)
 
     @Provides
     @Singleton

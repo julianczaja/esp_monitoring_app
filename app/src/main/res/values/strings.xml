@@ -15,6 +15,8 @@
     <string name="bluetooth_connection_lost_error_message">Connection attempt failed - connection lost</string>
     <string name="bluetooth_connection_not_connected_error_message">Connection attempt failed</string>
     <string name="bluetooth_connection_rejected_error_message">Connection attempt failed - connection rejected</string>
+    <string name="bluetooth_disabled_error_message">Bluetooth disabled</string>
+    <string name="bluetooth_disabled_label">Bluetooth disabled</string>
     <string name="bluetooth_permission_denied_body">This feature requires access to Bluetooth. You can grant permission in the app settings.</string>
     <string name="bluetooth_permission_needed_title">Bluetooth permission needed</string>
     <string name="bluetooth_permission_rationale_body">Bluetooth connectivity permissions are necessary for our app to establish secure connections with nearby devices, enabling seamless communication and functionality.</string>
@@ -41,6 +43,7 @@
     <string name="edit_device_label">Edit device</string>
     <string name="edit_label">Edit</string>
     <string name="effect_sepia">Sepia</string>
+    <string name="enable_label">Enable</string>
     <string name="generic_internet_error_message">Internet error</string>
     <string name="generic_server_error_message">Server error</string>
     <string name="grant_permission_button_label">Grant permission</string>
