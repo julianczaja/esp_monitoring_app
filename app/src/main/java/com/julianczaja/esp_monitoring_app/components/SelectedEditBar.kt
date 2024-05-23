@@ -1,6 +1,8 @@
 package com.julianczaja.esp_monitoring_app.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -32,7 +34,11 @@ fun SelectedEditBar(
     saveSelectedPhotos: (() -> Unit)? = null,
     resetSelections: () -> Unit
 ) {
-    AnimatedVisibility(visible = isSelectionMode) {
+    AnimatedVisibility(
+        visible = isSelectionMode,
+        enter = slideInVertically(initialOffsetY = { -it/2 }),
+        exit = slideOutVertically(targetOffsetY = { -it })
+    ) {
         Column {
             Row(
                 modifier = Modifier
