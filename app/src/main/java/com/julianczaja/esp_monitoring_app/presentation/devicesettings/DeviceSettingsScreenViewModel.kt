@@ -29,7 +29,6 @@ import com.juul.kable.peripheral
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -61,6 +60,8 @@ class DeviceSettingsScreenViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<UiState>(UiState.CheckPermission)
     val uiState: StateFlow<UiState> = _uiState
 
+    val eventFlow = MutableSharedFlow<Event>()
+
     val isBluetoothEnabled = bluetoothManager.isBluetoothEnabled
         .stateIn(
             scope = viewModelScope,
@@ -75,16 +76,9 @@ class DeviceSettingsScreenViewModel @Inject constructor(
             initialValue = false
         )
 
-    private var scanJob: Job? = null
+    private var _scanJob: Job? = null
+
     private var _monitoringDevice: MonitoringDevice? = null
-
-    private val _scanner by lazy {
-        Scanner {
-            logging { level = Logging.Level.Data }
-        }
-    }
-
-    val eventFlow = MutableSharedFlow<Event>()
 
     fun updatePermissionsStatus(permissionsStates: List<PermissionState>) {
         Timber.d("updatePermissionsStatus: $permissionsStates")
@@ -110,9 +104,14 @@ class DeviceSettingsScreenViewModel @Inject constructor(
             .sortedWith(compareByDescending<BleAdvertisement> { it.isEspMonitoringDevice }.thenByDescending { it.rssi })
             .toList()
 
-        scanJob = viewModelScope.launch(ioDispatcher) {
+
+        val scanner = Scanner {
+            logging { level = Logging.Level.Data }
+        }
+
+        _scanJob = viewModelScope.launch(ioDispatcher) {
             withTimeoutOrNull(SCAN_DURATION_MILLIS) {
-                _scanner
+                scanner
                     .advertisements
                     .onStart {
                         advertisements.clear()
@@ -142,8 +141,8 @@ class DeviceSettingsScreenViewModel @Inject constructor(
         }
     }
 
-    fun stopScan() = viewModelScope.launch(ioDispatcher) {
-        scanJob?.cancelAndJoin()
+    fun stopScan() {
+        _scanJob?.cancel()
     }
 
     fun connectDevice(address: String) {

@@ -3,10 +3,10 @@ package com.julianczaja.esp_monitoring_app.data.repository
 import android.content.ContentUris
 import android.content.Context
 import android.graphics.Bitmap
-import android.media.ExifInterface
 import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
+import androidx.exifinterface.media.ExifInterface
 import com.julianczaja.esp_monitoring_app.data.local.database.dao.PhotoDao
 import com.julianczaja.esp_monitoring_app.data.local.database.entity.toPhoto
 import com.julianczaja.esp_monitoring_app.data.remote.RetrofitEspMonitoringApi
