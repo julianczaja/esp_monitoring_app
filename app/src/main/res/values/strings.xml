@@ -40,9 +40,9 @@
     <string name="device_settings_special_effect_label">Special effect</string>
     <string name="device_settings_vertical_flip_label">Vertical flip</string>
     <string name="device_settings_white_balance_mode_label">White balance mode</string>
+    <string name="disconnect_label">Disconnect</string>
     <string name="edit_device_label">Edit device</string>
     <string name="edit_label">Edit</string>
-    <string name="effect_sepia">Sepia</string>
     <string name="enable_label">Enable</string>
     <string name="generic_internet_error_message">Internet error</string>
     <string name="generic_server_error_message">Server error</string>
@@ -59,6 +59,8 @@
     <string name="not_found_error_message">Not found</string>
     <string name="ok_label">OK</string>
     <string name="open_settings_label">Open settings</string>
+    <string name="photo_preview_date_label">Date: %1$s</string>
+    <string name="photo_preview_size_label">Size: %1$s</string>
     <string name="photos_tab_label">Photos</string>
     <string name="remove_device_explanation">This will remove device \"%1$s\" (id: %2$d) and all its photos from phone memory. Photos still will be stored on server.</string>
     <string name="remove_device_menu_item_remove">Remove</string>
@@ -80,6 +82,10 @@
     <string name="special_effect_no_effect">No effect</string>
     <string name="special_effect_red_tint">Red Tint</string>
     <string name="special_effect_sepia">Sepia</string>
+    <string name="status_connected_label">Connected</string>
+    <string name="status_connecting_label">Connecting</string>
+    <string name="status_disconnected_label">Disconnected</string>
+    <string name="status_disconnecting_label">Disconnecting</string>
     <string name="storage_permission_denied_body">This feature requires access to your device\'s storage. You can grant permission in the app settings.</string>
     <string name="storage_permission_needed_title">Storage permission needed</string>
     <string name="storage_permission_rationale_body">This feature requires permission to access your device\'s storage. This allows us to save photos on your disk.</string>
@@ -90,6 +96,5 @@
     <string name="white_balance_home">Home</string>
     <string name="white_balance_office">Office</string>
     <string name="white_balance_sunny">Sunny</string>
-    <string name="work_in_progress">\uD83D\uDD25 Work in progress \uD83D\uDD25</string>
     <string name="you_are_offline">You are offline</string>
 </resources>

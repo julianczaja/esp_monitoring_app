@@ -37,6 +37,7 @@ fun EspMonitoringNavHost(
     ) {
         composable<DevicesScreen> {
             DevicesScreen(
+                navigateToAppSettings = navController::navigateToAppSettings,
                 navigateToDevice = navController::navigateToDevice,
                 navigateToRemoveDevice = navController::navigateToRemoveDeviceDialog,
                 navigateToAddDevice = navController::navigateToAddEditDeviceScreen,

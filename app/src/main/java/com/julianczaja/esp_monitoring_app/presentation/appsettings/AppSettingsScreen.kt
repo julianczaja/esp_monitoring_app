@@ -7,8 +7,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -24,10 +24,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.components.AppBackground
+import com.julianczaja.esp_monitoring_app.components.DefaultProgressIndicator
 import com.julianczaja.esp_monitoring_app.domain.model.AppSettings
 import com.julianczaja.esp_monitoring_app.presentation.appsettings.AppSettingsScreenViewModel.UiState
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
@@ -83,7 +85,7 @@ private fun AppSettingsScreenContent(
 @Composable
 private fun LoadingScreen(modifier: Modifier = Modifier) {
     Box(modifier = modifier) {
-        CircularProgressIndicator(Modifier.align(Alignment.Center))
+        DefaultProgressIndicator(modifier = Modifier.align(Alignment.Center))
     }
 }
 
@@ -98,11 +100,12 @@ private fun SuccessScreen(
     val focusManager = LocalFocusManager.current
 
     Column(
-        modifier = modifier.padding(MaterialTheme.spacing.medium),
+        modifier = modifier.padding(MaterialTheme.spacing.large),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top
     ) {
         OutlinedTextField(
+            modifier = Modifier.fillMaxWidth(),
             value = uiState.baseUrlFieldValue,
             onValueChange = onBaseUrlUpdate,
             label = { Text(stringResource(R.string.base_url_label)) },
@@ -122,7 +125,7 @@ private fun SuccessScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = MaterialTheme.spacing.small),
-            horizontalArrangement = Arrangement.SpaceEvenly
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
             OutlinedButton(onClick = onBaseUrlRestoreDefault) {
                 Text(text = stringResource(id = R.string.restore_default_label))
@@ -144,7 +147,7 @@ private fun SuccessScreen(
 @Preview
 @Composable
 private fun LoadingScreenPreview() {
-    AppBackground {
+    AppBackground(Modifier.size(300.dp)) {
         LoadingScreen()
     }
 }

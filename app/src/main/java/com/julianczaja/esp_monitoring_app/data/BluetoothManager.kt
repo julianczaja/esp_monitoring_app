@@ -37,12 +37,11 @@ class BluetoothManager(context: Context) {
 
         val filter = IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED)
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        if (Build.VERSION.SDK_INT >= 33) {
             context.registerReceiver(bluetoothReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
         } else {
             @Suppress("UnspecifiedRegisterReceiverFlag")
             context.registerReceiver(bluetoothReceiver, filter)
-
         }
 
         channel.trySend(bluetoothAdapter.isEnabled)

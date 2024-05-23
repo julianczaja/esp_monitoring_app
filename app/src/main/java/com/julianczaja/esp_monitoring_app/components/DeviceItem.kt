@@ -141,7 +141,7 @@ private fun BoxScope.MoreMenuButton(
 private fun DeviceItemPreview() {
     AppBackground(Modifier.height((DEVICE_ITEM_MIN_HEIGHT_DP).dp)) {
         DeviceItem(
-            modifier = Modifier.padding(8.dp),
+            modifier = Modifier.padding(MaterialTheme.spacing.medium),
             device = Device(123L, "Device name"),
             onClicked = {},
             onRemoveClicked = {},
@@ -155,7 +155,7 @@ private fun DeviceItemPreview() {
 private fun DeviceItemLongNamePreview() {
     AppBackground(Modifier.height((DEVICE_ITEM_MIN_HEIGHT_DP).dp)) {
         DeviceItem(
-            modifier = Modifier.padding(8.dp),
+            modifier = Modifier.padding(MaterialTheme.spacing.medium),
             device = Device(123L, "Device very long name"),
             onClicked = {},
             onRemoveClicked = {},

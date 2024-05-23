@@ -30,9 +30,6 @@ class EspMonitoringAppState(
     val shouldShowNavigationIcon: Boolean
         @Composable get() = !currentDestination.isDevicesScreen()
 
-    val shouldShowSettingsIcon: Boolean
-        @Composable get() = currentDestination.isDevicesScreen()
-
     fun onBackClick() {
         navController.popBackStack()
     }

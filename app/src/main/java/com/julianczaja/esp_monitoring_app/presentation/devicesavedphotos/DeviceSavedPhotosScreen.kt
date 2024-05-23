@@ -29,7 +29,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.julianczaja.esp_monitoring_app.R
@@ -85,6 +85,7 @@ fun DeviceSavedPhotosScreen(
 
     if (storagePermissionState == PermissionState.GRANTED) {
         DeviceSavedPhotosScreenContent(
+            modifier = Modifier.fillMaxSize(),
             savedPhotos = uiState.dateGroupedSelectablePhotos,
             isLoading = uiState.isLoading,
             isSelectionMode = uiState.isSelectionMode,
@@ -96,6 +97,7 @@ fun DeviceSavedPhotosScreen(
         )
     } else {
         PermissionsRequiredScreen(
+            modifier = Modifier.fillMaxSize(),
             storagePermissionState = storagePermissionState,
             storagePermissionName = storagePermissionName,
             onStoragePermissionChanged = { storagePermissionState = it }
@@ -130,9 +132,9 @@ private fun PermissionsRequiredScreen(
         }
     )
 
-    Box(modifier.fillMaxSize()) {
+    Box(modifier) {
         GrantPermissionButton(
-            modifier = modifier.align(Alignment.Center),
+            modifier = Modifier.align(Alignment.Center),
             titleId = R.string.storage_permission_needed_title,
             onButtonClicked = { storagePermissionLauncher.launch(storagePermissionName) }
         )
@@ -188,9 +190,7 @@ private fun DeviceSavedPhotosScreenContent(
         }
     }
     Box(
-        modifier = modifier
-            .fillMaxSize()
-            .nestedScroll(pullRefreshState.nestedScrollConnection)
+        modifier = modifier.nestedScroll(pullRefreshState.nestedScrollConnection)
     ) {
         Column {
             SelectedEditBar(
@@ -199,8 +199,9 @@ private fun DeviceSavedPhotosScreenContent(
                 resetSelections = resetSelections
             )
             when (savedPhotos.isEmpty()) {
-                true -> EmptyScreen(modifier.fillMaxSize())
+                true -> EmptyScreen(modifier)
                 false -> SelectablePhotosLazyGrid(
+                    modifier = modifier,
                     dateGroupedSelectablePhotos = savedPhotos,
                     isSelectionMode = isSelectionMode,
                     onPhotoClick = onPhotoClick,
@@ -233,19 +234,22 @@ private fun EmptyScreen(modifier: Modifier = Modifier) {
 }
 
 //region Preview
-@Preview(showSystemUi = true)
+@PreviewLightDark
 @Composable
 private fun DevicePhotosStateSuccessNoItemsPreview() {
     AppBackground {
-        EmptyScreen()
+        EmptyScreen(
+            modifier = Modifier.fillMaxSize()
+        )
     }
 }
 
-@Preview(showSystemUi = true)
+@PreviewLightDark
 @Composable
 private fun DevicePhotosPermissionRequiredPreview() {
     AppBackground {
         PermissionsRequiredScreen(
+            modifier = Modifier.fillMaxSize(),
             storagePermissionState = PermissionState.DENIED,
             storagePermissionName = "",
             onStoragePermissionChanged = {}

@@ -25,12 +25,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.julianczaja.esp_monitoring_app.R
+import com.julianczaja.esp_monitoring_app.components.AppBackground
 import com.julianczaja.esp_monitoring_app.presentation.addeditdevice.AddEditDeviceScreenViewModel.Event
-import com.julianczaja.esp_monitoring_app.presentation.theme.AppTheme
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 
 
@@ -172,10 +172,10 @@ fun AddEditDeviceScreenContent(
     }
 }
 
-@Preview(showBackground = true)
+@PreviewLightDark
 @Composable
 private fun AddEditDeviceScreenContentPreview() {
-    AppTheme {
+    AppBackground {
         AddEditDeviceScreenContent(
             titleId = R.string.add_new_device_label,
             applyButtonLabelId = R.string.add_label,
@@ -191,10 +191,10 @@ private fun AddEditDeviceScreenContentPreview() {
     }
 }
 
-@Preview(showBackground = true)
+@PreviewLightDark
 @Composable
 private fun AddEditDeviceScreenContentWithErrorsPreview() {
-    AppTheme {
+    AppBackground {
         AddEditDeviceScreenContent(
             titleId = R.string.add_new_device_label,
             applyButtonLabelId = R.string.update_label,

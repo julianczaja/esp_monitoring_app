@@ -10,18 +10,19 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.julianczaja.esp_monitoring_app.R
 
 
 @Composable
 fun DialogTwoButtons(
+    modifier: Modifier = Modifier,
     onFirstButtonClicked: () -> Unit,
     onSecondButtonClicked: () -> Unit,
     firstButtonEnabled: Boolean = true,
     secondButtonEnabled: Boolean = true,
     @StringRes firstButtonLabel: Int = R.string.cancel_label,
     @StringRes secondButtonLabel: Int = R.string.ok_label,
-    modifier: Modifier,
 ) {
     Row(
         horizontalArrangement = Arrangement.End,
@@ -38,10 +39,10 @@ fun DialogTwoButtons(
 
 @Composable
 fun DialogOneButton(
+    modifier: Modifier = Modifier,
     onButtonClicked: () -> Unit,
     buttonEnabled: Boolean = true,
-    @StringRes buttonLabel: Int = R.string.cancel_label,
-    modifier: Modifier,
+    @StringRes buttonLabel: Int = R.string.cancel_label
 ) {
     Row(
         horizontalArrangement = Arrangement.End,
@@ -52,3 +53,21 @@ fun DialogOneButton(
         }
     }
 }
+
+//region Preview
+@PreviewLightDark
+@Composable
+private fun DialogTwoButtonsPreview() {
+    AppBackground {
+        DialogTwoButtons(onFirstButtonClicked = {}, onSecondButtonClicked = {})
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun DialogOneButtonPreview() {
+    AppBackground {
+        DialogOneButton(onButtonClicked = {})
+    }
+}
+//endregion

@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 
@@ -29,5 +30,13 @@ fun GrantPermissionButton(
         Button(onClick = onButtonClicked) {
             Text(stringResource(id = R.string.grant_permission_button_label))
         }
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun GrantPermissionButtonPreview() {
+    AppBackground {
+        GrantPermissionButton(titleId = R.string.storage_permission_needed_title, onButtonClicked = {})
     }
 }

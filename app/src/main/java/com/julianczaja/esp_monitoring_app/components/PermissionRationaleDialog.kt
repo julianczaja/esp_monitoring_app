@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.domain.model.PermissionState
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
@@ -64,3 +65,35 @@ fun PermissionRationaleDialog(
         }
     }
 }
+
+//region Preview
+@PreviewLightDark
+@Composable
+private fun PermissionRationaleDialogRationaleNeededPreview() {
+    AppBackground {
+        PermissionRationaleDialog(
+            title = R.string.location_permission_needed_title,
+            bodyRationale = R.string.location_permission_rationale_body,
+            bodyDenied = R.string.location_permission_denied_body,
+            permissionState = PermissionState.RATIONALE_NEEDED,
+            onRequestPermission = {},
+            onDismiss = {}
+        )
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun PermissionRationaleDialogPermissionDeniedPreview() {
+    AppBackground {
+        PermissionRationaleDialog(
+            title = R.string.location_permission_needed_title,
+            bodyRationale = R.string.location_permission_rationale_body,
+            bodyDenied = R.string.location_permission_denied_body,
+            permissionState = PermissionState.DENIED,
+            onRequestPermission = {},
+            onDismiss = {}
+        )
+    }
+}
+//endregion

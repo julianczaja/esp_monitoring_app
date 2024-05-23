@@ -34,7 +34,12 @@ fun AppContent(modifier: Modifier = Modifier) {
         contentColor = MaterialTheme.colorScheme.onBackground,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        topBar = { DefaultAppBar(appState) }
+        topBar = {
+            DefaultAppBar(
+                shouldShowNavigationIcon = appState.shouldShowNavigationIcon,
+                onBackClick = appState::onBackClick
+            )
+        }
     ) { paddingValues ->
         Box(
             modifier = modifier

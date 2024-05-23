@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,7 +27,6 @@ import androidx.compose.ui.layout.lerp
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.constraintlayout.compose.ChainStyle
@@ -39,11 +37,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import coil.size.Scale
-import coil.size.Size
+import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.components.DefaultProgressIndicator
+import com.julianczaja.esp_monitoring_app.components.ErrorText
 import com.julianczaja.esp_monitoring_app.data.utils.toPrettyString
 import com.julianczaja.esp_monitoring_app.presentation.photopreview.PhotoPreviewDialogViewModel.UiState
 import com.julianczaja.esp_monitoring_app.presentation.theme.shape
+import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 
 @Composable
 fun PhotoPreviewDialog(
@@ -69,33 +69,30 @@ fun PhotoPreviewDialogContent(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
-        val columnModifier = if (orientation == Configuration.ORIENTATION_LANDSCAPE)
-            Modifier
+        val columnModifier = when (orientation) {
+            Configuration.ORIENTATION_LANDSCAPE -> Modifier
                 .fillMaxWidth(.7f)
                 .fillMaxHeight(.9f)
-        else
-            Modifier
+
+            else -> Modifier
                 .fillMaxWidth(.9f)
                 .fillMaxHeight(.7f)
+        }
+
         Column(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = columnModifier.clip(RoundedCornerShape(MaterialTheme.shape.dialogCorners))
         ) {
             when (uiState) {
-                UiState.Loading -> {
-                    Box(modifier = Modifier.fillMaxSize()) {
-                        CircularProgressIndicator()
-                    }
-                }
-
-                is UiState.Error -> {
-                    Box(modifier = Modifier.fillMaxSize()) {
-                        Text(text = stringResource(uiState.messageId))
-                    }
-                }
-
                 is UiState.Success -> PhotoPreview(uiState)
+                is UiState.Loading -> Box(modifier = Modifier.fillMaxSize()) {
+                    DefaultProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                }
+
+                is UiState.Error -> Box(modifier = Modifier.fillMaxSize()) {
+                    ErrorText(text = stringResource(uiState.messageId), modifier = Modifier.align(Alignment.Center))
+                }
             }
         }
     }
@@ -105,12 +102,11 @@ fun PhotoPreviewDialogContent(
 fun PhotoPreview(
     uiState: UiState.Success,
 ) {
+    val context = LocalContext.current
     val pagerState = rememberPagerState(
         pageCount = { uiState.photos.size },
         initialPage = uiState.initialPhotoIndex
     )
-    val context = LocalContext.current
-
     HorizontalPager(
         state = pagerState,
         modifier = Modifier
@@ -120,11 +116,9 @@ fun PhotoPreview(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(vertical = 16.dp)
+                .padding(vertical = MaterialTheme.spacing.large)
                 .graphicsLayer {
-//                    val pageOffset = calculateCurrentOffsetForPage(page).absoluteValue
-                    val pageOffset =
-                        (pagerState.currentPage - page) + pagerState.currentPageOffsetFraction
+                    val pageOffset = (pagerState.currentPage - page) + pagerState.currentPageOffsetFraction
 
                     lerp(
                         start = ScaleFactor(0.65f, 0.65f),
@@ -145,10 +139,8 @@ fun PhotoPreview(
                 }
         ) {
             SubcomposeAsyncImage(
-                modifier = Modifier.fillMaxSize(),
                 model = ImageRequest.Builder(context)
                     .data(uiState.photos[page].url)
-                    .size(Size.ORIGINAL)
                     .scale(Scale.FIT)
                     .crossfade(true)
                     .build(),
@@ -160,59 +152,57 @@ fun PhotoPreview(
                     }
                 },
                 success = {
-                    val painter = painter
-
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.fillMaxSize()
+                    ConstraintLayout(
+                        modifier = Modifier
+                            .padding(MaterialTheme.spacing.medium)
+                            .fillMaxSize()
                     ) {
-                        ConstraintLayout(
+                        val (image, imageInfoSize, imageInfoDate) = createRefs()
+
+                        Image(
+                            painter = it.painter,
+                            contentDescription = null,
                             modifier = Modifier
-                                .padding(16.dp)
-                                .fillMaxSize()
-                        ) {
-                            val (image, imageInfoSize, imageInfoDate) = createRefs()
-
-                            Image(
-                                painter = painter,
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .constrainAs(image) {
-                                        top.linkTo(parent.top)
-                                        start.linkTo(parent.start)
-                                        end.linkTo(parent.end)
-                                        height = Dimension.preferredWrapContent
-                                        width = Dimension.fillToConstraints
-                                    }
-                            )
-                            Text(
-                                text = "Size: ${uiState.photos[page].size}",
-                                modifier = Modifier
-                                    .padding(top = 8.dp)
-                                    .constrainAs(imageInfoSize) {
-                                        top.linkTo(image.bottom)
-                                        bottom.linkTo(imageInfoDate.top)
-                                        start.linkTo(parent.start)
-                                        end.linkTo(parent.end)
-                                    }
-                            )
-                            Text(
-                                text = "Date: ${uiState.photos[page].dateTime.toPrettyString()}",
-                                modifier = Modifier
-                                    .constrainAs(imageInfoDate) {
-                                        bottom.linkTo(parent.bottom)
-                                        start.linkTo(parent.start)
-                                        end.linkTo(parent.end)
-                                    }
-                            )
-
-                            createVerticalChain(
-                                image,
-                                imageInfoSize,
-                                imageInfoDate,
-                                chainStyle = ChainStyle.Packed
-                            )
-                        }
+                                .constrainAs(image) {
+                                    top.linkTo(parent.top)
+                                    start.linkTo(parent.start)
+                                    end.linkTo(parent.end)
+                                    height = Dimension.preferredWrapContent
+                                    width = Dimension.fillToConstraints
+                                }
+                        )
+                        Text(
+                            text = stringResource(
+                                R.string.photo_preview_size_label,
+                                uiState.photos[page].size
+                            ),
+                            modifier = Modifier
+                                .padding(top = MaterialTheme.spacing.medium)
+                                .constrainAs(imageInfoSize) {
+                                    top.linkTo(image.bottom)
+                                    bottom.linkTo(imageInfoDate.top)
+                                    start.linkTo(parent.start)
+                                    end.linkTo(parent.end)
+                                }
+                        )
+                        Text(
+                            text = stringResource(
+                                R.string.photo_preview_date_label,
+                                uiState.photos[page].dateTime.toPrettyString()
+                            ),
+                            modifier = Modifier
+                                .constrainAs(imageInfoDate) {
+                                    bottom.linkTo(parent.bottom)
+                                    start.linkTo(parent.start)
+                                    end.linkTo(parent.end)
+                                }
+                        )
+                        createVerticalChain(
+                            image,
+                            imageInfoSize,
+                            imageInfoDate,
+                            chainStyle = ChainStyle.Packed
+                        )
                     }
                 },
             )

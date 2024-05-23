@@ -16,12 +16,6 @@ import kotlinx.serialization.json.Json
 @Serializable
 object DevicesScreen
 
-fun NavController.navigateToDevices() {
-    navigate(DevicesScreen) {
-        launchSingleTop = true
-    }
-}
-
 // Device
 @Serializable
 data class DeviceScreen(val deviceId: Long)

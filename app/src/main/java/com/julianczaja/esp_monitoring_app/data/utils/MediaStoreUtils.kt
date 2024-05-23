@@ -5,7 +5,6 @@ import android.content.ContentValues
 import android.content.Context
 import android.media.MediaScannerConnection
 import android.net.Uri
-import android.os.Build
 import android.provider.MediaStore
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import kotlinx.coroutines.Dispatchers
@@ -55,11 +54,7 @@ fun checkIfPhotoExists(context: Context, photo: Photo): Boolean {
 }
 
 suspend fun createPhotoUri(context: Context, photo: Photo): Uri? {
-    val imageCollection = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-        MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
-    } else {
-        MediaStore.Images.Media.EXTERNAL_CONTENT_URI
-    }
+    val imageCollection = MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
 
     return withContext(Dispatchers.IO) {
         val content = ContentValues().apply {

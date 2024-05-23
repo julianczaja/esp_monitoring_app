@@ -38,7 +38,8 @@ class DevicesScreenTest {
                 onDeviceClicked = {},
                 onRemoveDeviceClicked = {},
                 onEditDeviceClicked = {},
-                onAddDeviceClicked = {}
+                onAddDeviceClicked = {},
+                onAppSettingsClicked = {}
             )
         }
         composeTestRule
@@ -66,7 +67,8 @@ class DevicesScreenTest {
                 onDeviceClicked = {},
                 onRemoveDeviceClicked = {},
                 onEditDeviceClicked = {},
-                onAddDeviceClicked = {}
+                onAddDeviceClicked = {},
+                onAppSettingsClicked = {}
             )
         }
         composeTestRule
@@ -86,7 +88,8 @@ class DevicesScreenTest {
                 onDeviceClicked = {},
                 onRemoveDeviceClicked = {},
                 onEditDeviceClicked = {},
-                onAddDeviceClicked = {}
+                onAddDeviceClicked = {},
+                onAppSettingsClicked = {}
             )
         }
         composeTestRule

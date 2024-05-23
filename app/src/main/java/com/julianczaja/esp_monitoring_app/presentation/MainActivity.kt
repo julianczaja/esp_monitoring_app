@@ -31,18 +31,17 @@ class MainActivity : ComponentActivity() {
 
     private fun setupSplashScreen() {
         installSplashScreen()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        if (Build.VERSION.SDK_INT >= 31) {
             splashScreen.setOnExitAnimationListener { splashScreenView ->
-                val slideUp = ObjectAnimator.ofFloat(
+                ObjectAnimator.ofFloat(
                     splashScreenView,
                     View.TRANSLATION_Y,
                     0f,
                     -splashScreenView.height.toFloat()
-                )
-                slideUp.interpolator = AnticipateInterpolator()
-                slideUp.duration = 200L
-                slideUp.doOnEnd { splashScreenView.remove() }
-                slideUp.start()
+                ).apply {
+                    interpolator = AnticipateInterpolator()
+                    doOnEnd { splashScreenView.remove() }
+                }.start()
             }
         }
     }

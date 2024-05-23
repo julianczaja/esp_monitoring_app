@@ -29,7 +29,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.julianczaja.esp_monitoring_app.R
@@ -53,7 +53,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 
 
-const val DEFAULT_PHOTO_HEIGHT = 150
+const val DEFAULT_PHOTO_WIDTH = 150
 
 @Composable
 fun DevicePhotosScreen(
@@ -183,6 +183,7 @@ private fun DevicePhotosScreenContent(
             when (uiState.dateGroupedSelectablePhotos.isEmpty()) {
                 true -> DevicePhotosEmptyScreen()
                 false -> SelectablePhotosLazyGrid(
+                    modifier = Modifier.fillMaxSize(),
                     dateGroupedSelectablePhotos = uiState.dateGroupedSelectablePhotos,
                     isSelectionMode = uiState.isSelectionMode,
                     onPhotoClick = onPhotoClick,
@@ -217,36 +218,36 @@ private fun DevicePhotosEmptyScreen() {
 
 
 //region Preview
-@Preview(showSystemUi = true)
+@PreviewLightDark
 @Composable
 private fun DevicePhotosStateItemsPreview() {
-    AppBackground {
-        val dateGroupedSelectablePhotos = mapOf(
-            LocalDate.of(2023, 1, 1) to listOf(
-                SelectablePhoto(
-                    photo = Photo(123L, LocalDateTime.of(2023, 1, 1, 10, 10), "fileName 1", "1600x1200", "url"),
-                    isSelected = false
-                ),
-                SelectablePhoto(
-                    photo = Photo(123L, LocalDateTime.of(2023, 1, 1, 10, 11), "fileName 2", "1600x1200", "url"),
-                    isSelected = false
-                ),
-                SelectablePhoto(
-                    photo = Photo(123L, LocalDateTime.of(2023, 1, 1, 10, 12), "fileName 3", "1600x1200", "url"),
-                    isSelected = false
-                ),
+    val dateGroupedSelectablePhotos = mapOf(
+        LocalDate.of(2023, 1, 1) to listOf(
+            SelectablePhoto(
+                photo = Photo(123L, LocalDateTime.of(2023, 1, 1, 10, 10), "fileName 1", "1600x1200", "url"),
+                isSelected = false
             ),
-            LocalDate.of(2023, 1, 2) to listOf(
-                SelectablePhoto(
-                    photo = Photo(123L, LocalDateTime.of(2023, 1, 2, 10, 13), "fileName 4", "1600x1200", "url"),
-                    isSelected = false
-                ),
-                SelectablePhoto(
-                    photo = Photo(123L, LocalDateTime.of(2023, 1, 2, 10, 14), "fileName 5", "1600x1200", "url"),
-                    isSelected = false
-                ),
-            )
+            SelectablePhoto(
+                photo = Photo(123L, LocalDateTime.of(2023, 1, 1, 10, 11), "fileName 2", "1600x1200", "url"),
+                isSelected = false
+            ),
+            SelectablePhoto(
+                photo = Photo(123L, LocalDateTime.of(2023, 1, 1, 10, 12), "fileName 3", "1600x1200", "url"),
+                isSelected = false
+            ),
+        ),
+        LocalDate.of(2023, 1, 2) to listOf(
+            SelectablePhoto(
+                photo = Photo(123L, LocalDateTime.of(2023, 1, 2, 10, 13), "fileName 4", "1600x1200", "url"),
+                isSelected = false
+            ),
+            SelectablePhoto(
+                photo = Photo(123L, LocalDateTime.of(2023, 1, 2, 10, 14), "fileName 5", "1600x1200", "url"),
+                isSelected = false
+            ),
         )
+    )
+    AppBackground {
         DevicePhotosScreenContent(
             uiState = UiState(
                 dateGroupedSelectablePhotos = dateGroupedSelectablePhotos,
@@ -260,7 +261,7 @@ private fun DevicePhotosStateItemsPreview() {
 
 }
 
-@Preview(showSystemUi = true)
+@PreviewLightDark
 @Composable
 private fun DevicePhotosStateSuccessNoItemsPreview() {
     AppBackground {

@@ -1,3 +1,5 @@
+package com.julianczaja.esp_monitoring_app.data.remote
+
 import com.julianczaja.esp_monitoring_app.domain.repository.AppSettingsRepository
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking

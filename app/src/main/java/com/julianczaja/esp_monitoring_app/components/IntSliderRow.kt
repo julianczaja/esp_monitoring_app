@@ -79,7 +79,8 @@ fun IntSliderRow(
         )
         Text(
             text = value.toString(),
-            modifier = Modifier.weight(.1f)
+            modifier = Modifier.weight(.1f),
+            textAlign = TextAlign.Center
         )
     }
 }

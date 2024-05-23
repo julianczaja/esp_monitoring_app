@@ -7,6 +7,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -15,11 +16,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -37,6 +38,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -131,15 +133,15 @@ fun DeviceSettingsScreen(
         bluetoothPermissionsNames = bluetoothPermissionsNames,
         onBluetoothPermissionChanged = { bluetoothPermissionState = it },
         onStartScanClicked = {
-            if (context.isBluetoothEnabled()) {
-                viewModel.startScanning()
-            } else {
-                context.getActivity().promptEnableBluetooth()
+            when {
+                context.isBluetoothEnabled() -> viewModel.startScanning()
+                else -> context.getActivity().promptEnableBluetooth()
             }
         },
         onStopScanClicked = viewModel::stopScan,
         onDeviceClicked = viewModel::connectDevice,
-        onDeviceSettingsChanged = viewModel::updateDeviceSettings
+        onDeviceSettingsChanged = viewModel::updateDeviceSettings,
+        onDisconnectClicked = viewModel::disconnectDevice
     )
 }
 
@@ -159,6 +161,7 @@ private fun DeviceSettingsScreenContent(
     onStopScanClicked: () -> Unit,
     onDeviceClicked: (String) -> Unit,
     onDeviceSettingsChanged: (DeviceSettings) -> Unit,
+    onDisconnectClicked: () -> Unit,
 ) {
     when (uiState) {
         is UiState.CheckPermission -> PermissionsRequiredScreen(
@@ -184,7 +187,8 @@ private fun DeviceSettingsScreenContent(
         is UiState.Connect -> DeviceSettingsConnectScreen(
             modifier = modifier,
             uiState = uiState,
-            onDeviceSettingsChanged = onDeviceSettingsChanged
+            onDeviceSettingsChanged = onDeviceSettingsChanged,
+            onDisconnectClicked = onDisconnectClicked
         )
     }
 }
@@ -272,7 +276,7 @@ private fun PermissionsRequiredScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(MaterialTheme.spacing.large)
     ) {
         if (locationPermissionState != PermissionState.GRANTED) {
             GrantPermissionButton(
@@ -359,10 +363,8 @@ fun DeviceSettingsScanScreen(
                     .height(2.dp)
             )
         }
-        OutlinedButton(
-            modifier = Modifier
-                .fillMaxWidth(.5f)
-                .padding(top = MaterialTheme.spacing.small),
+        Button(
+            modifier = Modifier.fillMaxWidth(.5f),
             enabled = isBluetoothEnabled && isBleLocationEnabled,
             onClick = if (uiState.isScanning) onStopScanClicked else onStartScanClicked
         ) {
@@ -371,9 +373,10 @@ fun DeviceSettingsScanScreen(
                 else stringResource(R.string.bluetooth_scan_label)
             )
         }
+        HorizontalDivider()
         LazyColumn(
-            modifier = modifier.padding(MaterialTheme.spacing.medium),
-            verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium, Alignment.Top)
+            verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium, Alignment.Top),
+            contentPadding = PaddingValues(MaterialTheme.spacing.medium)
         ) {
             items(uiState.bleAdvertisements) {
                 AdvertisementItem(it, onDeviceClicked)
@@ -389,7 +392,8 @@ fun DeviceSettingsScanScreen(
 fun DeviceSettingsConnectScreen(
     modifier: Modifier = Modifier,
     uiState: UiState.Connect,
-    onDeviceSettingsChanged: (DeviceSettings) -> Unit
+    onDeviceSettingsChanged: (DeviceSettings) -> Unit,
+    onDisconnectClicked: () -> Unit
 ) {
     val pullRefreshState = rememberPullToRefreshState(enabled = { false })
 
@@ -410,7 +414,7 @@ fun DeviceSettingsConnectScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = uiState.deviceStatus.toString(),
+                text = stringResource(id = uiState.deviceStatus.stringId),
                 modifier = Modifier.padding(top = MaterialTheme.spacing.small)
             )
             HorizontalDivider(
@@ -429,6 +433,15 @@ fun DeviceSettingsConnectScreen(
                         enabled = !uiState.isBusy,
                         onChanged = onDeviceSettingsChanged
                     )
+                    Button(
+                        modifier = Modifier
+                            .fillMaxWidth(.5f)
+                            .padding(top = MaterialTheme.spacing.small),
+                        onClick = onDisconnectClicked,
+                        enabled = !uiState.isBusy
+                    ) {
+                        Text(text = stringResource(id = R.string.disconnect_label))
+                    }
                 }
             }
         }
@@ -534,7 +547,7 @@ fun DeviceSettingsContent(
 //endregion
 
 //region Preview
-@Preview
+@PreviewLightDark
 @Composable
 private fun DeviceSettingsConnectScreenPreview() {
     AppBackground {
@@ -545,23 +558,42 @@ private fun DeviceSettingsConnectScreenPreview() {
                 deviceSettings = DeviceSettings(),
                 isBusy = false
             ),
-            onDeviceSettingsChanged = {}
+            onDeviceSettingsChanged = {},
+            onDisconnectClicked = {}
         )
     }
 }
 
-@Preview
+@PreviewLightDark
 @Composable
 private fun DeviceSettingsScanScreenPreview() {
-    AppBackground(Modifier.fillMaxSize()) {
+    AppBackground {
         DeviceSettingsScanScreen(
             uiState = UiState.Scan(
                 isScanning = true,
                 bleAdvertisements = listOf(
-                    BleAdvertisement("name321", "address", true, true, -50),
-                    BleAdvertisement("name123", "address", false, true, -70),
-                    BleAdvertisement("Aaaaaaaaaaaaaa", "address", true, false, -100),
+                    BleAdvertisement("ESP Monitoring device", "address", true, true, -50),
+                    BleAdvertisement("Name123", "address", false, true, -70),
+                    BleAdvertisement("Name321", "address", false, false, -100),
                 )
+            ),
+            isBluetoothEnabled = true,
+            isBleLocationEnabled = true,
+            onStopScanClicked = {},
+            onStartScanClicked = {},
+            onDeviceClicked = {}
+        )
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun DeviceSettingsScanScreenStatusBarsPreview() {
+    AppBackground {
+        DeviceSettingsScanScreen(
+            uiState = UiState.Scan(
+                isScanning = true,
+                bleAdvertisements = emptyList()
             ),
             isBluetoothEnabled = false,
             isBleLocationEnabled = false,
@@ -572,7 +604,7 @@ private fun DeviceSettingsScanScreenPreview() {
     }
 }
 
-@Preview
+@PreviewLightDark
 @Composable
 private fun PermissionsRequiredScreenTwoPermissionsPreview() {
     AppBackground {
@@ -598,55 +630,6 @@ private fun PermissionsRequiredScreenOnePermissionPreview() {
             bluetoothPermissionsNames = emptyArray(),
             bluetoothPermissionState = PermissionState.DENIED,
             onBluetoothPermissionChanged = {}
-        )
-    }
-}
-
-
-@Preview
-@Composable
-private fun LocationPermissionRationaleDialogPreview() {
-    AppBackground {
-        LocationPermissionRationaleDialog(
-            permissionState = PermissionState.RATIONALE_NEEDED,
-            onRequestPermission = {},
-            onDismiss = {}
-        )
-    }
-}
-
-@Preview
-@Composable
-private fun LocationPermissionDeniedDialogPreview() {
-    AppBackground {
-        LocationPermissionRationaleDialog(
-            permissionState = PermissionState.DENIED,
-            onRequestPermission = {},
-            onDismiss = {}
-        )
-    }
-}
-
-@Preview
-@Composable
-private fun BluetoothPermissionRationaleDialogPreview() {
-    AppBackground {
-        BluetoothPermissionRationaleDialog(
-            permissionState = PermissionState.RATIONALE_NEEDED,
-            onRequestPermission = {},
-            onDismiss = {}
-        )
-    }
-}
-
-@Preview
-@Composable
-private fun BluetoothPermissionDeniedDialogPreview() {
-    AppBackground {
-        BluetoothPermissionRationaleDialog(
-            permissionState = PermissionState.DENIED,
-            onRequestPermission = {},
-            onDismiss = {}
         )
     }
 }

@@ -1,6 +1,5 @@
 package com.julianczaja.esp_monitoring_app.di
 
-import HostSelectionInterceptor
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
@@ -17,6 +16,7 @@ import com.julianczaja.esp_monitoring_app.data.NetworkManager
 import com.julianczaja.esp_monitoring_app.data.local.database.EspMonitoringDatabase
 import com.julianczaja.esp_monitoring_app.data.local.database.dao.DeviceDao
 import com.julianczaja.esp_monitoring_app.data.local.database.dao.PhotoDao
+import com.julianczaja.esp_monitoring_app.data.remote.HostSelectionInterceptor
 import com.julianczaja.esp_monitoring_app.data.remote.RetrofitEspMonitoringApi
 import com.julianczaja.esp_monitoring_app.data.repository.DeviceRepositoryImpl
 import com.julianczaja.esp_monitoring_app.data.repository.PhotoRepositoryImpl
@@ -31,7 +31,6 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -64,10 +63,7 @@ object AppModule {
                 .build()
         )
         .addCallAdapterFactory(ResultCallAdapterFactory())
-        .addConverterFactory(
-            @OptIn(ExperimentalSerializationApi::class)
-            networkJson.asConverterFactory("application/json".toMediaType())
-        )
+        .addConverterFactory(networkJson.asConverterFactory("application/json".toMediaType()))
         .build()
         .create(RetrofitEspMonitoringApi::class.java)
 

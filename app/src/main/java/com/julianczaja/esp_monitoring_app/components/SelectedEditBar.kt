@@ -4,9 +4,9 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
@@ -19,13 +19,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.compose.ui.unit.dp
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 
 
 @Composable
-fun ColumnScope.SelectedEditBar(
+fun SelectedEditBar(
     isSelectionMode: Boolean,
     removeSelectedPhotos: () -> Unit,
     saveSelectedPhotos: (() -> Unit)? = null,
@@ -67,18 +68,16 @@ fun ColumnScope.SelectedEditBar(
 }
 
 //region Preview
-@Preview(heightDp = 100)
+@PreviewLightDark
 @Composable
 private fun SelectedEditBarPreview() {
-    AppBackground {
-        Column {
-            SelectedEditBar(
-                isSelectionMode = true,
-                removeSelectedPhotos = {},
-                saveSelectedPhotos = {},
-                resetSelections = {}
-            )
-        }
+    AppBackground(Modifier.height(100.dp)) {
+        SelectedEditBar(
+            isSelectionMode = true,
+            removeSelectedPhotos = {},
+            saveSelectedPhotos = {},
+            resetSelections = {}
+        )
     }
 }
 //endregion

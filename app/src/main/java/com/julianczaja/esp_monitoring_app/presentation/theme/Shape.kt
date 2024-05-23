@@ -1,3 +1,5 @@
+
+
 package com.julianczaja.esp_monitoring_app.presentation.theme
 
 import androidx.compose.material3.MaterialTheme
@@ -16,6 +18,7 @@ data class Shape(
 
 internal val LocalShape = staticCompositionLocalOf { Shape() }
 
+@Suppress("UnusedReceiverParameter")
 val MaterialTheme.shape: Shape
     @Composable
     @ReadOnlyComposable

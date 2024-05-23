@@ -20,9 +20,11 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.julianczaja.esp_monitoring_app.R
+import com.julianczaja.esp_monitoring_app.components.AppBackground
 import com.julianczaja.esp_monitoring_app.components.DefaultDialog
 import com.julianczaja.esp_monitoring_app.components.DefaultProgressIndicator
 import com.julianczaja.esp_monitoring_app.components.DialogOneButton
@@ -31,7 +33,6 @@ import com.julianczaja.esp_monitoring_app.components.ErrorText
 import com.julianczaja.esp_monitoring_app.domain.model.Device
 import com.julianczaja.esp_monitoring_app.presentation.removedevice.RemoveDeviceDialogViewModel.Event
 import com.julianczaja.esp_monitoring_app.presentation.removedevice.RemoveDeviceDialogViewModel.UiState
-import com.julianczaja.esp_monitoring_app.presentation.theme.AppTheme
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 
 
@@ -136,10 +137,10 @@ private fun RemoveNewDeviceDialogContentError(
     }
 }
 
-@Preview
+@PreviewLightDark
 @Composable
 fun RemoveNewDeviceDialogContentSuccessPreview() {
-    AppTheme {
+    AppBackground {
         val secondaryColor = MaterialTheme.colorScheme.secondary
         RemoveNewDeviceDialogContent(
             onDismiss = {},
@@ -158,7 +159,7 @@ fun RemoveNewDeviceDialogContentSuccessPreview() {
 @Preview
 @Composable
 fun RemoveNewDeviceDialogContentErrorPreview() {
-    AppTheme {
+    AppBackground {
         RemoveNewDeviceDialogContent(
             onDismiss = {},
             uiState = UiState.Error(R.string.internal_app_error_message),
@@ -171,7 +172,7 @@ fun RemoveNewDeviceDialogContentErrorPreview() {
 @Preview
 @Composable
 fun RemoveNewDeviceDialogContentLoadingPreview() {
-    AppTheme {
+    AppBackground {
         RemoveNewDeviceDialogContent(
             onDismiss = {},
             uiState = UiState.Loading,

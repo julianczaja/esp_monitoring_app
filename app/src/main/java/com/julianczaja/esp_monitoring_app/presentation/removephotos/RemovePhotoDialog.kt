@@ -21,9 +21,11 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.julianczaja.esp_monitoring_app.R
+import com.julianczaja.esp_monitoring_app.components.AppBackground
 import com.julianczaja.esp_monitoring_app.components.DefaultDialog
 import com.julianczaja.esp_monitoring_app.components.DefaultProgressIndicator
 import com.julianczaja.esp_monitoring_app.components.DialogOneButton
@@ -31,7 +33,6 @@ import com.julianczaja.esp_monitoring_app.components.DialogTwoButtons
 import com.julianczaja.esp_monitoring_app.components.ErrorText
 import com.julianczaja.esp_monitoring_app.presentation.removephotos.RemovePhotosDialogViewModel.Event
 import com.julianczaja.esp_monitoring_app.presentation.removephotos.RemovePhotosDialogViewModel.UiState
-import com.julianczaja.esp_monitoring_app.presentation.theme.AppTheme
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 
 
@@ -150,10 +151,10 @@ private fun RemoveNewPhotoDialogContentError(
 }
 
 //region Preview
-@Preview
+@PreviewLightDark
 @Composable
 fun RemovePhotosDialogContentSuccessPreviewMultiplePhotos() {
-    AppTheme {
+    AppBackground {
         val secondaryColor = MaterialTheme.colorScheme.secondary
         RemovePhotosDialogContent(
             onDismiss = {},
@@ -173,10 +174,10 @@ fun RemovePhotosDialogContentSuccessPreviewMultiplePhotos() {
     }
 }
 
-@Preview
+@PreviewLightDark
 @Composable
 fun RemovePhotosDialogContentSuccessPreviewSinglePhoto() {
-    AppTheme {
+    AppBackground {
         val secondaryColor = MaterialTheme.colorScheme.secondary
         RemovePhotosDialogContent(
             onDismiss = {},
@@ -199,7 +200,7 @@ fun RemovePhotosDialogContentSuccessPreviewSinglePhoto() {
 @Preview
 @Composable
 fun RemoveNewPhotoDialogContentErrorPreview() {
-    AppTheme {
+    AppBackground {
         RemovePhotosDialogContent(
             onDismiss = {},
             uiState = UiState.Error(R.string.internal_app_error_message),
@@ -212,7 +213,7 @@ fun RemoveNewPhotoDialogContentErrorPreview() {
 @Preview
 @Composable
 fun RemoveNewPhotoDialogContentLoadingPreview() {
-    AppTheme {
+    AppBackground {
         RemovePhotosDialogContent(
             onDismiss = {},
             uiState = UiState.Loading,
