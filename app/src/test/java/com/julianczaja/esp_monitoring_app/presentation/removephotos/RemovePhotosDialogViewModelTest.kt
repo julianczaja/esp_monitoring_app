@@ -6,7 +6,7 @@ import com.google.common.truth.Truth.assertThat
 import com.julianczaja.esp_monitoring_app.data.repository.FakePhotoRepositoryImpl
 import com.julianczaja.esp_monitoring_app.domain.repository.PhotoRepository
 import com.julianczaja.esp_monitoring_app.navigation.RemovePhotosDialogParameters
-import com.julianczaja.esp_monitoring_app.presentation.devices.MainDispatcherRule
+import com.julianczaja.esp_monitoring_app.MainDispatcherRule
 import io.mockk.coVerify
 import io.mockk.spyk
 import kotlinx.coroutines.test.runTest

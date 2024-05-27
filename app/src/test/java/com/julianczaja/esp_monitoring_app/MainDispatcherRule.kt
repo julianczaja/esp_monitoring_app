@@ -1,4 +1,4 @@
-package com.julianczaja.esp_monitoring_app.presentation.devices
+package com.julianczaja.esp_monitoring_app
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi

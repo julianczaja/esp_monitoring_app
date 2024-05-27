@@ -6,7 +6,7 @@ import com.google.common.truth.Truth.assertThat
 import com.julianczaja.esp_monitoring_app.data.repository.FakeDeviceRepositoryImpl
 import com.julianczaja.esp_monitoring_app.domain.model.Device
 import com.julianczaja.esp_monitoring_app.domain.repository.DeviceRepository
-import com.julianczaja.esp_monitoring_app.presentation.devices.MainDispatcherRule
+import com.julianczaja.esp_monitoring_app.MainDispatcherRule
 import io.mockk.coVerify
 import io.mockk.spyk
 import kotlinx.coroutines.test.runTest

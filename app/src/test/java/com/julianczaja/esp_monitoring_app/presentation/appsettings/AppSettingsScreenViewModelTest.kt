@@ -6,7 +6,7 @@ import com.julianczaja.esp_monitoring_app.domain.model.AppSettings
 import com.julianczaja.esp_monitoring_app.domain.repository.AppSettingsRepository
 import com.julianczaja.esp_monitoring_app.presentation.appsettings.AppSettingsScreenViewModel.Event
 import com.julianczaja.esp_monitoring_app.presentation.appsettings.AppSettingsScreenViewModel.UiState
-import com.julianczaja.esp_monitoring_app.presentation.devices.MainDispatcherRule
+import com.julianczaja.esp_monitoring_app.MainDispatcherRule
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk

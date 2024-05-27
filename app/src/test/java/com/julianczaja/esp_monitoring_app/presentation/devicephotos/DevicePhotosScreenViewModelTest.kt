@@ -9,7 +9,7 @@ import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.domain.model.SelectablePhoto
 import com.julianczaja.esp_monitoring_app.navigation.DeviceIdArgs
 import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DevicePhotosScreenViewModel.UiState
-import com.julianczaja.esp_monitoring_app.presentation.devices.MainDispatcherRule
+import com.julianczaja.esp_monitoring_app.MainDispatcherRule
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk

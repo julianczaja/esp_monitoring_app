@@ -8,7 +8,7 @@ import com.julianczaja.esp_monitoring_app.domain.model.Device
 import com.julianczaja.esp_monitoring_app.domain.repository.DeviceRepository
 import com.julianczaja.esp_monitoring_app.navigation.DeviceIdArgs
 import com.julianczaja.esp_monitoring_app.presentation.addeditdevice.AddEditDeviceScreenViewModel.Event
-import com.julianczaja.esp_monitoring_app.presentation.devices.MainDispatcherRule
+import com.julianczaja.esp_monitoring_app.MainDispatcherRule
 import io.mockk.coVerify
 import io.mockk.spyk
 import kotlinx.coroutines.test.runTest

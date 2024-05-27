@@ -2,6 +2,7 @@ package com.julianczaja.esp_monitoring_app.presentation.devices
 
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
+import com.julianczaja.esp_monitoring_app.MainDispatcherRule
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.data.repository.FakeDeviceRepositoryImpl
 import com.julianczaja.esp_monitoring_app.domain.model.Device
