@@ -126,10 +126,8 @@ class AddEditDeviceScreenViewModelTest {
         val deviceId = 1L
         val deviceInDatabase = Device(deviceId, "name")
         val savedStateHandle = SavedStateHandle().apply { set(DeviceIdArgs.KEY, deviceId) }
-        val deviceRepository = spyk(FakeDeviceRepositoryImpl())
+        val deviceRepository = spyk(FakeDeviceRepositoryImpl().apply { addNew(deviceInDatabase) })
         val viewModel = getViewModel(savedStateHandle, deviceRepository)
-
-        deviceRepository.addNew(deviceInDatabase)
 
         viewModel.nameError.test {
             assertThat(awaitItem()).isNull()
@@ -161,10 +159,8 @@ class AddEditDeviceScreenViewModelTest {
         val deviceId = 1L
         val deviceInDatabase = Device(deviceId, "name")
         val savedStateHandle = SavedStateHandle().apply { set(DeviceIdArgs.KEY, deviceId) }
-        val deviceRepository = FakeDeviceRepositoryImpl()
+        val deviceRepository = FakeDeviceRepositoryImpl().apply { addNew(deviceInDatabase) }
         val viewModel = getViewModel(savedStateHandle, deviceRepository)
-
-        deviceRepository.addNew(deviceInDatabase)
 
         viewModel.eventFlow.test {
             viewModel.updateName("updated name")
@@ -195,11 +191,11 @@ class AddEditDeviceScreenViewModelTest {
         val deviceId = 1L
         val deviceInDatabase = Device(deviceId, "name")
         val savedStateHandle = SavedStateHandle().apply { set(DeviceIdArgs.KEY, deviceId) }
-        val deviceRepository = FakeDeviceRepositoryImpl()
+        val deviceRepository = FakeDeviceRepositoryImpl().apply {
+            addNew(deviceInDatabase)
+            updateDeviceThrowsError = true
+        }
         val viewModel = getViewModel(savedStateHandle, deviceRepository)
-
-        deviceRepository.addNew(deviceInDatabase)
-        deviceRepository.updateDeviceThrowsError = true
 
         viewModel.eventFlow.test {
             viewModel.updateName("updated name")

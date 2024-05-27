@@ -20,7 +20,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -32,21 +32,19 @@ class RemoveDeviceDialogViewModel @Inject constructor(
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
 
-     private val deviceId = savedStateHandle.toRoute<RemoveDeviceDialog>().deviceId
+    private val deviceId = savedStateHandle.toRoute<RemoveDeviceDialog>().deviceId
 
     val eventFlow = MutableSharedFlow<Event>()
 
     private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
     val uiState = _uiState.asStateFlow()
 
-    init {
-        viewModelScope.launch(ioDispatcher) {
-            val device = deviceRepository.getDeviceById(deviceId).first()
-            if (device != null) {
-                _uiState.update { UiState.Success(device) }
-            } else {
-                _uiState.update { UiState.Error(R.string.internal_app_error_message) }
-            }
+    fun init() = viewModelScope.launch(ioDispatcher) {
+        val device = deviceRepository.getDeviceById(deviceId).firstOrNull()
+        if (device != null) {
+            _uiState.update { UiState.Success(device) }
+        } else {
+            _uiState.update { UiState.Error(R.string.internal_app_error_message) }
         }
     }
 
