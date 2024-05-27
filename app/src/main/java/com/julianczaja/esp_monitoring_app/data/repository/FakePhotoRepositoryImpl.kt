@@ -12,6 +12,8 @@ class FakePhotoRepositoryImpl : PhotoRepository {
     private val _allPhotosLocalFlow = MutableSharedFlow<List<Photo>>(replay = 1, extraBufferCapacity = 1)
 
     var updateAllPhotosReturnsException = false
+    var removePhotoByFileNameLocalReturnsException = false
+    var removePhotoByFileNameRemoteReturnsException = false
     var remotePhotos = emptyList<Photo>()
 
     suspend fun emitAllPhotosLocalData(data: List<Photo>) = _allPhotosLocalFlow.emit(data)
@@ -44,11 +46,15 @@ class FakePhotoRepositoryImpl : PhotoRepository {
         TODO("Not yet implemented")
     }
 
-    override suspend fun removePhotoByFileNameLocal(fileName: String): Result<Unit> {
-        return Result.success(Unit)
-    }
+    override suspend fun removePhotoByFileNameLocal(fileName: String): Result<Unit> =
+        when (removePhotoByFileNameLocalReturnsException) {
+            true -> Result.failure(Exception())
+            false -> Result.success(Unit)
+        }
 
-    override suspend fun removePhotoByFileNameRemote(fileName: String): Result<Unit> {
-        return Result.success(Unit)
-    }
+    override suspend fun removePhotoByFileNameRemote(fileName: String): Result<Unit> =
+        when (removePhotoByFileNameRemoteReturnsException) {
+            true -> Result.failure(Exception())
+            false -> Result.success(Unit)
+        }
 }
