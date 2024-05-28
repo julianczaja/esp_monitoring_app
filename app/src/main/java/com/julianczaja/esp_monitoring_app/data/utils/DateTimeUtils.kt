@@ -6,6 +6,7 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import java.time.Instant
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneOffset
@@ -43,6 +44,10 @@ fun LocalDateTime.toPrettyString(): String = this.format(localDateTimePrettyForm
 fun LocalDateTime.toExifString(): String = this.format(localDateTimeExifFormatter)
 
 fun LocalTime.toPrettyString(): String = this.format(localTimePrettyFormatter)
+
+fun LocalDate.toDayString(): String = this.format(DateTimeFormatter.ofPattern("d"))
+
+fun LocalDate.toMonthString(): String = this.format(DateTimeFormatter.ofPattern("MMM"))
 
 object LocalDateTimeAsStringSerializer : KSerializer<LocalDateTime> {
     override val descriptor = PrimitiveSerialDescriptor("LocalDateTimeAsStringSerializer", PrimitiveKind.STRING)

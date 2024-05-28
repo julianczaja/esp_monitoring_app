@@ -3,11 +3,13 @@ package com.julianczaja.esp_monitoring_app.presentation.devicephotos
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -19,8 +21,11 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -35,6 +40,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.components.AppBackground
 import com.julianczaja.esp_monitoring_app.components.PermissionRationaleDialog
+import com.julianczaja.esp_monitoring_app.components.PhotosDateFilterBar
 import com.julianczaja.esp_monitoring_app.components.SelectablePhotosLazyGrid
 import com.julianczaja.esp_monitoring_app.components.SelectedEditBar
 import com.julianczaja.esp_monitoring_app.components.StateBar
@@ -45,10 +51,13 @@ import com.julianczaja.esp_monitoring_app.data.utils.getReadExternalStoragePermi
 import com.julianczaja.esp_monitoring_app.data.utils.openAppSettings
 import com.julianczaja.esp_monitoring_app.domain.model.PermissionState
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
+import com.julianczaja.esp_monitoring_app.domain.model.SelectableLocalDate
 import com.julianczaja.esp_monitoring_app.domain.model.SelectablePhoto
 import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DevicePhotosScreenViewModel.Event
 import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DevicePhotosScreenViewModel.UiState
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -141,7 +150,8 @@ fun DevicePhotosScreen(
         },
         removeSelectedPhotos = viewModel::removeSelectedPhotos,
         onPhotoClick = viewModel::onPhotoClick,
-        onPhotoLongClick = viewModel::onPhotoLongClick
+        onPhotoLongClick = viewModel::onPhotoLongClick,
+        onFilterDateClicked = viewModel::onFilterDateClicked,
     )
 }
 
@@ -155,6 +165,7 @@ private fun DevicePhotosScreenContent(
     removeSelectedPhotos: () -> Unit,
     onPhotoClick: (SelectablePhoto) -> Unit,
     onPhotoLongClick: (SelectablePhoto) -> Unit,
+    onFilterDateClicked: (SelectableLocalDate) -> Unit,
 ) {
     val pullRefreshState = rememberPullToRefreshState(enabled = { uiState.isOnline })
 
@@ -182,18 +193,72 @@ private fun DevicePhotosScreenContent(
 
             when (uiState.dateGroupedSelectablePhotos.isEmpty()) {
                 true -> DevicePhotosEmptyScreen()
-                false -> SelectablePhotosLazyGrid(
+                false -> DevicePhotosNotEmptyScreen(
                     modifier = Modifier.fillMaxSize(),
-                    dateGroupedSelectablePhotos = uiState.dateGroupedSelectablePhotos,
-                    isSelectionMode = uiState.isSelectionMode,
+                    uiState = uiState,
                     onPhotoClick = onPhotoClick,
-                    onPhotoLongClick = onPhotoLongClick
+                    onPhotoLongClick = onPhotoLongClick,
+                    onFilterDateClicked = onFilterDateClicked
                 )
             }
         }
         PullToRefreshContainer(
             modifier = Modifier.align(Alignment.TopCenter),
             state = pullRefreshState,
+        )
+    }
+}
+
+@Composable
+private fun DevicePhotosNotEmptyScreen(
+    modifier: Modifier = Modifier,
+    uiState: UiState,
+    onPhotoClick: (SelectablePhoto) -> Unit,
+    onPhotoLongClick: (SelectablePhoto) -> Unit,
+    onFilterDateClicked: (SelectableLocalDate) -> Unit,
+) {
+    val coroutineScope = rememberCoroutineScope()
+    val lazyGridState = rememberLazyGridState()
+    val visibleItemKey by remember {
+        derivedStateOf {
+            val layoutInfo = lazyGridState.layoutInfo
+            val visibleItemsInfo = layoutInfo.visibleItemsInfo
+
+            if (layoutInfo.totalItemsCount == 0) return@derivedStateOf null
+
+            val visibleKey = if (visibleItemsInfo.last().index == layoutInfo.totalItemsCount - 1) {
+                visibleItemsInfo.last()
+            } else {
+                visibleItemsInfo.first()
+            }
+            return@derivedStateOf (visibleKey.key as? LocalDate)
+                ?: (visibleKey.key as? LocalDateTime)?.toLocalDate()
+        }
+    }
+
+    Column(
+        modifier = modifier
+    ) {
+        AnimatedVisibility(visible = uiState.selectableFilterDates.size > 1) {
+            PhotosDateFilterBar(
+                dates = uiState.selectableFilterDates,
+                highlightedDate = visibleItemKey,
+                onDateClicked = {
+                    onFilterDateClicked(it)
+                    coroutineScope.launch {
+                        delay(100) // fixme: wait until filtering is finished
+                        lazyGridState.scrollToItem(0)
+                    }
+                }
+            )
+        }
+        SelectablePhotosLazyGrid(
+            modifier = Modifier.fillMaxSize(),
+            dateGroupedSelectablePhotos = uiState.dateGroupedSelectablePhotos,
+            isSelectionMode = uiState.isSelectionMode,
+            state = lazyGridState,
+            onPhotoClick = onPhotoClick,
+            onPhotoLongClick = onPhotoLongClick
         )
     }
 }
@@ -254,8 +319,12 @@ private fun DevicePhotosStateItemsPreview() {
                 isLoading = false,
                 isOnline = false,
                 isSelectionMode = false,
+                selectableFilterDates = listOf(
+                    SelectableLocalDate(LocalDate.of(2023, 1, 2), true),
+                    SelectableLocalDate(LocalDate.of(2023, 1, 1), false),
+                )
             ),
-            {}, {}, {}, {}, {}, {},
+            {}, {}, {}, {}, {}, {}, {}
         )
     }
 
@@ -271,8 +340,9 @@ private fun DevicePhotosStateSuccessNoItemsPreview() {
                 isLoading = false,
                 isOnline = true,
                 isSelectionMode = false,
+                selectableFilterDates = emptyList()
             ),
-            {}, {}, {}, {}, {}, {},
+            {}, {}, {}, {}, {}, {}, {}
         )
     }
 }

@@ -7,14 +7,17 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyGridItemScope
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -50,37 +53,47 @@ fun SelectablePhotosLazyGrid(
     dateGroupedSelectablePhotos: Map<LocalDate, List<SelectablePhoto>>,
     isSelectionMode: Boolean,
     minSize: Dp = DEFAULT_PHOTO_WIDTH.dp,
+    state: LazyGridState = rememberLazyGridState(),
     onPhotoClick: (SelectablePhoto) -> Unit,
     onPhotoLongClick: (SelectablePhoto) -> Unit,
 ) {
     LazyVerticalGrid(
         modifier = modifier,
         columns = GridCells.Adaptive(minSize),
+        state = state,
         contentPadding = PaddingValues(MaterialTheme.spacing.medium),
         horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium, Alignment.CenterHorizontally),
         verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium, Alignment.Top)
     ) {
         dateGroupedSelectablePhotos.onEachIndexed { index, (localDate, photos) ->
-            header {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(
-                        space = MaterialTheme.spacing.medium,
-                        alignment = Alignment.CenterHorizontally
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.DateRange,
-                        contentDescription = null
-                    )
-                    Text(
-                        text = localDate.toString(),
-                        style = MaterialTheme.typography.bodyLarge
-                    )
+            header(key = localDate) {
+                Column {
+                    if (index > 0) {
+                        HorizontalDivider(
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(MaterialTheme.spacing.small)
+                        )
+                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(
+                            space = MaterialTheme.spacing.medium,
+                            alignment = Alignment.CenterHorizontally
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.DateRange,
+                            contentDescription = null
+                        )
+                        Text(
+                            text = localDate.toString(),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
                 }
             }
-            items(photos, key = { it.photo.fileName }) { selectablePhoto ->
+            items(photos, key = { it.photo.dateTime }) { selectablePhoto ->
                 SelectableDevicePhoto(
                     selectablePhoto = selectablePhoto,
                     isSelectionMode = isSelectionMode,
@@ -88,14 +101,6 @@ fun SelectablePhotosLazyGrid(
                     onClick = onPhotoClick,
                     onLongClick = onPhotoLongClick
                 )
-            }
-            if (index < dateGroupedSelectablePhotos.size - 1) {
-                header {
-                    HorizontalDivider(
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(MaterialTheme.spacing.small)
-                    )
-                }
             }
         }
     }

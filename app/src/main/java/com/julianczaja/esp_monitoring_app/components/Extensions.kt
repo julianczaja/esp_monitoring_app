@@ -7,9 +7,11 @@ import androidx.compose.runtime.Composable
 
 
 fun LazyGridScope.header(
+    key: Any? = null,
     content: @Composable LazyGridItemScope.() -> Unit,
 ) {
     item(
+        key = key,
         span = { GridItemSpan(this.maxLineSpan) },
         content = content
     )

@@ -8,20 +8,23 @@ import androidx.navigation.toRoute
 import com.julianczaja.esp_monitoring_app.data.NetworkManager
 import com.julianczaja.esp_monitoring_app.di.IoDispatcher
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
+import com.julianczaja.esp_monitoring_app.domain.model.SelectableLocalDate
 import com.julianczaja.esp_monitoring_app.domain.model.SelectablePhoto
 import com.julianczaja.esp_monitoring_app.domain.model.getErrorMessageId
 import com.julianczaja.esp_monitoring_app.domain.repository.PhotoRepository
 import com.julianczaja.esp_monitoring_app.navigation.DeviceScreen
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -41,6 +44,8 @@ class DevicePhotosScreenViewModel @Inject constructor(
 
     private val _selectedPhotos = MutableStateFlow<List<Photo>>(emptyList())
 
+    private val _selectableFilterDates = MutableStateFlow<List<SelectableLocalDate>>(emptyList())
+
     private var _isSelectionMode = false
 
     private val _isSaving = MutableStateFlow(false)
@@ -51,36 +56,65 @@ class DevicePhotosScreenViewModel @Inject constructor(
 
     val eventFlow = MutableSharedFlow<Event>()
 
-    val devicePhotosUiState: StateFlow<UiState> = devicePhotosUiState()
+    val devicePhotosUiState: StateFlow<UiState> = combine(
+        localFilteredGroupedSelectablePhotosFlow(),
+        isLoadingFlow(),
+        _isOnline,
+        _selectedPhotos
+    ) { (filterDates, filteredGroupedPhotos), isLoading, isOnline, selectedPhotos ->
+        _isSelectionMode = selectedPhotos.isNotEmpty()
+        UiState(
+            dateGroupedSelectablePhotos = filteredGroupedPhotos,
+            selectableFilterDates = filterDates,
+            isLoading = isLoading,
+            isOnline = isOnline,
+            isSelectionMode = _isSelectionMode
+        )
+    }
+        .flowOn(ioDispatcher)
+        .catch { eventFlow.emit(Event.ShowError(it.getErrorMessageId())) }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = UiState(
                 dateGroupedSelectablePhotos = emptyMap(),
+                selectableFilterDates = emptyList(),
                 isLoading = false,
                 isOnline = true,
                 isSelectionMode = false
             )
         )
 
-    private fun devicePhotosUiState(): Flow<UiState> =
-        combine(
-            photoRepository.getAllPhotosLocal(deviceId),
-            _isRefreshing,
-            _isSaving,
-            _isOnline,
-            _selectedPhotos
-        ) { photos, isRefreshing, isSaving, isOnline, selectedPhotos ->
-            _isSelectionMode = selectedPhotos.isNotEmpty()
-            UiState(
-                dateGroupedSelectablePhotos = groupPhotosByDayDesc(photos),
-                isLoading = isRefreshing || isSaving,
-                isOnline = isOnline,
-                isSelectionMode = _isSelectionMode,
-            )
+    private fun localFilteredGroupedSelectablePhotosFlow() = combine(
+        localGroupedSelectablePhotosFlow(), _selectableFilterDates
+    ) { localPhotos, filterDates ->
+        val selectedDates = filterDates.filter { it.isSelected }
+        val filteredPhotos = localPhotos.filter { photo ->
+            when (selectedDates.isEmpty()) {
+                true -> true
+                false -> selectedDates.any { it.date == photo.key }
+            }
         }
-            .flowOn(ioDispatcher)
-            .catch { eventFlow.emit(Event.ShowError(it.getErrorMessageId())) }
+        return@combine (filterDates to filteredPhotos)
+    }
+
+    private fun localGroupedSelectablePhotosFlow() = photoRepository.getAllPhotosLocal(deviceId)
+        .distinctUntilChanged()
+        .map(::groupPhotosByDayDesc)
+        .onEach { groupedPhotos ->
+            val oldDates = _selectableFilterDates.value
+            val newDates = groupedPhotos.keys
+
+            _selectableFilterDates.update {
+                newDates.map { newDate ->
+                    oldDates.find { it.date == newDate } ?: SelectableLocalDate(newDate, false)
+                }
+            }
+        }
+
+    private fun isLoadingFlow() = combine(_isSaving, _isRefreshing) { isSaving, isRefreshing ->
+        return@combine isRefreshing || isSaving
+    }
 
     fun updatePhotos() {
         _isRefreshing.update { true }
@@ -110,6 +144,14 @@ class DevicePhotosScreenViewModel @Inject constructor(
                 photos + selectablePhoto.photo
             } else {
                 photos - selectablePhoto.photo
+            }
+        }
+    }
+
+    fun onFilterDateClicked(selectableLocalDate: SelectableLocalDate) {
+        _selectableFilterDates.update { dates ->
+            dates.map {
+                if (it.date == selectableLocalDate.date) it.copy(isSelected = !it.isSelected) else it
             }
         }
     }
@@ -164,6 +206,7 @@ class DevicePhotosScreenViewModel @Inject constructor(
     @Immutable
     data class UiState(
         val dateGroupedSelectablePhotos: Map<LocalDate, List<SelectablePhoto>>,
+        val selectableFilterDates: List<SelectableLocalDate>,
         val isLoading: Boolean,
         val isOnline: Boolean,
         val isSelectionMode: Boolean
