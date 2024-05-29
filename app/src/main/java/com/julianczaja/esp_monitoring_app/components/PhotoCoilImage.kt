@@ -12,6 +12,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import coil.compose.SubcomposeAsyncImage
+import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.julianczaja.esp_monitoring_app.domain.model.getErrorMessageId
 
@@ -30,6 +31,8 @@ fun PhotoCoilImage(
         contentDescription = null,
         model = ImageRequest.Builder(context)
             .data(data)
+            .memoryCachePolicy(CachePolicy.DISABLED)
+            .diskCachePolicy(CachePolicy.ENABLED)
             .crossfade(true)
             .build(),
         loading = {

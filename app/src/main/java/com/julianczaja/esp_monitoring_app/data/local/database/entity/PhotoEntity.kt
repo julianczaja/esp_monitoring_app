@@ -29,6 +29,8 @@ data class PhotoEntity(
     @ColumnInfo(defaultValue = "unknownSize")
     val size: String,
     val url: String,
+    @ColumnInfo(defaultValue = "")
+    val thumbnailUrl: String,
 ) : BaseEntity
 
 fun PhotoEntity.toPhoto() = Photo(
@@ -36,5 +38,6 @@ fun PhotoEntity.toPhoto() = Photo(
     dateTime = dateTime.toDefaultFormatLocalDateTime(),
     fileName = fileName,
     size = size,
-    url = url
+    url = url,
+    thumbnailUrl = thumbnailUrl,
 )

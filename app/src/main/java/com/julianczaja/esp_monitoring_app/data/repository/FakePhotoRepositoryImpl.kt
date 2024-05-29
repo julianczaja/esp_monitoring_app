@@ -24,7 +24,7 @@ class FakePhotoRepositoryImpl : PhotoRepository {
         TODO("Not yet implemented")
     }
 
-    override suspend fun updateAllPhotosRemote(deviceId: Long, from: Long?, to: Long?): Result<Unit> {
+    override suspend fun updateAllPhotosRemote(deviceId: Long): Result<Unit> {
         delay(1000)
         return if (updateAllPhotosReturnsException) {
             Result.failure(Exception("error"))

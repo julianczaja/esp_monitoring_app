@@ -14,6 +14,7 @@ data class Photo(
     val fileName: String,
     val size: String,
     val url: String,
+    val thumbnailUrl: String,
 )
 
 fun Photo.toPhotoEntity() = PhotoEntity(
@@ -21,5 +22,6 @@ fun Photo.toPhotoEntity() = PhotoEntity(
     dateTime = dateTime.toDefaultFormatString(),
     fileName = fileName,
     size = size,
-    url = url
+    url = url,
+    thumbnailUrl = thumbnailUrl,
 )

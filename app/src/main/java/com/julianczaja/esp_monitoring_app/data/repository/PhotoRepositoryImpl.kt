@@ -49,14 +49,13 @@ class PhotoRepositoryImpl @Inject constructor(
 
     override suspend fun removePhotoByFileNameRemote(fileName: String) = api.removePhoto(fileName)
 
-    override suspend fun updateAllPhotosRemote(deviceId: Long, from: Long?, to: Long?): Result<Unit> {
+    override suspend fun updateAllPhotosRemote(deviceId: Long): Result<Unit> {
         var result = Result.success(Unit)
-        api.getDevicePhotos(deviceId, from, to)
+        api.getDevicePhotos(deviceId)
             .onFailure { result = Result.failure(it) }
             .onSuccess { refreshPhotosCache(deviceId, it) }
         return result
     }
-
 
     override suspend fun downloadPhotoAndSaveToExternalStorage(photo: Photo): Result<Unit> {
         if (Environment.getExternalStorageState() != Environment.MEDIA_MOUNTED) {
@@ -144,7 +143,8 @@ class PhotoRepositoryImpl @Inject constructor(
                             dateTime = date.millisToDefaultFormatLocalDateTime(),
                             fileName = fileName,
                             size = "${width}x${height}",
-                            url = contentUri.toString()
+                            url = contentUri.toString(),
+                            thumbnailUrl = contentUri.toString()
                         )
                         photos.add(photo)
                     } catch (e: Exception) {

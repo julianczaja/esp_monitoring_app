@@ -63,7 +63,7 @@ class DevicePhotosScreenViewModelTest {
 
     @Test
     fun `isRefreshing should be true after updatePhotos has been called`() = runTest {
-        val remotePhotos = listOf(Photo(1L, LocalDateTime.MAX, "", "", ""))
+        val remotePhotos = listOf(Photo(1L, LocalDateTime.MAX, "", "", "", ""))
         photoRepository.remotePhotos = remotePhotos
 
         viewModel.devicePhotosUiState.test {
@@ -84,8 +84,9 @@ class DevicePhotosScreenViewModelTest {
             deviceId = deviceId,
             dateTime = LocalDateTime.of(2022, 1, 1, 1, 1, 1),
             fileName = "fileName",
+            size = "100x500",
             url = "url",
-            size = "100x500"
+            thumbnailUrl = "thumbnailUrl"
         )
         val localPhotos = listOf(photo)
         val dateGroupedSelectablePhotos = mapOf(

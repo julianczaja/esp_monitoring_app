@@ -138,7 +138,7 @@ private fun LazyGridItemScope.SelectableDevicePhoto(
     ) {
         PhotoCoilImage(
             modifier = Modifier.align(Alignment.Center),
-            data = selectablePhoto.photo.url,
+            data = selectablePhoto.photo.thumbnailUrl,
             height = minSize,
         )
         if (isSelectionMode) {
@@ -173,25 +173,25 @@ fun SelectableDevicePhotoPreview() {
     val dateGroupedSelectablePhotos = mapOf(
         LocalDate.of(2023, 1, 1) to listOf(
             SelectablePhoto(
-                photo = Photo(123L, LocalDateTime.of(2023, 1, 1, 10, 10), "fileName 1", "1600x1200", "url"),
+                photo = Photo(123L, LocalDateTime.of(2023, 1, 1, 10, 10), "fileName 1", "1600x1200", "url", "url"),
                 isSelected = false
             ),
             SelectablePhoto(
-                photo = Photo(123L, LocalDateTime.of(2023, 1, 1, 10, 11), "fileName 2", "1600x1200", "url"),
+                photo = Photo(123L, LocalDateTime.of(2023, 1, 1, 10, 11), "fileName 2", "1600x1200", "url", "url"),
                 isSelected = false
             ),
             SelectablePhoto(
-                photo = Photo(123L, LocalDateTime.of(2023, 1, 1, 10, 12), "fileName 3", "1600x1200", "url"),
+                photo = Photo(123L, LocalDateTime.of(2023, 1, 1, 10, 12), "fileName 3", "1600x1200", "url", "url"),
                 isSelected = false
             ),
         ),
         LocalDate.of(2023, 1, 2) to listOf(
             SelectablePhoto(
-                photo = Photo(123L, LocalDateTime.of(2023, 1, 2, 10, 13), "fileName 4", "1600x1200", "url"),
+                photo = Photo(123L, LocalDateTime.of(2023, 1, 2, 10, 13), "fileName 4", "1600x1200", "url", "url"),
                 isSelected = false
             ),
             SelectablePhoto(
-                photo = Photo(123L, LocalDateTime.of(2023, 1, 2, 10, 14), "fileName 5", "1600x1200", "url"),
+                photo = Photo(123L, LocalDateTime.of(2023, 1, 2, 10, 14), "fileName 5", "1600x1200", "url", "url"),
                 isSelected = false
             ),
         )

@@ -35,6 +35,7 @@ import androidx.constraintlayout.compose.Dimension
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.SubcomposeAsyncImage
+import coil.request.CachePolicy
 import coil.request.ImageRequest
 import coil.size.Scale
 import com.julianczaja.esp_monitoring_app.R
@@ -141,10 +142,12 @@ fun PhotoPreview(
             SubcomposeAsyncImage(
                 model = ImageRequest.Builder(context)
                     .data(uiState.photos[page].url)
-                    .scale(Scale.FIT)
+                    .memoryCachePolicy(CachePolicy.ENABLED)
+                    .diskCachePolicy(CachePolicy.DISABLED)
+                    .scale(Scale.FILL)
                     .crossfade(true)
                     .build(),
-                contentScale = ContentScale.Fit,
+                contentScale = ContentScale.FillWidth,
                 contentDescription = null,
                 loading = {
                     Box(Modifier.fillMaxSize()) {
@@ -167,7 +170,7 @@ fun PhotoPreview(
                                     top.linkTo(parent.top)
                                     start.linkTo(parent.start)
                                     end.linkTo(parent.end)
-                                    height = Dimension.preferredWrapContent
+                                    height = Dimension.fillToConstraints
                                     width = Dimension.fillToConstraints
                                 }
                         )

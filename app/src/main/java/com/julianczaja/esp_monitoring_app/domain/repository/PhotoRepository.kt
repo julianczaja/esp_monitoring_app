@@ -14,7 +14,7 @@ interface PhotoRepository {
 
     suspend fun removePhotoByFileNameRemote(fileName: String): Result<Unit>
 
-    suspend fun updateAllPhotosRemote(deviceId: Long, from: Long? = null, to: Long? = null): Result<Unit>
+    suspend fun updateAllPhotosRemote(deviceId: Long): Result<Unit>
 
     suspend fun downloadPhotoAndSaveToExternalStorage(photo: Photo): Result<Unit>
 
