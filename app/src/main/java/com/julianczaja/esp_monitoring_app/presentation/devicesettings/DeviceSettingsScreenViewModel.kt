@@ -2,10 +2,8 @@ package com.julianczaja.esp_monitoring_app.presentation.devicesettings
 
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.navigation.toRoute
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.common.Constants.SCAN_DURATION_MILLIS
 import com.julianczaja.esp_monitoring_app.data.BleLocationManager
@@ -19,7 +17,6 @@ import com.julianczaja.esp_monitoring_app.domain.model.PermissionState
 import com.julianczaja.esp_monitoring_app.domain.model.getErrorMessageId
 import com.julianczaja.esp_monitoring_app.domain.model.toBleAdvertisement
 import com.julianczaja.esp_monitoring_app.domain.model.toDeviceStatus
-import com.julianczaja.esp_monitoring_app.navigation.DeviceScreen
 import com.juul.kable.GattStatusException
 import com.juul.kable.Scanner
 import com.juul.kable.State
@@ -49,13 +46,10 @@ import javax.inject.Inject
 
 @HiltViewModel
 class DeviceSettingsScreenViewModel @Inject constructor(
-    savedStateHandle: SavedStateHandle,
     bluetoothManager: BluetoothManager,
     bleLocationManager: BleLocationManager,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
-
-    private val deviceId = savedStateHandle.toRoute<DeviceScreen>().deviceId // TODO: Use it to filter out proper device
 
     private val _uiState = MutableStateFlow<UiState>(UiState.CheckPermission)
     val uiState: StateFlow<UiState> = _uiState

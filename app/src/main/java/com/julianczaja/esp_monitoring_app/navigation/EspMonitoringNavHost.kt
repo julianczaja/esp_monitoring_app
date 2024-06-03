@@ -18,6 +18,7 @@ import com.julianczaja.esp_monitoring_app.presentation.addeditdevice.AddEditDevi
 import com.julianczaja.esp_monitoring_app.presentation.appsettings.AppSettingsScreen
 import com.julianczaja.esp_monitoring_app.presentation.device.DeviceScreen
 import com.julianczaja.esp_monitoring_app.presentation.devices.DevicesScreen
+import com.julianczaja.esp_monitoring_app.presentation.devicesettings.DeviceSettingsScreen
 import com.julianczaja.esp_monitoring_app.presentation.photopreview.PhotoPreviewDialog
 import com.julianczaja.esp_monitoring_app.presentation.removedevice.RemoveDeviceDialog
 import com.julianczaja.esp_monitoring_app.presentation.removephotos.RemovePhotosDialog
@@ -41,7 +42,8 @@ fun EspMonitoringNavHost(
                 navigateToDevice = navController::navigateToDevice,
                 navigateToRemoveDevice = navController::navigateToRemoveDeviceDialog,
                 navigateToAddDevice = navController::navigateToAddEditDeviceScreen,
-                navigateToEditDevice = navController::navigateToAddEditDeviceScreen
+                navigateToEditDevice = navController::navigateToAddEditDeviceScreen,
+                navigateToDeviceSettings = navController::navigateToDeviceSettings,
             )
         }
         composable<DeviceScreen>(
@@ -52,6 +54,14 @@ fun EspMonitoringNavHost(
                 snackbarHostState = snackbarHostState,
                 navigateToPhotoPreview = navController::navigateToPhotoPreview,
                 navigateToRemovePhotosDialog = navController::navigateToRemovePhotosDialog
+            )
+        }
+        composable<DeviceSettingsScreen>(
+            enterTransition = { defaultEnterTransition() },
+            exitTransition = { defaultExitTransition() }
+        ) {
+            DeviceSettingsScreen(
+                snackbarHostState = snackbarHostState
             )
         }
         composable<AddEditDeviceScreen>(

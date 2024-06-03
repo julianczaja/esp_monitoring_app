@@ -26,6 +26,17 @@ fun NavController.navigateToDevice(deviceId: Long) {
     }
 }
 
+
+// Device settings
+@Serializable
+data object DeviceSettingsScreen
+
+fun NavController.navigateToDeviceSettings() {
+    navigate(DeviceSettingsScreen) {
+        launchSingleTop = true
+    }
+}
+
 // Add or edit device
 @Serializable
 data class AddEditDeviceScreen(val deviceId: Long)

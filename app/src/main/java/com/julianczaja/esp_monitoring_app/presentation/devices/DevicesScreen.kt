@@ -3,7 +3,6 @@ package com.julianczaja.esp_monitoring_app.presentation.devices
 import android.content.res.Configuration
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -55,6 +54,7 @@ fun DevicesScreen(
     navigateToRemoveDevice: (Long) -> Unit,
     navigateToAddDevice: () -> Unit,
     navigateToEditDevice: (Device) -> Unit,
+    navigateToDeviceSettings: () -> Unit,
     viewModel: DevicesScreenViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -66,7 +66,8 @@ fun DevicesScreen(
         onRemoveDeviceClicked = navigateToRemoveDevice,
         onAddDeviceClicked = navigateToAddDevice,
         onEditDeviceClicked = navigateToEditDevice,
-        onAppSettingsClicked = navigateToAppSettings
+        onAppSettingsClicked = navigateToAppSettings,
+        onDeviceSettingsClicked = navigateToDeviceSettings
     )
 }
 
@@ -79,6 +80,7 @@ fun DevicesScreenContent(
     onAddDeviceClicked: () -> Unit,
     onEditDeviceClicked: (Device) -> Unit,
     onAppSettingsClicked: () -> Unit,
+    onDeviceSettingsClicked: () -> Unit,
 ) {
     when (uiState) {
         is UiState.Success -> DevicesScreenSuccessContent(
@@ -88,7 +90,8 @@ fun DevicesScreenContent(
             onRemoveDeviceClicked = onRemoveDeviceClicked,
             onAddDeviceClicked = onAddDeviceClicked,
             onEditDeviceClicked = onEditDeviceClicked,
-            onAppSettingsClicked = onAppSettingsClicked
+            onAppSettingsClicked = onAppSettingsClicked,
+            onDeviceSettingsClicked = onDeviceSettingsClicked,
         )
 
         is UiState.Loading -> Box(modifier = modifier) {
@@ -110,6 +113,7 @@ fun DevicesScreenSuccessContent(
     onAddDeviceClicked: () -> Unit,
     onEditDeviceClicked: (Device) -> Unit,
     onAppSettingsClicked: () -> Unit,
+    onDeviceSettingsClicked: () -> Unit,
 ) {
     val configuration = LocalConfiguration.current
 
@@ -131,16 +135,16 @@ fun DevicesScreenSuccessContent(
             }
             item {
                 CardButton(
-                    labelId = R.string.open_settings_label,
-                    iconId = R.drawable.ic_baseline_settings_24,
-                    onClicked = onAppSettingsClicked
+                    labelId = R.string.device_configuration_label,
+                    iconId = R.drawable.ic_devices,
+                    onClicked = onDeviceSettingsClicked
                 )
             }
             item {
                 CardButton(
-                    labelId = R.string.app_name,
-                    iconId = R.drawable.ic_devices,
-                    onClicked = { }
+                    labelId = R.string.open_settings_label,
+                    iconId = R.drawable.ic_baseline_settings_24,
+                    onClicked = onAppSettingsClicked
                 )
             }
         }
@@ -173,7 +177,8 @@ fun CardButton(
     onClicked: () -> Unit
 ) {
     Card(
-        modifier = modifier.clickable(onClick = onClicked)
+        modifier = modifier,
+        onClick = onClicked
     ) {
         Column(
             modifier = Modifier.padding(MaterialTheme.spacing.large),
@@ -263,7 +268,8 @@ private fun DevicesScreenSuccessPreview() {
             onRemoveDeviceClicked = {},
             onAddDeviceClicked = { },
             onEditDeviceClicked = {},
-            onAppSettingsClicked = {}
+            onAppSettingsClicked = {},
+            onDeviceSettingsClicked = {}
         )
     }
 }

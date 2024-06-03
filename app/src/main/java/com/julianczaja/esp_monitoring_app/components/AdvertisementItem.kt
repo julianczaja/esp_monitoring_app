@@ -2,7 +2,6 @@ package com.julianczaja.esp_monitoring_app.components
 
 import android.content.res.Configuration
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -38,12 +37,9 @@ fun AdvertisementItem(
     onDeviceClicked: (String) -> Unit,
 ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(
-                enabled = bleAdvertisement.isEspMonitoringDevice,
-                onClick = { onDeviceClicked(bleAdvertisement.address) }
-            ),
+        modifier = Modifier.fillMaxWidth(),
+        onClick = { onDeviceClicked(bleAdvertisement.address) },
+        enabled = bleAdvertisement.isEspMonitoringDevice,
         border = if (bleAdvertisement.isEspMonitoringDevice) {
             BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
         } else {
@@ -93,7 +89,10 @@ fun AdvertisementItem(
                     )
                     Text(
                         text = stringResource(id = getConnectableStringId(bleAdvertisement.isConnectable)),
-                        color = getConnectableTextColor(bleAdvertisement.isConnectable),
+                        color = getConnectableTextColor(
+                            isConnectable = bleAdvertisement.isConnectable,
+                            isEnabled = bleAdvertisement.isEspMonitoringDevice
+                        ),
                         style = MaterialTheme.typography.bodyMedium,
                     )
                 }
@@ -113,9 +112,9 @@ private fun getConnectableDrawableId(isConnectable: Boolean) = when (isConnectab
     false -> R.drawable.ic_plug_x
 }
 
-private fun getConnectableTextColor(isConnectable: Boolean) = when (isConnectable) {
-    true -> color_green_connectable
-    false -> color_red_not_connectable
+private fun getConnectableTextColor(isConnectable: Boolean, isEnabled: Boolean) = when (isConnectable) {
+    true -> if (isEnabled) color_green_connectable else color_green_connectable.copy(alpha = 0.5f)
+    false -> if (isEnabled) color_red_not_connectable else color_red_not_connectable.copy(alpha = 0.5f)
 }
 
 private fun getConnectableStringId(isConnectable: Boolean) = when (isConnectable) {

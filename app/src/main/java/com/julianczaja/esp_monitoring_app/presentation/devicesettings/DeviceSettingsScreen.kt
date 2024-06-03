@@ -437,8 +437,7 @@ fun DeviceSettingsConnectScreen(
                         modifier = Modifier
                             .fillMaxWidth(.5f)
                             .padding(top = MaterialTheme.spacing.small),
-                        onClick = onDisconnectClicked,
-                        enabled = !uiState.isBusy
+                        onClick = onDisconnectClicked
                     ) {
                         Text(text = stringResource(id = R.string.disconnect_label))
                     }

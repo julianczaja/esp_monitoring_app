@@ -1,5 +1,6 @@
 package com.julianczaja.esp_monitoring_app.presentation.device
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager
@@ -19,7 +20,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.zIndex
 import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DevicePhotosScreen
 import com.julianczaja.esp_monitoring_app.presentation.devicesavedphotos.DeviceSavedPhotosScreen
-import com.julianczaja.esp_monitoring_app.presentation.devicesettings.DeviceSettingsScreen
 import kotlinx.coroutines.launch
 
 
@@ -30,7 +30,7 @@ fun DeviceScreen(
     navigateToRemovePhotosDialog: (List<String>) -> Unit,
 ) {
     val coroutineScope = rememberCoroutineScope()
-    val pages = listOf(DevicePage.Photos, DevicePage.Saved, DevicePage.Settings)
+    val pages = listOf(DevicePage.Photos, DevicePage.Saved, DevicePage.Info)
     val pagerState = rememberPagerState(pageCount = { pages.size })
 
     Column(
@@ -79,9 +79,9 @@ fun DeviceScreen(
                     navigateToPhotoPreview = navigateToPhotoPreview
                 )
 
-                DevicePage.Settings.index -> DeviceSettingsScreen(
-                    snackbarHostState = snackbarHostState
-                )
+                DevicePage.Info.index -> Box(modifier = Modifier.fillMaxSize()) {
+                    Text(text = "Work in progress...")
+                }
             }
         }
     }
