@@ -19,4 +19,6 @@ interface DeviceRepository {
     suspend fun update(device: Device): Result<Unit>
 
     suspend fun remove(device: Device): Result<Unit>
+
+    suspend fun reorderDevices(device1Id: Long, device2Id: Long): Result<Unit>
 }

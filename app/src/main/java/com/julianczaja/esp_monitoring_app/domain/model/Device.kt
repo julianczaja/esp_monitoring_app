@@ -5,6 +5,9 @@ import com.julianczaja.esp_monitoring_app.data.local.database.entity.DeviceEntit
 data class Device(
     val id: Long,
     val name: String,
+    val order: Long = -1L,
 )
 
-fun Device.toDeviceEntity() = DeviceEntity(id, name)
+fun Device.toDeviceEntity() = DeviceEntity(id = id, name = name, order = order)
+
+fun Device.toDeviceEntity(customOrder: Long) = DeviceEntity(id = id, name = name, order = customOrder)

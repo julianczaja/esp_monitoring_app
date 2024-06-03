@@ -16,13 +16,14 @@ import com.julianczaja.esp_monitoring_app.data.local.database.entity.PhotoEntity
         DeviceEntity::class,
         PhotoEntity::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3),
         AutoMigration(from = 3, to = 4, MigrationFrom3To4::class),
         AutoMigration(from = 4, to = 5, MigrationFrom4To5::class),
+        AutoMigration(from = 5, to = 6, MigrationFrom5To6::class),
     ]
 )
 abstract class EspMonitoringDatabase : RoomDatabase() {
@@ -36,5 +37,11 @@ class MigrationFrom3To4 : AutoMigrationSpec
 class MigrationFrom4To5 : AutoMigrationSpec {
     override fun onPostMigrate(db: SupportSQLiteDatabase) {
         db.execSQL("UPDATE photo SET thumbnailUrl = url")
+    }
+}
+
+class MigrationFrom5To6 : AutoMigrationSpec {
+    override fun onPostMigrate(db: SupportSQLiteDatabase) {
+        db.execSQL("UPDATE device SET `order` = id")
     }
 }

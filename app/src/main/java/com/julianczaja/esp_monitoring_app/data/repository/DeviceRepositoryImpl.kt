@@ -8,6 +8,7 @@ import com.julianczaja.esp_monitoring_app.domain.model.InternalAppException
 import com.julianczaja.esp_monitoring_app.domain.model.toDeviceEntity
 import com.julianczaja.esp_monitoring_app.domain.repository.DeviceRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import javax.inject.Inject
@@ -26,7 +27,12 @@ class DeviceRepositoryImpl @Inject constructor(
     override suspend fun doesDeviceWithGivenNameAlreadyExist(name: String) = deviceDao.hasDeviceWithName(name)
 
     override suspend fun addNew(device: Device): Result<Unit> = try {
-        deviceDao.insert(device.toDeviceEntity())
+        if (device.order == -1L) {
+            val maxOrder = deviceDao.getMaxOrder() ?: 0
+            deviceDao.insert(device.toDeviceEntity(customOrder = maxOrder + 1L))
+        } else {
+            deviceDao.insert(device.toDeviceEntity())
+        }
         Result.success(Unit)
     } catch (e: Exception) {
         Result.failure(e)
@@ -45,4 +51,21 @@ class DeviceRepositoryImpl @Inject constructor(
         } else {
             Result.failure(InternalAppException())
         }
+
+    override suspend fun reorderDevices(device1Id: Long, device2Id: Long): Result<Unit> {
+        val device1 = deviceDao.getById(device1Id).first()
+        val device2 = deviceDao.getById(device2Id).first()
+
+        if (device1 != null && device2 != null) {
+            val device1Order = device1.order
+            val device2Order = device2.order
+
+            deviceDao.update(device1.copy(order = device2Order))
+            deviceDao.update(device2.copy(order = device1Order))
+
+            return Result.success(Unit)
+        } else {
+            return Result.failure(IllegalArgumentException("One or both devices not found"))
+        }
+    }
 }

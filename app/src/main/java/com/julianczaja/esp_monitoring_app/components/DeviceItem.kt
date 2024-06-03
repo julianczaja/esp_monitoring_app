@@ -92,6 +92,10 @@ fun DeviceItem(
                         text = stringResource(id = R.string.device_id_label_with_format, device.id),
                         style = MaterialTheme.typography.bodyMedium
                     )
+                    Text(
+                        text = "ORDER = ${device.order}",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
                 }
             }
             MoreMenuButton(device, onRemoveClicked, onEditClicked)
@@ -142,7 +146,7 @@ private fun DeviceItemPreview() {
     AppBackground(Modifier.height((DEVICE_ITEM_MIN_HEIGHT_DP).dp)) {
         DeviceItem(
             modifier = Modifier.padding(MaterialTheme.spacing.medium),
-            device = Device(123L, "Device name"),
+            device = Device(123L, "Device name", 1),
             onClicked = {},
             onRemoveClicked = {},
             onEditClicked = {}
@@ -156,7 +160,7 @@ private fun DeviceItemLongNamePreview() {
     AppBackground(Modifier.height((DEVICE_ITEM_MIN_HEIGHT_DP).dp)) {
         DeviceItem(
             modifier = Modifier.padding(MaterialTheme.spacing.medium),
-            device = Device(123L, "Device very long name"),
+            device = Device(123L, "Device very long name", 1),
             onClicked = {},
             onRemoveClicked = {},
             onEditClicked = {}

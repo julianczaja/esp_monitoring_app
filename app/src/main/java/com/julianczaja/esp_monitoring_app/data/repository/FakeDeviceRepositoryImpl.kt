@@ -65,4 +65,8 @@ class FakeDeviceRepositoryImpl : DeviceRepository {
             return Result.failure(InternalAppException())
         }
     }
+
+    override suspend fun reorderDevices(device1Id: Long, device2Id: Long): Result<Unit> {
+        TODO("Not yet implemented")
+    }
 }

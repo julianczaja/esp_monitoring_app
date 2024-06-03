@@ -19,4 +19,7 @@ abstract class DeviceDao : EntityDao<DeviceEntity>() {
 
     @Query("SELECT EXISTS(SELECT * FROM device where name = :name)")
     abstract suspend fun hasDeviceWithName(name: String): Boolean
+
+    @Query("SELECT MAX(`order`) FROM device")
+    abstract fun getMaxOrder(): Long?
 }

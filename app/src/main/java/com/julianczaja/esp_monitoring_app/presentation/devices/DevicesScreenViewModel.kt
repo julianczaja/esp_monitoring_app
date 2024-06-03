@@ -16,16 +16,18 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 
 @HiltViewModel
 class DevicesScreenViewModel @Inject constructor(
-    deviceRepository: DeviceRepository,
+    private val deviceRepository: DeviceRepository,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
 
     val uiState: StateFlow<UiState> = deviceRepository.getAllDevices()
+        .map { devices -> devices.sortedBy { it.order } }
         .map<List<Device>, UiState>(UiState::Success)
         .flowOn(ioDispatcher)
         .catch { emit(UiState.Error(it.getErrorMessageId())) }
@@ -34,6 +36,10 @@ class DevicesScreenViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = UiState.Loading
         )
+
+    fun onDevicesReordered(device1Id: Long, device2Id: Long) = viewModelScope.launch(ioDispatcher) {
+        deviceRepository.reorderDevices(device1Id, device2Id)
+    }
 
     @Immutable
     sealed interface UiState {

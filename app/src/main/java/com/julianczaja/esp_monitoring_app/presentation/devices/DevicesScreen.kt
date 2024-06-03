@@ -4,6 +4,7 @@ import android.content.res.Configuration
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,11 +15,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListItemInfo
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Card
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -26,14 +29,21 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.julianczaja.esp_monitoring_app.R
@@ -45,6 +55,7 @@ import com.julianczaja.esp_monitoring_app.components.ErrorText
 import com.julianczaja.esp_monitoring_app.domain.model.Device
 import com.julianczaja.esp_monitoring_app.presentation.devices.DevicesScreenViewModel.UiState
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
+import timber.log.Timber
 
 private const val HEADER_HEIGHT_DP = 70
 
@@ -66,12 +77,13 @@ fun DevicesScreen(
         onRemoveDeviceClicked = navigateToRemoveDevice,
         onAddDeviceClicked = navigateToAddDevice,
         onEditDeviceClicked = navigateToEditDevice,
-        onAppSettingsClicked = navigateToAppSettings
+        onAppSettingsClicked = navigateToAppSettings,
+        onDevicesReordered = viewModel::onDevicesReordered
     )
 }
 
 @Composable
-fun DevicesScreenContent(
+private fun DevicesScreenContent(
     modifier: Modifier = Modifier,
     uiState: UiState,
     onDeviceClicked: (Long) -> Unit,
@@ -79,6 +91,7 @@ fun DevicesScreenContent(
     onAddDeviceClicked: () -> Unit,
     onEditDeviceClicked: (Device) -> Unit,
     onAppSettingsClicked: () -> Unit,
+    onDevicesReordered: (Long, Long) -> Unit,
 ) {
     when (uiState) {
         is UiState.Success -> DevicesScreenSuccessContent(
@@ -88,7 +101,8 @@ fun DevicesScreenContent(
             onRemoveDeviceClicked = onRemoveDeviceClicked,
             onAddDeviceClicked = onAddDeviceClicked,
             onEditDeviceClicked = onEditDeviceClicked,
-            onAppSettingsClicked = onAppSettingsClicked
+            onAppSettingsClicked = onAppSettingsClicked,
+            onDevicesReordered = onDevicesReordered
         )
 
         is UiState.Loading -> Box(modifier = modifier) {
@@ -102,7 +116,7 @@ fun DevicesScreenContent(
 }
 
 @Composable
-fun DevicesScreenSuccessContent(
+private fun DevicesScreenSuccessContent(
     modifier: Modifier = Modifier,
     uiState: UiState.Success,
     onDeviceClicked: (Long) -> Unit,
@@ -110,6 +124,7 @@ fun DevicesScreenSuccessContent(
     onAddDeviceClicked: () -> Unit,
     onEditDeviceClicked: (Device) -> Unit,
     onAppSettingsClicked: () -> Unit,
+    onDevicesReordered: (Long, Long) -> Unit,
 ) {
     val configuration = LocalConfiguration.current
 
@@ -159,14 +174,15 @@ fun DevicesScreenSuccessContent(
                 uiState = uiState,
                 onDeviceClicked = onDeviceClicked,
                 onRemoveDeviceClicked = onRemoveDeviceClicked,
-                onEditDeviceClicked = onEditDeviceClicked
+                onEditDeviceClicked = onEditDeviceClicked,
+                onDevicesReordered = onDevicesReordered,
             )
         }
     }
 }
 
 @Composable
-fun CardButton(
+private fun CardButton(
     modifier: Modifier = Modifier,
     @StringRes labelId: Int,
     @DrawableRes iconId: Int,
@@ -201,20 +217,72 @@ private fun DevicesListPortrait(
     onDeviceClicked: (Long) -> Unit,
     onRemoveDeviceClicked: (Long) -> Unit,
     onEditDeviceClicked: (Device) -> Unit,
+    onDevicesReordered: (Long, Long) -> Unit,
 ) {
+    var draggingElement by remember { mutableStateOf<LazyListItemInfo?>(null) }
+    var draggingOffsetY by remember { mutableFloatStateOf(0f) }
+
+    val lazyColumnState = rememberLazyListState()
+
+
+    fun LazyListState.getItemByOffset(offset: Int) = layoutInfo.visibleItemsInfo.firstOrNull { item ->
+        offset in item.offset..(item.offset + item.size)
+    }
+
     LazyColumn(
+        state = lazyColumnState,
         verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium),
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(MaterialTheme.spacing.medium)
+        contentPadding = PaddingValues(MaterialTheme.spacing.medium),
+        modifier = Modifier
+            .fillMaxSize()
+            .pointerInput(Unit) {
+                detectDragGesturesAfterLongPress(
+                    onDragStart = { offset ->
+                        lazyColumnState
+                            .getItemByOffset(offset.y.toInt())
+                            ?.also {
+                                Timber.e("ON DRAG START: item.key = ${it.key}")
+                                draggingElement = it
+                            }
+                    },
+                    onDrag = { change, dragAmount ->
+//                        Timber.e("change=$change, dragAmount=$dragAmount")
+                        change.consume()
+                        draggingOffsetY += dragAmount.y
+                    },
+                    onDragEnd = {
+                        Timber.e("ON DRAG END")
+                        val draggedPosition = draggingElement!!.offset + draggingOffsetY
+
+                        lazyColumnState
+                            .getItemByOffset(draggedPosition.toInt())
+                            ?.also { endItem ->
+                                draggingElement?.let { startItem ->
+                                    Timber.e("ON DRAG END: startItem=${startItem.key}, endItem=${endItem.key}")
+                                    onDevicesReordered(startItem.key as Long, endItem.key as Long)
+                                }
+                            } ?: kotlin.run { Timber.e("CANT FIND ITEM") }
+
+                        draggingElement = null
+                        draggingOffsetY = 0f
+                    }
+                )
+            }
     ) {
-        items(uiState.devices, key = { it.id }) {
-            DeviceItem(
-                device = it,
-                onClicked = onDeviceClicked,
-                onRemoveClicked = onRemoveDeviceClicked,
-                onEditClicked = onEditDeviceClicked
-            )
+        uiState.devices.forEachIndexed { index, device ->
+            item(key = device.id) {
+                DeviceItem(
+                    modifier = Modifier
+                        .graphicsLayer { translationY = if (index == draggingElement?.index) draggingOffsetY else 0f }
+                        .zIndex(if (index == draggingElement?.index) 10f else 0f)
+                        .animateItem(),
+                    device = device,
+                    onClicked = onDeviceClicked,
+                    onRemoveClicked = onRemoveDeviceClicked,
+                    onEditClicked = onEditDeviceClicked
+                )
+            }
         }
     }
 }
@@ -254,16 +322,17 @@ private fun DevicesScreenSuccessPreview() {
         DevicesScreenContent(
             uiState = UiState.Success(
                 listOf(
-                    Device(1, "Device 1"),
-                    Device(12, "Device 2"),
-                    Device(123, "Device 3"),
+                    Device(1, "Device 1", 1),
+                    Device(12, "Device 2", 2),
+                    Device(123, "Device 3", 3),
                 )
             ),
             onDeviceClicked = {},
             onRemoveDeviceClicked = {},
             onAddDeviceClicked = { },
             onEditDeviceClicked = {},
-            onAppSettingsClicked = {}
+            onAppSettingsClicked = {},
+            onDevicesReordered = { _, _ -> }
         )
     }
 }
