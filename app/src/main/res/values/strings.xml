@@ -1,4 +1,5 @@
 <resources>
+    <string name="accurate_float_mb">%.3f MB</string>
     <string name="add_device_error_below_zero">Device ID must be >= 0</string>
     <string name="add_device_error_id_exists">Device with this ID already exists</string>
     <string name="add_device_error_name_exists">Device with this name already exists</string>
@@ -29,6 +30,17 @@
     <string name="device_configuration_label">Configure device</string>
     <string name="device_id_label">ID</string>
     <string name="device_id_label_with_format">ID: %d</string>
+    <string name="device_info_average_photo_size_label">"Average photo size: "</string>
+    <string name="device_info_free_space_format">Free space: %.2f MB</string>
+    <string name="device_info_id_format">ID: %1$s</string>
+    <string name="device_info_last_photo_size_label">"Last photo size: "</string>
+    <string name="device_info_newest_photo_date_label">"Newest photo date: "</string>
+    <string name="device_info_oldest_photo_date_label">"Oldest photo date: "</string>
+    <string name="device_info_percent_used_format">%.1f%%\nused</string>
+    <string name="device_info_photos_count_label">"Photos count: "</string>
+    <string name="device_info_space_limit_format">Space limit: %.2f MB</string>
+    <string name="device_info_title">Device info</string>
+    <string name="device_info_used_space_format">Used space: %.2f MB</string>
     <string name="device_name_label">Name</string>
     <string name="device_settings_brightness_label">Brightness</string>
     <string name="device_settings_contrast_label">Contrast</string>

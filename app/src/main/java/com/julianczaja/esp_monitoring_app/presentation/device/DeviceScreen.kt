@@ -1,6 +1,5 @@
 package com.julianczaja.esp_monitoring_app.presentation.device
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager
@@ -18,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.zIndex
+import com.julianczaja.esp_monitoring_app.presentation.deviceinfo.DeviceInfoScreen
 import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DevicePhotosScreen
 import com.julianczaja.esp_monitoring_app.presentation.devicesavedphotos.DeviceSavedPhotosScreen
 import kotlinx.coroutines.launch
@@ -79,9 +79,9 @@ fun DeviceScreen(
                     navigateToPhotoPreview = navigateToPhotoPreview
                 )
 
-                DevicePage.Info.index -> Box(modifier = Modifier.fillMaxSize()) {
-                    Text(text = "Work in progress...")
-                }
+                DevicePage.Info.index -> DeviceInfoScreen(
+                    snackbarHostState = snackbarHostState
+                )
             }
         }
     }

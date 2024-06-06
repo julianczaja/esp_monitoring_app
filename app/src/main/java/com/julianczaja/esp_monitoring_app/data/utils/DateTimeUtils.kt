@@ -17,7 +17,7 @@ import java.time.temporal.ChronoField
 const val EXIF_UTC_OFFSET = "+00:00"
 
 private val localDateTimeExifFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss")
-private val localDateTimePrettyFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm:ss")
+private val localDateTimePrettyFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd, HH:mm:ss")
 private val localDateTimeDefaultFormatter: DateTimeFormatter = DateTimeFormatterBuilder()
     .appendValue(ChronoField.YEAR_OF_ERA, 4)
     .appendValue(ChronoField.MONTH_OF_YEAR, 2)

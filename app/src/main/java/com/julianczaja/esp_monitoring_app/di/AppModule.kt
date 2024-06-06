@@ -15,14 +15,17 @@ import com.julianczaja.esp_monitoring_app.data.CoilBitmapDownloader
 import com.julianczaja.esp_monitoring_app.data.NetworkManager
 import com.julianczaja.esp_monitoring_app.data.local.database.EspMonitoringDatabase
 import com.julianczaja.esp_monitoring_app.data.local.database.dao.DeviceDao
+import com.julianczaja.esp_monitoring_app.data.local.database.dao.DeviceInfoDao
 import com.julianczaja.esp_monitoring_app.data.local.database.dao.PhotoDao
 import com.julianczaja.esp_monitoring_app.data.remote.HostSelectionInterceptor
 import com.julianczaja.esp_monitoring_app.data.remote.RetrofitEspMonitoringApi
+import com.julianczaja.esp_monitoring_app.data.repository.DeviceInfoRepositoryImpl
 import com.julianczaja.esp_monitoring_app.data.repository.DeviceRepositoryImpl
 import com.julianczaja.esp_monitoring_app.data.repository.PhotoRepositoryImpl
 import com.julianczaja.esp_monitoring_app.domain.BitmapDownloader
 import com.julianczaja.esp_monitoring_app.domain.model.ResultCallAdapterFactory
 import com.julianczaja.esp_monitoring_app.domain.repository.AppSettingsRepository
+import com.julianczaja.esp_monitoring_app.domain.repository.DeviceInfoRepository
 import com.julianczaja.esp_monitoring_app.domain.repository.DeviceRepository
 import com.julianczaja.esp_monitoring_app.domain.repository.PhotoRepository
 import dagger.Module
@@ -31,6 +34,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -42,9 +46,13 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object AppModule {
 
+    @OptIn(ExperimentalSerializationApi::class)
     @Provides
     @Singleton
-    fun provideJson(): Json = Json { ignoreUnknownKeys = true }
+    fun provideJson(): Json = Json {
+        ignoreUnknownKeys = true
+        explicitNulls = true
+    }
 
     @Provides
     @Singleton
@@ -97,6 +105,10 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideDeviceInfoDao(espMonitoringDatabase: EspMonitoringDatabase) = espMonitoringDatabase.deviceInfoDao()
+
+    @Provides
+    @Singleton
     fun provideBitmapDownloader(
         @ApplicationContext context: Context,
         @IoDispatcher ioDispatcher: CoroutineDispatcher
@@ -114,6 +126,13 @@ object AppModule {
         api: RetrofitEspMonitoringApi,
         bitmapDownloader: BitmapDownloader
     ): PhotoRepository = PhotoRepositoryImpl(context, photoDao, api, bitmapDownloader)
+
+    @Provides
+    @Singleton
+    fun provideDeviceInfoRepository(
+        deviceInfoDao: DeviceInfoDao,
+        api: RetrofitEspMonitoringApi
+    ): DeviceInfoRepository = DeviceInfoRepositoryImpl(api, deviceInfoDao)
 
     @Provides
     @Singleton
