@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
@@ -53,6 +54,7 @@ class RemovePhotosDialogViewModel @Inject constructor(
         params.photosFileNames.forEach { photoFileName ->
             photoRepository.removePhotoByFileNameRemote(photoFileName)
                 .onFailure { e ->
+                    Timber.e(e)
                     _uiState.update { UiState.Error(e.getErrorMessageId()) }
                     isError = true
                     return@forEach
@@ -60,6 +62,7 @@ class RemovePhotosDialogViewModel @Inject constructor(
                 .onSuccess {
                     photoRepository.removePhotoByFileNameLocal(photoFileName)
                         .onFailure { e ->
+                            Timber.e(e)
                             _uiState.update { UiState.Error(e.getErrorMessageId()) }
                             isError = true
                             return@forEach

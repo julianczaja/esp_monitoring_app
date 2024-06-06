@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import timber.log.Timber
 import javax.inject.Inject
 
 
@@ -28,7 +29,10 @@ class DevicesScreenViewModel @Inject constructor(
     val uiState: StateFlow<UiState> = deviceRepository.getAllDevices()
         .map<List<Device>, UiState>(UiState::Success)
         .flowOn(ioDispatcher)
-        .catch { emit(UiState.Error(it.getErrorMessageId())) }
+        .catch {
+            Timber.e(it)
+            emit(UiState.Error(it.getErrorMessageId()))
+        }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),

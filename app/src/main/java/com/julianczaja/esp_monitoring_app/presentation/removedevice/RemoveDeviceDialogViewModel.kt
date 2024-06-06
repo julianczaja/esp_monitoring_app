@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
@@ -44,14 +45,20 @@ class RemoveDeviceDialogViewModel @Inject constructor(
         if (device != null) {
             _uiState.update { UiState.Success(device) }
         } else {
-            _uiState.update { UiState.Error(R.string.internal_app_error_message) }
+            _uiState.update {
+                Timber.e("Can't find device with id $deviceId in repository")
+                UiState.Error(R.string.internal_app_error_message)
+            }
         }
     }
 
     fun removeDevice(device: Device) = viewModelScope.launch {
         _uiState.update { UiState.Loading }
         deviceRepository.remove(device)
-            .onFailure { e -> _uiState.update { UiState.Error(e.getErrorMessageId()) } }
+            .onFailure { e ->
+                Timber.e(e)
+                _uiState.update { UiState.Error(e.getErrorMessageId()) }
+            }
             .onSuccess { eventFlow.emit(Event.DEVICE_REMOVED) }
     }
 

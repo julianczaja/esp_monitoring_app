@@ -72,7 +72,10 @@ class DevicePhotosScreenViewModel @Inject constructor(
         )
     }
         .flowOn(ioDispatcher)
-        .catch { eventFlow.emit(Event.ShowError(it.getErrorMessageId())) }
+        .catch {
+            Timber.e(it)
+            eventFlow.emit(Event.ShowError(it.getErrorMessageId()))
+        }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
@@ -122,6 +125,7 @@ class DevicePhotosScreenViewModel @Inject constructor(
         viewModelScope.launch(ioDispatcher) {
             photoRepository.updateAllPhotosRemote(deviceId)
                 .onFailure {
+                    Timber.e(it)
                     eventFlow.emit(Event.ShowError(it.getErrorMessageId()))
                     _isRefreshing.update { false }
                 }

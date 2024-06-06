@@ -73,7 +73,10 @@ class DeviceSavedPhotosScreenViewModel @Inject constructor(
             )
         }
             .flowOn(ioDispatcher)
-            .catch { eventFlow.emit(Event.ShowError(it.getErrorMessageId())) }
+            .catch {
+                Timber.e(it)
+                eventFlow.emit(Event.ShowError(it.getErrorMessageId()))
+            }
 
     fun updateSavedPhotos() {
         readSavedPhotos()
@@ -128,7 +131,10 @@ class DeviceSavedPhotosScreenViewModel @Inject constructor(
         _isLoading.emit(true)
         photoRepository.readAllSavedPhotosFromExternalStorage(deviceId)
             .onSuccess { _savedPhotos.emit(it) }
-            .onFailure { eventFlow.emit(Event.ShowError(R.string.internal_app_error_message)) }
+            .onFailure {
+                Timber.e(it)
+                eventFlow.emit(Event.ShowError(R.string.internal_app_error_message))
+            }
         _isLoading.emit(false)
     }
 

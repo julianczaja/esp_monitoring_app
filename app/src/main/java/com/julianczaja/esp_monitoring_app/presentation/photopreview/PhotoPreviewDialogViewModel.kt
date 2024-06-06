@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.stateIn
+import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
@@ -36,7 +37,10 @@ class PhotoPreviewDialogViewModel @Inject constructor(
     private val photoFileName = savedStateHandle.toRoute<PhotoPreviewDialog>().photoFileName
 
     val uiState: StateFlow<UiState> = photoPreviewUiState()
-        .catch { UiState.Error(it.getErrorMessageId()) }
+        .catch {
+            Timber.e(it)
+            UiState.Error(it.getErrorMessageId())
+        }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),

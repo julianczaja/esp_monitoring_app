@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 
@@ -31,7 +32,7 @@ class AddEditDeviceScreenViewModel @Inject constructor(
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
 
-     private val _deviceId = savedStateHandle.toRoute<AddEditDeviceScreen>().deviceId
+    private val _deviceId = savedStateHandle.toRoute<AddEditDeviceScreen>().deviceId
 
     private var localDevice: Device? = null
 
@@ -116,7 +117,10 @@ class AddEditDeviceScreenViewModel @Inject constructor(
         if (isError) return
 
         deviceRepository.addNew(Device(deviceId, name.value))
-            .onFailure { eventFlow.emit(Event.ShowError(R.string.cant_add_device)) }
+            .onFailure {
+                Timber.e(it)
+                eventFlow.emit(Event.ShowError(R.string.cant_add_device))
+            }
             .onSuccess { eventFlow.emit(Event.DeviceAdded) }
     }
 
@@ -130,7 +134,10 @@ class AddEditDeviceScreenViewModel @Inject constructor(
 
         localDevice?.copy(name = _name.value)?.let { device ->
             deviceRepository.update(device)
-                .onFailure { eventFlow.emit(Event.ShowError(R.string.cant_update_device)) }
+                .onFailure {
+                    Timber.e(it)
+                    eventFlow.emit(Event.ShowError(R.string.cant_update_device))
+                }
                 .onSuccess { eventFlow.emit(Event.DeviceUpdated) }
         }
     }
