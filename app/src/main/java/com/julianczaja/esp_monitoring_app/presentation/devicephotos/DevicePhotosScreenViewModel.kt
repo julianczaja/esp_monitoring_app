@@ -15,6 +15,7 @@ import com.julianczaja.esp_monitoring_app.domain.repository.PhotoRepository
 import com.julianczaja.esp_monitoring_app.navigation.DeviceScreen
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -23,8 +24,6 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -44,7 +43,7 @@ class DevicePhotosScreenViewModel @Inject constructor(
 
     private val _selectedPhotos = MutableStateFlow<List<Photo>>(emptyList())
 
-    private val _selectableFilterDates = MutableStateFlow<List<SelectableLocalDate>>(emptyList())
+    private val _selectedFilterDates = MutableStateFlow<List<SelectableLocalDate>>(emptyList())
 
     private var _isSelectionMode = false
 
@@ -62,13 +61,11 @@ class DevicePhotosScreenViewModel @Inject constructor(
         localFilteredGroupedSelectablePhotosFlow(),
         isLoadingFlow(),
         _isOnline,
-        _selectedPhotos,
         _isRefreshed
-    ) { (filterDates, filteredGroupedPhotos), isLoading, isOnline, selectedPhotos, isRefreshed ->
-        _isSelectionMode = selectedPhotos.isNotEmpty()
+    ) { (selectableFilterDates, dateGroupedSelectablePhotos), isLoading, isOnline, isRefreshed ->
         UiState(
-            dateGroupedSelectablePhotos = filteredGroupedPhotos,
-            selectableFilterDates = filterDates,
+            dateGroupedSelectablePhotos = dateGroupedSelectablePhotos,
+            selectableFilterDates = selectableFilterDates,
             isLoading = isLoading,
             isOnline = isOnline,
             isSelectionMode = _isSelectionMode,
@@ -93,31 +90,37 @@ class DevicePhotosScreenViewModel @Inject constructor(
             )
         )
 
-    private fun localFilteredGroupedSelectablePhotosFlow() = combine(
-        localGroupedSelectablePhotosFlow(), _selectableFilterDates
-    ) { localPhotos, filterDates ->
-        val selectedDates = filterDates.filter { it.isSelected }
-        val filteredPhotos = localPhotos.filter { photo ->
-            when (selectedDates.isEmpty()) {
-                true -> true
-                false -> selectedDates.any { it.date == photo.key }
-            }
-        }
-        return@combine (filterDates to filteredPhotos)
-    }
+    private fun localFilteredGroupedSelectablePhotosFlow(): Flow<Pair<List<SelectableLocalDate>, Map<LocalDate, List<SelectablePhoto>>>> =
+        combine(
+            photoRepository.getAllPhotosLocal(deviceId).distinctUntilChanged(),
+            _selectedPhotos,
+            _selectedFilterDates,
+        ) { localPhotos, selectedPhotos, selectedFilterDates ->
+            _isSelectionMode = selectedPhotos.isNotEmpty()
 
-    private fun localGroupedSelectablePhotosFlow() = photoRepository.getAllPhotosLocal(deviceId)
-        .distinctUntilChanged()
-        .map(::groupPhotosByDayDesc)
-        .onEach { groupedPhotos ->
-            val oldDates = _selectableFilterDates.value
-            val newDates = groupedPhotos.keys
+            // Map photos to SelectablePhoto
+            val groupedSelectablePhotos = localPhotos
+                .map { SelectablePhoto(photo = it, isSelected = selectedPhotos.contains(it)) }
+                .groupBy { it.photo.dateTime.toLocalDate() }
 
-            _selectableFilterDates.update {
-                newDates.map { newDate ->
+            // Calculate new filter dates
+            val oldDates = selectedFilterDates
+            val newDates = groupedSelectablePhotos.keys
+            val newSelectedFilterDates = newDates
+                .map { newDate ->
                     oldDates.find { it.date == newDate } ?: SelectableLocalDate(newDate, false)
                 }
+            _selectedFilterDates.update { newSelectedFilterDates }
+
+            // Filter selectable photos
+            val selectedDates = selectedFilterDates.filter { it.isSelected }
+            val filteredPhotos = groupedSelectablePhotos.filter { photo ->
+                when (selectedDates.isEmpty()) {
+                    true -> true
+                    false -> selectedDates.any { it.date == photo.key }
+                }
             }
+            return@combine (newSelectedFilterDates to filteredPhotos)
         }
 
     private fun isLoadingFlow() = combine(_isSaving, _isRefreshing) { isSaving, isRefreshing ->
@@ -153,7 +156,7 @@ class DevicePhotosScreenViewModel @Inject constructor(
     }
 
     fun onFilterDateClicked(selectableLocalDate: SelectableLocalDate) {
-        _selectableFilterDates.update { dates ->
+        _selectedFilterDates.update { dates ->
             dates.map {
                 if (it.date == selectableLocalDate.date) it.copy(isSelected = !it.isSelected) else it
             }
@@ -195,10 +198,6 @@ class DevicePhotosScreenViewModel @Inject constructor(
             resetSelectedPhotos()
         }
     }
-
-    private fun groupPhotosByDayDesc(photos: List<Photo>) = photos
-        .map { SelectablePhoto(photo = it, isSelected = _selectedPhotos.value.contains(it)) }
-        .groupBy { it.photo.dateTime.toLocalDate() }
 
     sealed class Event {
         data class NavigateToPhotoPreview(val photo: Photo) : Event()
