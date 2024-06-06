@@ -67,14 +67,14 @@
     <string name="location_permission_needed_title">Location permission needed</string>
     <string name="location_permission_rationale_body">Location permissions are needed for BLE functionality in this app, ensuring accurate device connections for an optimal experience. We won\'t use it in any way.</string>
     <string name="no_internet_connection_error_message">No internet connection</string>
-    <string name="no_photos_saved_from_this_device">No photos from this device have been saved yet</string>
-    <string name="no_photos_taken_by_this_device">This device hasn\'t taken any photos yet</string>
+    <string name="no_photos_saved_message">No photos saved</string>
     <string name="not_connectable_label">Not connectable</string>
     <string name="not_found_error_message">Not found</string>
     <string name="ok_label">OK</string>
     <string name="open_settings_label">Open settings</string>
     <string name="photo_preview_date_label">Date: %1$s</string>
     <string name="photo_preview_size_label">Size: %1$s</string>
+    <string name="photos_not_found_message">Photos not found</string>
     <string name="photos_tab_label">Photos</string>
     <string name="remove_device_explanation">This will remove device \"%1$s\" (id: %2$d) and all its photos from phone memory. Photos still will be stored on server.</string>
     <string name="remove_device_menu_item_remove">Remove</string>

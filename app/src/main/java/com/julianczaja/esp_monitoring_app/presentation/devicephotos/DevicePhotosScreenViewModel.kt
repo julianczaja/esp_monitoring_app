@@ -52,6 +52,8 @@ class DevicePhotosScreenViewModel @Inject constructor(
 
     private val _isRefreshing = MutableStateFlow(false)
 
+    private val _isRefreshed = MutableStateFlow(false)
+
     private val _isOnline = networkManager.isOnline
 
     val eventFlow = MutableSharedFlow<Event>()
@@ -60,15 +62,17 @@ class DevicePhotosScreenViewModel @Inject constructor(
         localFilteredGroupedSelectablePhotosFlow(),
         isLoadingFlow(),
         _isOnline,
-        _selectedPhotos
-    ) { (filterDates, filteredGroupedPhotos), isLoading, isOnline, selectedPhotos ->
+        _selectedPhotos,
+        _isRefreshed
+    ) { (filterDates, filteredGroupedPhotos), isLoading, isOnline, selectedPhotos, isRefreshed ->
         _isSelectionMode = selectedPhotos.isNotEmpty()
         UiState(
             dateGroupedSelectablePhotos = filteredGroupedPhotos,
             selectableFilterDates = filterDates,
             isLoading = isLoading,
             isOnline = isOnline,
-            isSelectionMode = _isSelectionMode
+            isSelectionMode = _isSelectionMode,
+            isRefreshed = isRefreshed
         )
     }
         .flowOn(ioDispatcher)
@@ -84,7 +88,8 @@ class DevicePhotosScreenViewModel @Inject constructor(
                 selectableFilterDates = emptyList(),
                 isLoading = false,
                 isOnline = true,
-                isSelectionMode = false
+                isSelectionMode = false,
+                isRefreshed = false
             )
         )
 
@@ -119,20 +124,15 @@ class DevicePhotosScreenViewModel @Inject constructor(
         return@combine isRefreshing || isSaving
     }
 
-    fun updatePhotos() {
+    fun updatePhotos() = viewModelScope.launch(ioDispatcher) {
         _isRefreshing.update { true }
-
-        viewModelScope.launch(ioDispatcher) {
-            photoRepository.updateAllPhotosRemote(deviceId)
-                .onFailure {
-                    Timber.e(it)
-                    eventFlow.emit(Event.ShowError(it.getErrorMessageId()))
-                    _isRefreshing.update { false }
-                }
-                .onSuccess {
-                    _isRefreshing.update { false }
-                }
-        }
+        photoRepository.updateAllPhotosRemote(deviceId)
+            .onFailure {
+                Timber.e(it)
+                eventFlow.emit(Event.ShowError(it.getErrorMessageId()))
+            }
+        _isRefreshing.update { false }
+        _isRefreshed.update { true }
     }
 
     fun onPhotoClick(selectablePhoto: SelectablePhoto) {
@@ -213,6 +213,7 @@ class DevicePhotosScreenViewModel @Inject constructor(
         val selectableFilterDates: List<SelectableLocalDate>,
         val isLoading: Boolean,
         val isOnline: Boolean,
-        val isSelectionMode: Boolean
+        val isSelectionMode: Boolean,
+        val isRefreshed: Boolean
     )
 }

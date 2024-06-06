@@ -62,7 +62,7 @@ class DevicePhotosScreenViewModelTest {
     }
 
     @Test
-    fun `isRefreshing should be true after updatePhotos has been called`() = runTest {
+    fun `isLoading should be true after updatePhotos has been called`() = runTest {
         val remotePhotos = listOf(Photo(1L, LocalDateTime.MAX, "", "", "", ""))
         photoRepository.remotePhotos = remotePhotos
 
@@ -74,6 +74,7 @@ class DevicePhotosScreenViewModelTest {
             assertThat(uiState.isLoading).isEqualTo(true)
             uiState = awaitItem()
             assertThat(uiState.isLoading).isEqualTo(false)
+            cancelAndIgnoreRemainingEvents()
         }
         coVerify(exactly = 1) { photoRepository.updateAllPhotosRemote(deviceId) }
     }
