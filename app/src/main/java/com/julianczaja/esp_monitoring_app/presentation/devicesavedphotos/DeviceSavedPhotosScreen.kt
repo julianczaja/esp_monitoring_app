@@ -97,7 +97,8 @@ fun DeviceSavedPhotosScreen(
             resetSelections = viewModel::resetSelectedPhotos,
             removeSelectedPhotos = viewModel::removeSelectedPhotos,
             onPhotoClick = viewModel::onPhotoClick,
-            onPhotoLongClick = viewModel::onPhotoLongClick
+            onPhotoLongClick = viewModel::onPhotoLongClick,
+            onSelectDeselectAllClick = viewModel::onSelectDeselectAllClicked
         )
     } else {
         PermissionsRequiredScreen(
@@ -175,6 +176,7 @@ private fun DeviceSavedPhotosScreenContent(
     removeSelectedPhotos: () -> Unit,
     onPhotoClick: (SelectablePhoto) -> Unit,
     onPhotoLongClick: (SelectablePhoto) -> Unit,
+    onSelectDeselectAllClick: (LocalDate) -> Unit,
 ) {
     LaunchedEffect(true) {
         onRefreshTriggered.invoke()
@@ -209,7 +211,8 @@ private fun DeviceSavedPhotosScreenContent(
                     dateGroupedSelectablePhotos = savedPhotos,
                     isSelectionMode = isSelectionMode,
                     onPhotoClick = onPhotoClick,
-                    onPhotoLongClick = onPhotoLongClick
+                    onPhotoLongClick = onPhotoLongClick,
+                    onSelectDeselectAllClick = onSelectDeselectAllClick
                 )
             }
         }

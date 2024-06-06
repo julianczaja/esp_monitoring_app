@@ -11,6 +11,7 @@ import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.domain.model.SelectablePhoto
 import com.julianczaja.esp_monitoring_app.domain.model.getErrorMessageId
 import com.julianczaja.esp_monitoring_app.domain.repository.PhotoRepository
+import com.julianczaja.esp_monitoring_app.domain.usecase.SelectOrDeselectAllPhotosByDateUseCase
 import com.julianczaja.esp_monitoring_app.navigation.DeviceScreen
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
@@ -33,6 +34,7 @@ import javax.inject.Inject
 class DeviceSavedPhotosScreenViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val photoRepository: PhotoRepository,
+    private val selectOrDeselectAllPhotosByDateUseCase: SelectOrDeselectAllPhotosByDateUseCase,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
 
@@ -97,6 +99,15 @@ class DeviceSavedPhotosScreenViewModel @Inject constructor(
                 photos - selectablePhoto.photo
             }
         }
+    }
+
+    fun onSelectDeselectAllClicked(localDate: LocalDate) {
+        val updatedSelectedPhotos = selectOrDeselectAllPhotosByDateUseCase.invoke(
+            allSelectablePhotosWithDate = uiState.value.dateGroupedSelectablePhotos[localDate].orEmpty(),
+            allSelectedPhotos = _selectedPhotos.value,
+            date = localDate
+        )
+        _selectedPhotos.update { updatedSelectedPhotos }
     }
 
     fun resetSelectedPhotos() {

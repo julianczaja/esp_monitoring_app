@@ -28,6 +28,7 @@ import com.julianczaja.esp_monitoring_app.domain.repository.AppSettingsRepositor
 import com.julianczaja.esp_monitoring_app.domain.repository.DeviceInfoRepository
 import com.julianczaja.esp_monitoring_app.domain.repository.DeviceRepository
 import com.julianczaja.esp_monitoring_app.domain.repository.PhotoRepository
+import com.julianczaja.esp_monitoring_app.domain.usecase.SelectOrDeselectAllPhotosByDateUseCase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -142,4 +143,8 @@ object AppModule {
                 applicationContext.preferencesDataStoreFile(Constants.SETTINGS_DATA_STORE_NAME)
             }
         )
+
+    @Provides
+    @Singleton
+    fun provideSelectOrDeselectAllPhotosByDateUseCase() = SelectOrDeselectAllPhotosByDateUseCase()
 }

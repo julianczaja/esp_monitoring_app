@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyGridItemScope
 import androidx.compose.foundation.lazy.grid.LazyGridState
@@ -21,10 +22,9 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,10 +33,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.data.utils.toPrettyString
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.domain.model.SelectablePhoto
@@ -56,40 +58,62 @@ fun SelectablePhotosLazyGrid(
     state: LazyGridState = rememberLazyGridState(),
     onPhotoClick: (SelectablePhoto) -> Unit,
     onPhotoLongClick: (SelectablePhoto) -> Unit,
+    onSelectDeselectAllClick: (LocalDate) -> Unit,
 ) {
     LazyVerticalGrid(
         modifier = modifier,
         columns = GridCells.Adaptive(minSize),
         state = state,
         contentPadding = PaddingValues(MaterialTheme.spacing.medium),
-        horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium, Alignment.CenterHorizontally),
-        verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium, Alignment.Top)
+        horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium),
+        verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium)
     ) {
         dateGroupedSelectablePhotos.onEachIndexed { index, (localDate, photos) ->
             header(key = localDate) {
                 Column {
                     if (index > 0) {
                         HorizontalDivider(
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(MaterialTheme.spacing.small)
+                            modifier = Modifier.padding(vertical = MaterialTheme.spacing.medium)
                         )
                     }
                     Row(
+                        modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(
-                            space = MaterialTheme.spacing.medium,
-                            alignment = Alignment.CenterHorizontally
-                        ),
-                        modifier = Modifier.fillMaxWidth()
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.DateRange,
-                            contentDescription = null
-                        )
-                        Text(
-                            text = localDate.toString(),
-                            style = MaterialTheme.typography.bodyLarge
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(
+                                space = MaterialTheme.spacing.small,
+                                alignment = Alignment.Start
+                            )
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_calendar),
+                                contentDescription = null
+                            )
+                            Text(
+                                text = localDate.toString(),
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                        val allPhotosWithDateAreSelected = photos
+                            .filter { it.photo.dateTime.toLocalDate() == localDate }
+                            .all { it.isSelected }
+
+                        val selectDeselectIcon = when (allPhotosWithDateAreSelected) {
+                            true -> R.drawable.ic_deselect_all
+                            false -> R.drawable.ic_select_all
+                        }
+                        IconButton(
+                            modifier = Modifier.size(24.dp),
+                            onClick = { onSelectDeselectAllClick(localDate) }
+                        ) {
+                            Icon(
+                                painter = painterResource(id = selectDeselectIcon),
+                                contentDescription = null
+                            )
+                        }
                     }
                 }
             }
@@ -174,11 +198,11 @@ fun SelectableDevicePhotoPreview() {
         LocalDate.of(2023, 1, 1) to listOf(
             SelectablePhoto(
                 photo = Photo(123L, LocalDateTime.of(2023, 1, 1, 10, 10), "fileName 1", "1600x1200", "url", "url"),
-                isSelected = false
+                isSelected = true
             ),
             SelectablePhoto(
                 photo = Photo(123L, LocalDateTime.of(2023, 1, 1, 10, 11), "fileName 2", "1600x1200", "url", "url"),
-                isSelected = false
+                isSelected = true
             ),
             SelectablePhoto(
                 photo = Photo(123L, LocalDateTime.of(2023, 1, 1, 10, 12), "fileName 3", "1600x1200", "url", "url"),
@@ -202,7 +226,8 @@ fun SelectableDevicePhotoPreview() {
             dateGroupedSelectablePhotos = dateGroupedSelectablePhotos,
             isSelectionMode = true,
             onPhotoClick = {},
-            onPhotoLongClick = {}
+            onPhotoLongClick = {},
+            onSelectDeselectAllClick = {}
         )
     }
 }

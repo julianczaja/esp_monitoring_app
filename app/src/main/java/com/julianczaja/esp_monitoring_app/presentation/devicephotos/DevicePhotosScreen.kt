@@ -157,6 +157,7 @@ fun DevicePhotosScreen(
         onPhotoClick = viewModel::onPhotoClick,
         onPhotoLongClick = viewModel::onPhotoLongClick,
         onFilterDateClicked = viewModel::onFilterDateClicked,
+        onSelectDeselectAllClick = viewModel::onSelectDeselectAllClicked
     )
 }
 
@@ -171,6 +172,7 @@ private fun DevicePhotosScreenContent(
     onPhotoClick: (SelectablePhoto) -> Unit,
     onPhotoLongClick: (SelectablePhoto) -> Unit,
     onFilterDateClicked: (SelectableLocalDate) -> Unit,
+    onSelectDeselectAllClick: (LocalDate) -> Unit,
 ) {
     val pullRefreshState = rememberPullToRefreshState(enabled = { uiState.isOnline })
 
@@ -203,7 +205,8 @@ private fun DevicePhotosScreenContent(
                     uiState = uiState,
                     onPhotoClick = onPhotoClick,
                     onPhotoLongClick = onPhotoLongClick,
-                    onFilterDateClicked = onFilterDateClicked
+                    onFilterDateClicked = onFilterDateClicked,
+                    onSelectDeselectAllClick = onSelectDeselectAllClick
                 )
             }
         }
@@ -221,6 +224,7 @@ private fun DevicePhotosNotEmptyScreen(
     onPhotoClick: (SelectablePhoto) -> Unit,
     onPhotoLongClick: (SelectablePhoto) -> Unit,
     onFilterDateClicked: (SelectableLocalDate) -> Unit,
+    onSelectDeselectAllClick: (LocalDate) -> Unit,
 ) {
     val coroutineScope = rememberCoroutineScope()
     val lazyGridState = rememberLazyGridState()
@@ -263,7 +267,8 @@ private fun DevicePhotosNotEmptyScreen(
             isSelectionMode = uiState.isSelectionMode,
             state = lazyGridState,
             onPhotoClick = onPhotoClick,
-            onPhotoLongClick = onPhotoLongClick
+            onPhotoLongClick = onPhotoLongClick,
+            onSelectDeselectAllClick = onSelectDeselectAllClick
         )
     }
 }
@@ -340,7 +345,7 @@ private fun DevicePhotosStateItemsPreview() {
                 ),
                 isRefreshed = true
             ),
-            {}, {}, {}, {}, {}, {}, {}
+            {}, {}, {}, {}, {}, {}, {}, {}
         )
     }
 
@@ -359,7 +364,7 @@ private fun DevicePhotosStateSuccessNoItemsPreview() {
                 selectableFilterDates = emptyList(),
                 isRefreshed = true
             ),
-            {}, {}, {}, {}, {}, {}, {}
+            {}, {}, {}, {}, {}, {}, {}, {}
         )
     }
 }

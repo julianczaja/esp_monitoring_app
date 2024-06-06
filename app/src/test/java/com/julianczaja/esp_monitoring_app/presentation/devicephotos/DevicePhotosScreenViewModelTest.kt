@@ -3,20 +3,20 @@ package com.julianczaja.esp_monitoring_app.presentation.devicephotos
 import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
+import com.julianczaja.esp_monitoring_app.MainDispatcherRule
 import com.julianczaja.esp_monitoring_app.data.NetworkManager
 import com.julianczaja.esp_monitoring_app.data.repository.FakePhotoRepositoryImpl
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.domain.model.SelectablePhoto
+import com.julianczaja.esp_monitoring_app.domain.usecase.SelectOrDeselectAllPhotosByDateUseCase
 import com.julianczaja.esp_monitoring_app.navigation.DeviceIdArgs
 import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DevicePhotosScreenViewModel.UiState
-import com.julianczaja.esp_monitoring_app.MainDispatcherRule
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.spyk
 import io.mockk.verify
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -48,6 +48,7 @@ class DevicePhotosScreenViewModelTest {
             savedStateHandle = savedStateHandle,
             photoRepository = photoRepository,
             networkManager = networkManager,
+            selectOrDeselectAllPhotosByDateUseCase = SelectOrDeselectAllPhotosByDateUseCase(),
             ioDispatcher = dispatcherRule.testDispatcher
         )
     }
@@ -110,9 +111,83 @@ class DevicePhotosScreenViewModelTest {
 
         viewModel.eventFlow.test {
             viewModel.updatePhotos()
-            viewModel.devicePhotosUiState.first()
             assertThat(awaitItem()).isInstanceOf(DevicePhotosScreenViewModel.Event.ShowError::class.java)
         }
         coVerify(exactly = 1) { photoRepository.updateAllPhotosRemote(deviceId) }
+    }
+
+    @Test
+    fun `should select all photos if only one photos with given date is selected`() = runTest {
+        val localDate = LocalDate.of(2024, 6, 6)
+        val remotePhotos = listOf(
+            Photo(1L, localDate.atTime(10, 0), "", "", "", ""),
+            Photo(2L, localDate.atTime(11, 0), "", "", "", ""),
+            Photo(3L, localDate.atTime(12, 0), "", "", "", ""),
+        )
+        photoRepository.remotePhotos = remotePhotos
+
+        viewModel.devicePhotosUiState.test {
+            assertThat(awaitItem().dateGroupedSelectablePhotos).isEmpty()
+            viewModel.updatePhotos()
+
+            var uiState = awaitItem()
+            val selectablePhotos = uiState.dateGroupedSelectablePhotos[localDate].orEmpty()
+            assertThat(selectablePhotos).hasSize(3)
+            viewModel.onPhotoLongClick(selectablePhotos.first())
+            viewModel.onSelectDeselectAllClicked(localDate)
+            uiState = expectMostRecentItem()
+            assertThat(uiState.dateGroupedSelectablePhotos[localDate]?.all { it.isSelected }).isTrue()
+        }
+    }
+
+    @Test
+    fun `should select all photos if no photo with given date is selected`() = runTest {
+        val localDate = LocalDate.of(2024, 6, 6)
+        val remotePhotos = listOf(
+            Photo(1L, localDate.atTime(10, 0), "", "", "", ""),
+            Photo(2L, localDate.atTime(11, 0), "", "", "", ""),
+            Photo(3L, localDate.atTime(12, 0), "", "", "", ""),
+        )
+        photoRepository.remotePhotos = remotePhotos
+
+        viewModel.devicePhotosUiState.test {
+            assertThat(awaitItem().dateGroupedSelectablePhotos).isEmpty()
+            viewModel.updatePhotos()
+
+            var uiState = awaitItem()
+            val selectablePhotos = uiState.dateGroupedSelectablePhotos[localDate].orEmpty()
+            assertThat(selectablePhotos).hasSize(3)
+            viewModel.onSelectDeselectAllClicked(localDate)
+            uiState = expectMostRecentItem()
+            assertThat(uiState.dateGroupedSelectablePhotos[localDate]?.all { it.isSelected }).isTrue()
+        }
+    }
+
+    @Test
+    fun `should deselect all photos if all photos with given date are selected`() = runTest {
+        val localDate = LocalDate.of(2024, 6, 6)
+        val remotePhotos = listOf(
+            Photo(1L, localDate.atTime(10, 0), "", "", "", ""),
+            Photo(2L, localDate.atTime(11, 0), "", "", "", ""),
+            Photo(3L, localDate.atTime(12, 0), "", "", "", ""),
+        )
+        photoRepository.remotePhotos = remotePhotos
+
+        viewModel.devicePhotosUiState.test {
+            assertThat(awaitItem().dateGroupedSelectablePhotos).isEmpty()
+            viewModel.updatePhotos()
+
+            var uiState = awaitItem()
+            val selectablePhotos = uiState.dateGroupedSelectablePhotos[localDate].orEmpty()
+            assertThat(selectablePhotos).hasSize(3)
+            with(viewModel) {
+                onPhotoLongClick(selectablePhotos[0])
+                onPhotoLongClick(selectablePhotos[1])
+                onPhotoLongClick(selectablePhotos[2])
+                onSelectDeselectAllClicked(localDate)
+            }
+            uiState = expectMostRecentItem()
+            assertThat(uiState.dateGroupedSelectablePhotos[localDate]?.all { !it.isSelected }).isTrue()
+        }
     }
 }
