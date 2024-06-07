@@ -12,29 +12,35 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -274,9 +280,7 @@ private fun PermissionsRequiredScreen(
     Column(
         verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.extraLarge, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier
-            .fillMaxSize()
-            .padding(MaterialTheme.spacing.large)
+        modifier = modifier.padding(MaterialTheme.spacing.large)
     ) {
         if (locationPermissionState != PermissionState.GRANTED) {
             GrantPermissionButton(
@@ -331,7 +335,7 @@ private fun BluetoothPermissionRationaleDialog(
 
 //region Scan
 @Composable
-fun DeviceSettingsScanScreen(
+private fun DeviceSettingsScanScreen(
     modifier: Modifier = Modifier,
     uiState: UiState.Scan,
     isBluetoothEnabled: Boolean,
@@ -341,53 +345,89 @@ fun DeviceSettingsScanScreen(
     onDeviceClicked: (String) -> Unit
 ) {
     val context = LocalContext.current
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        StateBar(
-            isVisible = !isBluetoothEnabled,
-            title = R.string.bluetooth_disabled_label,
-            onButtonClicked = { context.getActivity().promptEnableBluetooth() }
-        )
-        StateBar(
-            isVisible = !isBleLocationEnabled,
-            title = R.string.location_disabled_label,
-            onButtonClicked = { context.getActivity().promptEnableLocation() }
-        )
+    val lazyListState = rememberLazyListState()
+    val isFabExpanded by remember {
+        derivedStateOf {
+            lazyListState.firstVisibleItemScrollOffset == 0
+        }
+    }
 
-        AnimatedVisibility(visible = uiState.isScanning) {
-            LinearProgressIndicator(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(2.dp)
+    Scaffold(
+        modifier = modifier,
+        floatingActionButton = {
+            ScanFloatingActionButton(
+                isScanning = uiState.isScanning,
+                isExpanded = isFabExpanded,
+                onStartScanClicked = onStartScanClicked,
+                onStopScanClicked = onStopScanClicked
             )
+
         }
-        Button(
-            modifier = Modifier.fillMaxWidth(.5f),
-            enabled = isBluetoothEnabled && isBleLocationEnabled,
-            onClick = if (uiState.isScanning) onStopScanClicked else onStartScanClicked
-        ) {
-            Text(
-                text = if (uiState.isScanning) stringResource(R.string.bluetooth_stop_scan_label)
-                else stringResource(R.string.bluetooth_scan_label)
+    ) { padding ->
+        Column(modifier.padding(paddingValues = padding)) {
+            StateBar(
+                isVisible = !isBluetoothEnabled,
+                title = R.string.bluetooth_disabled_label,
+                onButtonClicked = { context.getActivity().promptEnableBluetooth() }
             )
-        }
-        HorizontalDivider()
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium, Alignment.Top),
-            contentPadding = PaddingValues(MaterialTheme.spacing.medium)
-        ) {
-            items(uiState.bleAdvertisements) {
-                AdvertisementItem(it, onDeviceClicked)
+            StateBar(
+                isVisible = !isBleLocationEnabled,
+                title = R.string.location_disabled_label,
+                onButtonClicked = { context.getActivity().promptEnableLocation() }
+            )
+
+            AnimatedVisibility(visible = uiState.isScanning) {
+                LinearProgressIndicator(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(2.dp)
+                )
+            }
+            LazyColumn(
+                state = lazyListState,
+                verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium, Alignment.Top),
+                contentPadding = PaddingValues(MaterialTheme.spacing.medium)
+            ) {
+                items(uiState.bleAdvertisements) {
+                    AdvertisementItem(it, onDeviceClicked)
+                }
             }
         }
     }
 }
+
+@Composable
+private fun ScanFloatingActionButton(
+    isScanning: Boolean,
+    isExpanded: Boolean,
+    onStartScanClicked: () -> Unit,
+    onStopScanClicked: () -> Unit,
+) {
+    ExtendedFloatingActionButton(
+        onClick = if (isScanning) onStopScanClicked else onStartScanClicked,
+        icon = {
+            Icon(
+                imageVector = when (isScanning) {
+                    true -> Icons.Default.Close
+                    false -> Icons.Default.Search
+                },
+                contentDescription = null,
+            )
+        },
+        text = {
+            Text(
+                text = when (isScanning) {
+                    true -> stringResource(R.string.bluetooth_stop_scan_label)
+                    false -> stringResource(R.string.bluetooth_scan_label)
+                }
+            )
+        },
+        expanded = isExpanded
+    )
+}
 //endregion
 
 //region Connect
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DeviceSettingsConnectScreen(
     modifier: Modifier = Modifier,
@@ -395,31 +435,8 @@ fun DeviceSettingsConnectScreen(
     onDeviceSettingsChanged: (DeviceSettings) -> Unit,
     onDisconnectClicked: () -> Unit
 ) {
-    val pullRefreshState = rememberPullToRefreshState(enabled = { false })
-
-    LaunchedEffect(uiState.isBusy) {
-        if (uiState.isBusy) {
-            pullRefreshState.startRefresh()
-        } else {
-            pullRefreshState.endRefresh()
-        }
-    }
-
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .nestedScroll(pullRefreshState.nestedScrollConnection)
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = stringResource(id = uiState.deviceStatus.stringId),
-                modifier = Modifier.padding(top = MaterialTheme.spacing.small)
-            )
-            HorizontalDivider(
-                modifier = Modifier.padding(top = MaterialTheme.spacing.small)
-            )
+    when (uiState.deviceStatus) {
+        DeviceStatus.Connected -> {
             Column(
                 modifier = modifier
                     .verticalScroll(rememberScrollState())
@@ -427,27 +444,32 @@ fun DeviceSettingsConnectScreen(
                 verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium, Alignment.Top),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                if (uiState.deviceStatus == DeviceStatus.Connected) {
-                    DeviceSettingsContent(
-                        deviceSettings = uiState.deviceSettings,
-                        enabled = !uiState.isBusy,
-                        onChanged = onDeviceSettingsChanged
-                    )
-                    Button(
-                        modifier = Modifier
-                            .fillMaxWidth(.5f)
-                            .padding(top = MaterialTheme.spacing.small),
-                        onClick = onDisconnectClicked
-                    ) {
-                        Text(text = stringResource(id = R.string.disconnect_label))
-                    }
+                DeviceSettingsContent(
+                    deviceSettings = uiState.deviceSettings,
+                    enabled = !uiState.isBusy,
+                    onChanged = onDeviceSettingsChanged
+                )
+                Button(
+                    modifier = Modifier
+                        .fillMaxWidth(.5f)
+                        .padding(top = MaterialTheme.spacing.small),
+                    onClick = onDisconnectClicked
+                ) {
+                    Text(text = stringResource(id = R.string.disconnect_label))
                 }
             }
         }
-        PullToRefreshContainer(
-            modifier = Modifier.align(Alignment.TopCenter),
-            state = pullRefreshState,
-        )
+
+        else -> {
+            Box(modifier) {
+                Text(
+                    text = stringResource(id = uiState.deviceStatus.stringId),
+                    modifier = Modifier
+                        .padding(MaterialTheme.spacing.medium)
+                        .align(Alignment.Center)
+                )
+            }
+        }
     }
 }
 
@@ -548,14 +570,32 @@ fun DeviceSettingsContent(
 //region Preview
 @PreviewLightDark
 @Composable
-private fun DeviceSettingsConnectScreenPreview() {
+private fun DeviceSettingsConnectScreenConnectedPreview() {
     AppBackground {
         DeviceSettingsConnectScreen(
-            modifier = Modifier,
             uiState = UiState.Connect(
                 deviceStatus = DeviceStatus.Connected,
                 deviceSettings = DeviceSettings(),
                 isBusy = false
+            ),
+            onDeviceSettingsChanged = {},
+            onDisconnectClicked = {}
+        )
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun DeviceSettingsConnectScreenConnectingPreview() {
+    AppBackground(
+        modifier = Modifier.size(300.dp)
+    ) {
+        DeviceSettingsConnectScreen(
+            modifier = Modifier.fillMaxSize(),
+            uiState = UiState.Connect(
+                deviceStatus = DeviceStatus.Connecting,
+                deviceSettings = DeviceSettings(),
+                isBusy = true
             ),
             onDeviceSettingsChanged = {},
             onDisconnectClicked = {}
