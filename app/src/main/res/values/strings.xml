@@ -88,6 +88,7 @@
     <string name="rssi_dbm">RSSI: %1$s dBm</string>
     <string name="save_photo_to_external_storage_result_message">%1$d/%2$d photos saved</string>
     <string name="saved_tab_label">Saved</string>
+    <string name="selected_photos_count_format">Selected: %1$d</string>
     <string name="special_effect_blue_tint">Blue Tint</string>
     <string name="special_effect_grayscale">Grayscale</string>
     <string name="special_effect_green_tint">Green Tint</string>

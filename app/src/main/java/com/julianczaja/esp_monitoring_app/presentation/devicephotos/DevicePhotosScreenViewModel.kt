@@ -71,7 +71,8 @@ class DevicePhotosScreenViewModel @Inject constructor(
             isLoading = isLoading,
             isOnline = isOnline,
             isSelectionMode = _isSelectionMode,
-            isRefreshed = isRefreshed
+            isRefreshed = isRefreshed,
+            selectedCount = _selectedPhotos.value.size
         )
     }
         .flowOn(ioDispatcher)
@@ -88,7 +89,8 @@ class DevicePhotosScreenViewModel @Inject constructor(
                 isLoading = false,
                 isOnline = true,
                 isSelectionMode = false,
-                isRefreshed = false
+                isRefreshed = false,
+                selectedCount = 0
             )
         )
 
@@ -224,6 +226,7 @@ class DevicePhotosScreenViewModel @Inject constructor(
         val isLoading: Boolean,
         val isOnline: Boolean,
         val isSelectionMode: Boolean,
-        val isRefreshed: Boolean
+        val isRefreshed: Boolean,
+        val selectedCount: Int
     )
 }

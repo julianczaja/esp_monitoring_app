@@ -17,10 +17,12 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.julianczaja.esp_monitoring_app.R
@@ -30,13 +32,14 @@ import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 @Composable
 fun SelectedEditBar(
     isSelectionMode: Boolean,
+    selectedCount: Int,
     removeSelectedPhotos: () -> Unit,
     saveSelectedPhotos: (() -> Unit)? = null,
     resetSelections: () -> Unit
 ) {
     AnimatedVisibility(
         visible = isSelectionMode,
-        enter = slideInVertically(initialOffsetY = { -it/2 }),
+        enter = slideInVertically(initialOffsetY = { -it / 2 }),
         exit = slideOutVertically(targetOffsetY = { -it })
     ) {
         Column {
@@ -45,27 +48,34 @@ fun SelectedEditBar(
                     .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.surfaceBright)
                     .padding(horizontal = MaterialTheme.spacing.medium),
-                horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small, Alignment.End),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = removeSelectedPhotos) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = null
-                    )
-                }
-                saveSelectedPhotos?.let { action ->
-                    IconButton(onClick = action) {
+                Text(text = stringResource(R.string.selected_photos_count_format, selectedCount))
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small, Alignment.End),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    IconButton(onClick = removeSelectedPhotos) {
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_baseline_save_24),
+                            imageVector = Icons.Default.Delete,
                             contentDescription = null
                         )
                     }
-                }
-                IconButton(onClick = resetSelections) {
-                    Icon(
-                        imageVector = Icons.Default.Clear,
-                        contentDescription = null
-                    )
+                    saveSelectedPhotos?.let { action ->
+                        IconButton(onClick = action) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_baseline_save_24),
+                                contentDescription = null
+                            )
+                        }
+                    }
+                    IconButton(onClick = resetSelections) {
+                        Icon(
+                            imageVector = Icons.Default.Clear,
+                            contentDescription = null
+                        )
+                    }
                 }
             }
             HorizontalDivider()
@@ -80,6 +90,7 @@ private fun SelectedEditBarPreview() {
     AppBackground(Modifier.height(100.dp)) {
         SelectedEditBar(
             isSelectionMode = true,
+            selectedCount = 2,
             removeSelectedPhotos = {},
             saveSelectedPhotos = {},
             resetSelections = {}

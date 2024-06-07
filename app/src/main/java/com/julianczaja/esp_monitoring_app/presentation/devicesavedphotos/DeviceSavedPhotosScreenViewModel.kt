@@ -57,7 +57,8 @@ class DeviceSavedPhotosScreenViewModel @Inject constructor(
             initialValue = UiState(
                 dateGroupedSelectablePhotos = emptyMap(),
                 isLoading = false,
-                isSelectionMode = false
+                isSelectionMode = false,
+                selectedCount = 0
             )
         )
 
@@ -72,6 +73,7 @@ class DeviceSavedPhotosScreenViewModel @Inject constructor(
                 dateGroupedSelectablePhotos = groupPhotosByDayDesc(savedPhotos),
                 isLoading = isLoading,
                 isSelectionMode = _isSelectionMode,
+                selectedCount = selectedPhotos.size
             )
         }
             .flowOn(ioDispatcher)
@@ -163,6 +165,7 @@ class DeviceSavedPhotosScreenViewModel @Inject constructor(
     data class UiState(
         val dateGroupedSelectablePhotos: Map<LocalDate, List<SelectablePhoto>>,
         val isLoading: Boolean,
-        val isSelectionMode: Boolean
+        val isSelectionMode: Boolean,
+        val selectedCount: Int
     )
 }

@@ -93,6 +93,7 @@ fun DeviceSavedPhotosScreen(
             savedPhotos = uiState.dateGroupedSelectablePhotos,
             isLoading = uiState.isLoading,
             isSelectionMode = uiState.isSelectionMode,
+            selectedCount = uiState.selectedCount,
             onRefreshTriggered = viewModel::updateSavedPhotos,
             resetSelections = viewModel::resetSelectedPhotos,
             removeSelectedPhotos = viewModel::removeSelectedPhotos,
@@ -171,6 +172,7 @@ private fun DeviceSavedPhotosScreenContent(
     savedPhotos: Map<LocalDate, List<SelectablePhoto>>,
     isLoading: Boolean,
     isSelectionMode: Boolean,
+    selectedCount: Int,
     onRefreshTriggered: () -> Unit,
     resetSelections: () -> Unit,
     removeSelectedPhotos: () -> Unit,
@@ -201,6 +203,7 @@ private fun DeviceSavedPhotosScreenContent(
         Column {
             SelectedEditBar(
                 isSelectionMode = isSelectionMode,
+                selectedCount = selectedCount,
                 removeSelectedPhotos = removeSelectedPhotos,
                 resetSelections = resetSelections
             )
@@ -225,24 +228,24 @@ private fun DeviceSavedPhotosScreenContent(
 
 @Composable
 private fun EmptyScreen(modifier: Modifier = Modifier) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.veryLarge, Alignment.CenterVertically),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = modifier
-                .padding(MaterialTheme.spacing.large)
-                .verticalScroll(rememberScrollState())
-        ) {
-            Icon(
-                modifier = Modifier.size(200.dp),
-                painter = painterResource(id = R.drawable.ic_image_question),
-                contentDescription = null
-            )
-            Text(
-                text = stringResource(R.string.no_photos_saved_message),
-                style = MaterialTheme.typography.headlineSmall,
-                textAlign = TextAlign.Center
-            )
-        }
+    Column(
+        verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.veryLarge, Alignment.CenterVertically),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+            .padding(MaterialTheme.spacing.large)
+            .verticalScroll(rememberScrollState())
+    ) {
+        Icon(
+            modifier = Modifier.size(200.dp),
+            painter = painterResource(id = R.drawable.ic_image_question),
+            contentDescription = null
+        )
+        Text(
+            text = stringResource(R.string.no_photos_saved_message),
+            style = MaterialTheme.typography.headlineSmall,
+            textAlign = TextAlign.Center
+        )
+    }
 }
 
 //region Preview

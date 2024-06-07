@@ -196,7 +196,13 @@ private fun DevicePhotosScreenContent(
             modifier = Modifier.fillMaxSize()
         ) {
             StateBar(isVisible = !uiState.isOnline, title = R.string.you_are_offline)
-            SelectedEditBar(uiState.isSelectionMode, removeSelectedPhotos, saveSelectedPhotos, resetSelections)
+            SelectedEditBar(
+                isSelectionMode = uiState.isSelectionMode,
+                selectedCount = uiState.selectedCount,
+                removeSelectedPhotos = removeSelectedPhotos,
+                saveSelectedPhotos = saveSelectedPhotos,
+                resetSelections = resetSelections
+            )
 
             when (uiState.dateGroupedSelectablePhotos.isEmpty()) {
                 true -> DevicePhotosEmptyScreen(uiState.isRefreshed)
@@ -306,28 +312,30 @@ private fun DevicePhotosEmptyScreen(isRefreshed: Boolean) {
 @PreviewLightDark
 @Composable
 private fun DevicePhotosStateItemsPreview() {
+    val date1 = LocalDate.of(2023, 1, 10)
+    val date2 = LocalDate.of(2023, 1, 11)
     val dateGroupedSelectablePhotos = mapOf(
-        LocalDate.of(2023, 1, 1) to listOf(
+        date1 to listOf(
             SelectablePhoto(
-                photo = Photo(123L, LocalDateTime.of(2023, 1, 1, 10, 10), "fileName 1", "1600x1200", "url", "url"),
+                photo = Photo(1L, date1.atTime(10, 10), "fileName 1", "1600x1200", "url", "url"),
                 isSelected = false
             ),
             SelectablePhoto(
-                photo = Photo(123L, LocalDateTime.of(2023, 1, 1, 10, 11), "fileName 2", "1600x1200", "url", "url"),
+                photo = Photo(2L, date1.atTime(10, 11), "fileName 2", "1600x1200", "url", "url"),
                 isSelected = false
             ),
             SelectablePhoto(
-                photo = Photo(123L, LocalDateTime.of(2023, 1, 1, 10, 12), "fileName 3", "1600x1200", "url", "url"),
+                photo = Photo(3L, date1.atTime(10, 12), "fileName 3", "1600x1200", "url", "url"),
                 isSelected = false
             ),
         ),
-        LocalDate.of(2023, 1, 2) to listOf(
+        date2 to listOf(
             SelectablePhoto(
-                photo = Photo(123L, LocalDateTime.of(2023, 1, 2, 10, 13), "fileName 4", "1600x1200", "url", "url"),
+                photo = Photo(4L, date2.atTime(10, 13), "fileName 4", "1600x1200", "url", "url"),
                 isSelected = false
             ),
             SelectablePhoto(
-                photo = Photo(123L, LocalDateTime.of(2023, 1, 2, 10, 14), "fileName 5", "1600x1200", "url", "url"),
+                photo = Photo(5L, date2.atTime(10, 14), "fileName 5", "1600x1200", "url", "url"),
                 isSelected = false
             ),
         )
@@ -340,15 +348,66 @@ private fun DevicePhotosStateItemsPreview() {
                 isOnline = false,
                 isSelectionMode = false,
                 selectableFilterDates = listOf(
-                    SelectableLocalDate(LocalDate.of(2023, 1, 2), true),
-                    SelectableLocalDate(LocalDate.of(2023, 1, 1), false),
+                    SelectableLocalDate(date2, false),
+                    SelectableLocalDate(date1, false),
                 ),
-                isRefreshed = true
+                isRefreshed = true,
+                selectedCount = 0
             ),
             {}, {}, {}, {}, {}, {}, {}, {}
         )
     }
 
+}
+
+@PreviewLightDark
+@Composable
+private fun DevicePhotosStateSelectedItemsPreview() {
+    val date1 = LocalDate.of(2023, 1, 10)
+    val date2 = LocalDate.of(2023, 1, 11)
+    val dateGroupedSelectablePhotos = mapOf(
+        date1 to listOf(
+            SelectablePhoto(
+                photo = Photo(1L, date1.atTime(10, 10), "fileName 1", "1600x1200", "url", "url"),
+                isSelected = true
+            ),
+            SelectablePhoto(
+                photo = Photo(2L, date1.atTime(10, 11), "fileName 2", "1600x1200", "url", "url"),
+                isSelected = true
+            ),
+            SelectablePhoto(
+                photo = Photo(3L, date1.atTime(10, 12), "fileName 3", "1600x1200", "url", "url"),
+                isSelected = false
+            ),
+        ),
+        date2 to listOf(
+            SelectablePhoto(
+                photo = Photo(4L, date2.atTime(10, 13), "fileName 4", "1600x1200", "url", "url"),
+                isSelected = false
+            ),
+            SelectablePhoto(
+                photo = Photo(5L, date2.atTime(10, 14), "fileName 5", "1600x1200", "url", "url"),
+                isSelected = false
+            ),
+        )
+    )
+    AppBackground {
+        DevicePhotosScreenContent(
+            uiState = UiState(
+                dateGroupedSelectablePhotos = dateGroupedSelectablePhotos,
+                isLoading = false,
+                isOnline = true,
+                isSelectionMode = true,
+                selectableFilterDates = listOf(
+                    SelectableLocalDate(date2, false),
+                    SelectableLocalDate(date1, false),
+                ),
+                isRefreshed = true,
+                selectedCount = 2
+            ),
+            {}, {}, {}, {}, {}, {}, {}, {}
+        )
+    }
 }
 
 @PreviewLightDark
@@ -362,7 +421,8 @@ private fun DevicePhotosStateSuccessNoItemsPreview() {
                 isOnline = true,
                 isSelectionMode = false,
                 selectableFilterDates = emptyList(),
-                isRefreshed = true
+                isRefreshed = true,
+                selectedCount = 0
             ),
             {}, {}, {}, {}, {}, {}, {}, {}
         )
