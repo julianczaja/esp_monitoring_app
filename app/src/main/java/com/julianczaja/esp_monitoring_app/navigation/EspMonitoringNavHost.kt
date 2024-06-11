@@ -27,6 +27,7 @@ import kotlin.reflect.typeOf
 @Composable
 fun EspMonitoringNavHost(
     modifier: Modifier = Modifier,
+    onSetAppBarTitle: (Int) -> Unit,
     navController: NavHostController,
     snackbarHostState: SnackbarHostState,
     onBackClick: () -> Unit,
@@ -38,6 +39,7 @@ fun EspMonitoringNavHost(
     ) {
         composable<DevicesScreen> {
             DevicesScreen(
+                onSetAppBarTitle = onSetAppBarTitle,
                 navigateToAppSettings = navController::navigateToAppSettings,
                 navigateToDevice = navController::navigateToDevice,
                 navigateToRemoveDevice = navController::navigateToRemoveDeviceDialog,
@@ -51,6 +53,7 @@ fun EspMonitoringNavHost(
             exitTransition = { defaultExitTransition() }
         ) {
             DeviceScreen(
+                onSetAppBarTitle = onSetAppBarTitle,
                 snackbarHostState = snackbarHostState,
                 navigateToPhotoPreview = navController::navigateToPhotoPreview,
                 navigateToRemovePhotosDialog = navController::navigateToRemovePhotosDialog
@@ -61,6 +64,7 @@ fun EspMonitoringNavHost(
             exitTransition = { defaultExitTransition() }
         ) {
             DeviceSettingsScreen(
+                onSetAppBarTitle = onSetAppBarTitle,
                 snackbarHostState = snackbarHostState
             )
         }
@@ -69,6 +73,7 @@ fun EspMonitoringNavHost(
             exitTransition = { defaultExitTransition() }
         ) {
             AddEditDeviceScreen(
+                onSetAppBarTitle = onSetAppBarTitle,
                 snackbarHostState = snackbarHostState,
                 onDismiss = onBackClick
             )
@@ -95,6 +100,7 @@ fun EspMonitoringNavHost(
             exitTransition = { defaultExitTransition() }
         ) {
             AppSettingsScreen(
+                onSetAppBarTitle = onSetAppBarTitle,
                 snackbarHostState = snackbarHostState
             )
         }

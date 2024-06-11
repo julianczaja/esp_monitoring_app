@@ -14,10 +14,15 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.navigation.compose.rememberNavController
+import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.components.DefaultAppBar
 import com.julianczaja.esp_monitoring_app.navigation.EspMonitoringNavHost
 import com.julianczaja.esp_monitoring_app.rememberEspMonitoringAppState
@@ -27,6 +32,7 @@ fun AppContent(modifier: Modifier = Modifier) {
 
     val appState = rememberEspMonitoringAppState(rememberNavController())
     val snackbarHostState = remember { SnackbarHostState() }
+    var appBarTitleId by remember { mutableStateOf(R.string.app_name) }
 
     Scaffold(
         modifier = modifier,
@@ -36,6 +42,7 @@ fun AppContent(modifier: Modifier = Modifier) {
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             DefaultAppBar(
+                title = stringResource(id = appBarTitleId),
                 shouldShowNavigationIcon = appState.shouldShowNavigationIcon,
                 onBackClick = appState::onBackClick
             )
@@ -47,6 +54,7 @@ fun AppContent(modifier: Modifier = Modifier) {
                 .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
         ) {
             EspMonitoringNavHost(
+                onSetAppBarTitle = { appBarTitleId = it },
                 navController = appState.navController,
                 snackbarHostState = snackbarHostState,
                 onBackClick = appState::onBackClick,

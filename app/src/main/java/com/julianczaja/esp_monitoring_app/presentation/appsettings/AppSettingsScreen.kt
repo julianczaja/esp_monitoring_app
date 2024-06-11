@@ -36,6 +36,7 @@ import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 
 @Composable
 fun AppSettingsScreen(
+    onSetAppBarTitle: (Int) -> Unit,
     snackbarHostState: SnackbarHostState,
     viewModel: AppSettingsScreenViewModel = hiltViewModel()
 ) {
@@ -43,6 +44,7 @@ fun AppSettingsScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(true) {
+        onSetAppBarTitle(R.string.app_settings_screen_title)
         viewModel.eventFlow.collect { event ->
             when (event) {
                 AppSettingsScreenViewModel.Event.BaseUrlSaved -> snackbarHostState.showSnackbar(

@@ -128,10 +128,6 @@ private fun DeviceInfoContent(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = stringResource(R.string.device_info_title),
-            style = MaterialTheme.typography.headlineSmall
-        )
         Text(text = stringResource(R.string.device_info_id_format, deviceInfo.deviceId))
         HorizontalDivider(Modifier.padding(vertical = MaterialTheme.spacing.medium))
 

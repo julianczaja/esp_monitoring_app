@@ -12,11 +12,13 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.zIndex
+import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.presentation.deviceinfo.DeviceInfoScreen
 import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DevicePhotosScreen
 import com.julianczaja.esp_monitoring_app.presentation.devicesavedphotos.DeviceSavedPhotosScreen
@@ -25,6 +27,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun DeviceScreen(
+    onSetAppBarTitle: (Int) -> Unit,
     snackbarHostState: SnackbarHostState,
     navigateToPhotoPreview: (Long, String) -> Unit,
     navigateToRemovePhotosDialog: (List<String>) -> Unit,
@@ -32,6 +35,10 @@ fun DeviceScreen(
     val coroutineScope = rememberCoroutineScope()
     val pages = listOf(DevicePage.Photos, DevicePage.Saved, DevicePage.Info)
     val pagerState = rememberPagerState(pageCount = { pages.size })
+
+    LaunchedEffect(key1 = true) {
+        onSetAppBarTitle(R.string.device_screen_title)
+    }
 
     Column(
         modifier = Modifier.fillMaxSize()

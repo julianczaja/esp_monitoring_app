@@ -87,6 +87,7 @@ import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 
 @Composable
 fun DeviceSettingsScreen(
+    onSetAppBarTitle: (Int) -> Unit,
     snackbarHostState: SnackbarHostState,
     viewModel: DeviceSettingsScreenViewModel = hiltViewModel(),
 ) {
@@ -94,6 +95,14 @@ fun DeviceSettingsScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val isBluetoothEnabled by viewModel.isBluetoothEnabled.collectAsStateWithLifecycle()
     val isBleLocationEnabled by viewModel.isBleLocationEnabled.collectAsStateWithLifecycle()
+
+    LaunchedEffect(key1 = uiState) {
+        if (uiState is UiState.Connect) {
+            onSetAppBarTitle(R.string.device_settings_connect_screen_title)
+        } else {
+            onSetAppBarTitle(R.string.device_settings_scan_screen_title)
+        }
+    }
 
     LaunchedEffect(true) {
         viewModel.eventFlow.collect { event ->
@@ -507,10 +516,6 @@ private fun DeviceSettingsContent(
         )
     }
 
-    Text(
-        text = stringResource(R.string.device_settings_title),
-        style = MaterialTheme.typography.headlineSmall
-    )
     Text(text = stringResource(R.string.device_id_label_with_format, deviceSettings.deviceId))
     HorizontalDivider(Modifier.padding(vertical = MaterialTheme.spacing.medium))
 

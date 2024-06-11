@@ -9,20 +9,17 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
-import com.julianczaja.esp_monitoring_app.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DefaultAppBar(
+    title: String,
     shouldShowNavigationIcon: Boolean,
     onBackClick: () -> Unit
 ) {
     CenterAlignedTopAppBar(
-        title = {
-            Text(text = stringResource(id = R.string.app_name))
-        },
+        title = { Text(text = title) },
         navigationIcon = {
             if (shouldShowNavigationIcon) {
                 IconButton(onClick = onBackClick) {
@@ -41,6 +38,6 @@ fun DefaultAppBar(
 @Composable
 private fun DefaultAppBarPreview() {
     AppBackground {
-        DefaultAppBar(shouldShowNavigationIcon = true, onBackClick = {})
+        DefaultAppBar(title = "Esp monitoring", shouldShowNavigationIcon = true, onBackClick = {})
     }
 }

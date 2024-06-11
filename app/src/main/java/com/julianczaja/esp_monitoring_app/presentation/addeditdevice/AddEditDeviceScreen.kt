@@ -31,11 +31,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.components.AppBackground
 import com.julianczaja.esp_monitoring_app.presentation.addeditdevice.AddEditDeviceScreenViewModel.Event
+import com.julianczaja.esp_monitoring_app.presentation.addeditdevice.AddEditDeviceScreenViewModel.Mode
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 
 
 @Composable
 fun AddEditDeviceScreen(
+    onSetAppBarTitle: (Int) -> Unit,
     snackbarHostState: SnackbarHostState,
     onDismiss: () -> Unit,
     viewModel: AddEditDeviceScreenViewModel = hiltViewModel(),
@@ -44,6 +46,13 @@ fun AddEditDeviceScreen(
     var viewModelInitiated by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(true) {
+        onSetAppBarTitle(
+            when (viewModel.mode) {
+                Mode.Add -> R.string.add_device_screen_title
+                Mode.Edit -> R.string.edit_device_screen_title
+            }
+        )
+
         if (!viewModelInitiated) {
             viewModel.init()
             viewModelInitiated = true
@@ -52,14 +61,14 @@ fun AddEditDeviceScreen(
 
     val titleId = rememberSaveable {
         when (viewModel.mode) {
-            AddEditDeviceScreenViewModel.Mode.Edit -> R.string.edit_device_label
-            AddEditDeviceScreenViewModel.Mode.Add -> R.string.add_new_device_label
+            Mode.Edit -> R.string.edit_device_label
+            Mode.Add -> R.string.add_new_device_label
         }
     }
     val applyButtonLabelId = rememberSaveable {
         when (viewModel.mode) {
-            AddEditDeviceScreenViewModel.Mode.Edit -> R.string.update_label
-            AddEditDeviceScreenViewModel.Mode.Add -> R.string.add_label
+            Mode.Edit -> R.string.update_label
+            Mode.Add -> R.string.add_label
         }
     }
 
@@ -121,10 +130,6 @@ fun AddEditDeviceScreenContent(
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = stringResource(id = titleId),
-                style = MaterialTheme.typography.headlineSmall
-            )
             OutlinedTextField(
                 value = name,
                 label = { Text(stringResource(R.string.device_name_label)) },
