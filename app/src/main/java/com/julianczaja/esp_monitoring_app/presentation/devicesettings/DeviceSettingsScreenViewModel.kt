@@ -14,6 +14,7 @@ import com.julianczaja.esp_monitoring_app.domain.model.BleAdvertisement
 import com.julianczaja.esp_monitoring_app.domain.model.DeviceSettings
 import com.julianczaja.esp_monitoring_app.domain.model.DeviceStatus
 import com.julianczaja.esp_monitoring_app.domain.model.PermissionState
+import com.julianczaja.esp_monitoring_app.domain.model.WifiCredentials
 import com.julianczaja.esp_monitoring_app.domain.model.getErrorMessageId
 import com.julianczaja.esp_monitoring_app.domain.model.toBleAdvertisement
 import com.julianczaja.esp_monitoring_app.domain.model.toDeviceStatus
@@ -210,19 +211,44 @@ class DeviceSettingsScreenViewModel @Inject constructor(
     }
 
     fun updateDeviceSettings(deviceSettings: DeviceSettings) = viewModelScope.launch(ioDispatcher) {
-        Timber.d("viewModel.updateDeviceSettings")
-        _monitoringDevice?.let { device ->
-            try {
-                device.updateSettings(deviceSettings)
-            } catch (e: GattStatusException) {
-                Timber.e("updateDeviceSettings error: $e")
-                device.disconnect()
-                eventFlow.emit(Event.ShowError(e.getErrorMessageId()))
-            } catch (e: Exception) {
-                Timber.e("updateDeviceSettings error: $e")
-                eventFlow.emit(Event.ShowError(e.getErrorMessageId()))
-            }
+        val device = _monitoringDevice
+
+        if (device == null) {
+            Timber.e("updateDeviceSettings error: `_monitoringDevice` is null")
+            return@launch
         }
+
+        try {
+            device.updateSettings(deviceSettings)
+        } catch (e: GattStatusException) {
+            Timber.e("updateDeviceSettings error: $e")
+            device.disconnect()
+            eventFlow.emit(Event.ShowError(e.getErrorMessageId()))
+        } catch (e: Exception) {
+            Timber.e("updateDeviceSettings error: $e")
+            eventFlow.emit(Event.ShowError(e.getErrorMessageId()))
+        }
+    }
+
+    fun updateDeviceWifiCredentials(wifiCredentials: WifiCredentials) = viewModelScope.launch(ioDispatcher) {
+        val device = _monitoringDevice
+
+        if (device == null) {
+            Timber.e("updateDeviceWifiCredentials error: `_monitoringDevice` is null")
+            return@launch
+        }
+
+        try {
+            device.updateWifiCredentials(wifiCredentials)
+        } catch (e: GattStatusException) {
+            Timber.e("updateDeviceWifiCredentials error: $e")
+            device.disconnect()
+            eventFlow.emit(Event.ShowError(e.getErrorMessageId()))
+        } catch (e: Exception) {
+            Timber.e("updateDeviceWifiCredentials error: $e")
+            eventFlow.emit(Event.ShowError(e.getErrorMessageId()))
+        }
+
     }
 
     @Immutable

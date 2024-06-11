@@ -51,6 +51,7 @@
     <string name="device_settings_quality_label">Quality</string>
     <string name="device_settings_saturation_label">Saturation</string>
     <string name="device_settings_special_effect_label">Special effect</string>
+    <string name="device_settings_title">Device settings</string>
     <string name="device_settings_vertical_flip_label">Vertical flip</string>
     <string name="device_settings_white_balance_mode_label">White balance mode</string>
     <string name="disconnect_label">Disconnect</string>
@@ -72,6 +73,8 @@
     <string name="not_found_error_message">Not found</string>
     <string name="ok_label">OK</string>
     <string name="open_settings_label">Open settings</string>
+    <string name="password_label">Password</string>
+    <string name="password_label_with_placeholder">Password: ************</string>
     <string name="photo_preview_date_label">Date: %1$s</string>
     <string name="photo_preview_size_label">Size: %1$s</string>
     <string name="photos_not_found_message">Photos not found</string>
@@ -96,6 +99,7 @@
     <string name="special_effect_no_effect">No effect</string>
     <string name="special_effect_red_tint">Red Tint</string>
     <string name="special_effect_sepia">Sepia</string>
+    <string name="ssid_label">SSID</string>
     <string name="status_connected_label">Connected</string>
     <string name="status_connecting_label">Connecting…</string>
     <string name="status_disconnected_label">Disconnected</string>
@@ -110,5 +114,6 @@
     <string name="white_balance_home">Home</string>
     <string name="white_balance_office">Office</string>
     <string name="white_balance_sunny">Sunny</string>
+    <string name="wifi_credentials_label">WiFi credentials</string>
     <string name="you_are_offline">You are offline</string>
 </resources>

@@ -7,6 +7,7 @@ import com.julianczaja.esp_monitoring_app.domain.model.EspCameraFrameSize
 import com.julianczaja.esp_monitoring_app.domain.model.EspCameraPhotoInterval
 import com.julianczaja.esp_monitoring_app.domain.model.EspCameraSpecialEffect
 import com.julianczaja.esp_monitoring_app.domain.model.EspCameraWhiteBalanceMode
+import com.julianczaja.esp_monitoring_app.domain.model.WifiCredentials
 import com.juul.kable.Characteristic
 import com.juul.kable.Peripheral
 import com.juul.kable.WriteType
@@ -23,6 +24,13 @@ class MonitoringDevice(
 ) : Peripheral by peripheral {
 
     private companion object {
+        const val INFO_SERVICE_UUID = "691ff8e2-b4d3-4c2e-b72f-95b6e5acd64b"
+        const val DEVICE_ID_CHARACTERISTIC_UUID = "17a4e7f7-f645-4f67-a618-98037cb4372a"
+
+        const val WIFI_CREDENTIALS_SERVICE_UUID = "9717095f-7084-4a9c-a29c-7d030d8a86d2"
+        const val WIFI_SSID_CHARACTERISTIC_UUID = "1b5f00db-42f9-4cbd-a6ba-0e19a9192118"
+        const val WIFI_PASSWORD_CHARACTERISTIC_UUID = "bf4c3e01-11d0-40b4-9109-51202baebd28"
+
         const val SETTINGS_SERVICE_UUID = "ecb44d46-93cf-45cc-bd34-b82205e80d7b"
         const val FRAME_SIZE_CHARACTERISTIC_UUID = "2c0980bd-efc9-49e2-8043-ad94bf4bf81e"
         const val PHOTO_INTERVAL_CHARACTERISTIC_UUID = "184711ee-5964-4f31-9d2b-5405da58a7d9"
@@ -38,6 +46,11 @@ class MonitoringDevice(
 
         const val WAIT_TIME_MS_AFTER_WRITE = 100L
     }
+
+    private val deviceIdCharacteristic = infoCharacteristicOf(DEVICE_ID_CHARACTERISTIC_UUID)
+
+    private val wifiSsidCharacteristic = wifiCredentialsCharacteristicOf(WIFI_SSID_CHARACTERISTIC_UUID)
+    private val wifiPasswordCharacteristic = wifiCredentialsCharacteristicOf(WIFI_PASSWORD_CHARACTERISTIC_UUID)
 
     private val frameSizeCharacteristic = settingsCharacteristicOf(FRAME_SIZE_CHARACTERISTIC_UUID)
     private val photoIntervalCharacteristic = settingsCharacteristicOf(PHOTO_INTERVAL_CHARACTERISTIC_UUID)
@@ -61,19 +74,27 @@ class MonitoringDevice(
 
     suspend fun init() {
         if (!isInitiated) {
-            readSettings()
+            readDeviceData()
             isInitiated = true
         }
     }
 
+    private fun infoCharacteristicOf(characteristic: String): Characteristic =
+        characteristicOf(INFO_SERVICE_UUID, characteristic)
+
+    private fun wifiCredentialsCharacteristicOf(characteristic: String): Characteristic =
+        characteristicOf(WIFI_CREDENTIALS_SERVICE_UUID, characteristic)
+
     private fun settingsCharacteristicOf(characteristic: String): Characteristic =
         characteristicOf(SETTINGS_SERVICE_UUID, characteristic)
 
-    private suspend fun readSettings() {
+    private suspend fun readDeviceData() {
         Timber.d("readSettings")
         try {
             _isBusy.update { true }
             val timeTaken = measureTime {
+                readDeviceId()
+                readWifiSsid()
                 readFrameSize()
                 readPhotoInterval()
                 readSpecialEffect()
@@ -109,12 +130,36 @@ class MonitoringDevice(
             if (_deviceSettings.value.flashOn != newSettings.flashOn) writeFlashOn(newSettings.flashOn)
             if (_deviceSettings.value.verticalFlip != newSettings.verticalFlip) writeVerticalFlip(newSettings.verticalFlip)
             if (_deviceSettings.value.horizontalMirror != newSettings.horizontalMirror) writeHorizontalMirror(newSettings.horizontalMirror)
-        }.inWholeMilliseconds
-        Timber.d("updateSettings took $timeTaken ms")
+        }
+        Timber.d("updateSettings took ${timeTaken.inWholeMilliseconds} ms")
+        _isBusy.update { false }
+    }
+
+    suspend fun updateWifiCredentials(wifiCredentials: WifiCredentials) {
+        _isBusy.update { true }
+        writeWifiCredentials(wifiCredentials)
         _isBusy.update { false }
     }
 
     //region read/write
+    private suspend fun readDeviceId() {
+        val deviceId = readIntCharacteristic(deviceIdCharacteristic).toLong()
+        _deviceSettings.update { it.copy(deviceId = deviceId) }
+    }
+
+    private suspend fun readWifiSsid() {
+        val newWifiSsid = readStringCharacteristic(wifiSsidCharacteristic)
+        _deviceSettings.update { it.copy(wifiSsid = newWifiSsid) }
+    }
+
+    private suspend fun writeWifiCredentials(wifiCredentials: WifiCredentials) {
+        writeStringCharacteristic(wifiSsidCharacteristic, wifiCredentials.ssid)
+        delay(WAIT_TIME_MS_AFTER_WRITE)
+        writeStringCharacteristic(wifiPasswordCharacteristic, wifiCredentials.password)
+        delay(WAIT_TIME_MS_AFTER_WRITE)
+        readWifiSsid()
+    }
+
     private suspend fun readFrameSize() {
         val newFrameSize = readIntCharacteristic(frameSizeCharacteristic)
         _deviceSettings.update { it.copy(frameSize = EspCameraFrameSize.entries[newFrameSize]) }
@@ -242,6 +287,14 @@ class MonitoringDevice(
 
     private suspend fun writeIntCharacteristic(characteristic: Characteristic, value: Int): Unit =
         write(characteristic, value.toString().toByteArray(), WriteType.WithResponse)
+            .also { Timber.d("write $characteristic: $value") }
+
+    private suspend fun readStringCharacteristic(characteristic: Characteristic): String =
+        String(read(characteristic))
+            .also { Timber.d("read $characteristic: $it") }
+
+    private suspend fun writeStringCharacteristic(characteristic: Characteristic, value: String): Unit =
+        write(characteristic, value.toByteArray(), WriteType.WithResponse)
             .also { Timber.d("write $characteristic: $value") }
     //endregion
 }

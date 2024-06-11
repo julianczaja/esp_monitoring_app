@@ -1,10 +1,9 @@
 package com.julianczaja.esp_monitoring_app.domain.model
 
-import kotlinx.serialization.Serializable
 
-
-@Serializable
 data class DeviceSettings(
+    val deviceId: Long = -1L,
+    val wifiSsid: String = "",
     val frameSize: EspCameraFrameSize = EspCameraFrameSize.FrameSizeSVGA,
     val photoInterval: EspCameraPhotoInterval = EspCameraPhotoInterval.FIVE_MINUTES,
     val specialEffect: EspCameraSpecialEffect = EspCameraSpecialEffect.NoEffect,

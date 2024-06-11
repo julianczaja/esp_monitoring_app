@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -27,10 +29,12 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -43,6 +47,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
@@ -74,8 +79,10 @@ import com.julianczaja.esp_monitoring_app.domain.model.EspCameraPhotoInterval
 import com.julianczaja.esp_monitoring_app.domain.model.EspCameraSpecialEffect
 import com.julianczaja.esp_monitoring_app.domain.model.EspCameraWhiteBalanceMode
 import com.julianczaja.esp_monitoring_app.domain.model.PermissionState
+import com.julianczaja.esp_monitoring_app.domain.model.WifiCredentials
 import com.julianczaja.esp_monitoring_app.presentation.devicesettings.DeviceSettingsScreenViewModel.Event
 import com.julianczaja.esp_monitoring_app.presentation.devicesettings.DeviceSettingsScreenViewModel.UiState
+import com.julianczaja.esp_monitoring_app.presentation.devicesettings.components.WiFiCredentialsEditDialog
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 
 @Composable
@@ -147,6 +154,7 @@ fun DeviceSettingsScreen(
         onStopScanClicked = viewModel::stopScan,
         onDeviceClicked = viewModel::connectDevice,
         onDeviceSettingsChanged = viewModel::updateDeviceSettings,
+        onWifiCredentialsChanged = viewModel::updateDeviceWifiCredentials,
         onDisconnectClicked = viewModel::disconnectDevice
     )
 }
@@ -167,6 +175,7 @@ private fun DeviceSettingsScreenContent(
     onStopScanClicked: () -> Unit,
     onDeviceClicked: (String) -> Unit,
     onDeviceSettingsChanged: (DeviceSettings) -> Unit,
+    onWifiCredentialsChanged: (WifiCredentials) -> Unit,
     onDisconnectClicked: () -> Unit,
 ) {
     when (uiState) {
@@ -194,7 +203,8 @@ private fun DeviceSettingsScreenContent(
             modifier = modifier,
             uiState = uiState,
             onDeviceSettingsChanged = onDeviceSettingsChanged,
-            onDisconnectClicked = onDisconnectClicked
+            onDisconnectClicked = onDisconnectClicked,
+            onWifiCredentialsChanged = onWifiCredentialsChanged
         )
     }
 }
@@ -429,10 +439,11 @@ private fun ScanFloatingActionButton(
 
 //region Connect
 @Composable
-fun DeviceSettingsConnectScreen(
+private fun DeviceSettingsConnectScreen(
     modifier: Modifier = Modifier,
     uiState: UiState.Connect,
     onDeviceSettingsChanged: (DeviceSettings) -> Unit,
+    onWifiCredentialsChanged: (WifiCredentials) -> Unit,
     onDisconnectClicked: () -> Unit
 ) {
     when (uiState.deviceStatus) {
@@ -447,7 +458,8 @@ fun DeviceSettingsConnectScreen(
                 DeviceSettingsContent(
                     deviceSettings = uiState.deviceSettings,
                     enabled = !uiState.isBusy,
-                    onChanged = onDeviceSettingsChanged
+                    onSettingsChanged = onDeviceSettingsChanged,
+                    onWifiCredentialsChanged = onWifiCredentialsChanged
                 )
                 Button(
                     modifier = Modifier
@@ -474,18 +486,65 @@ fun DeviceSettingsConnectScreen(
 }
 
 @Composable
-fun DeviceSettingsContent(
+private fun DeviceSettingsContent(
     deviceSettings: DeviceSettings,
     enabled: Boolean,
-    onChanged: (DeviceSettings) -> Unit
+    onSettingsChanged: (DeviceSettings) -> Unit,
+    onWifiCredentialsChanged: (WifiCredentials) -> Unit
 ) {
+    var isWifiCredentialsDialogVisible by rememberSaveable { mutableStateOf(false) }
+
+    if (isWifiCredentialsDialogVisible) {
+        WiFiCredentialsEditDialog(
+            initialSsid = deviceSettings.wifiSsid,
+            onDismiss = {
+                isWifiCredentialsDialogVisible = false
+            },
+            onApply = { ssid, password ->
+                onWifiCredentialsChanged(WifiCredentials(ssid, password))
+                isWifiCredentialsDialogVisible = false
+            }
+        )
+    }
+
+    Text(
+        text = stringResource(R.string.device_settings_title),
+        style = MaterialTheme.typography.headlineSmall
+    )
+    Text(text = stringResource(R.string.device_id_label_with_format, deviceSettings.deviceId))
+    HorizontalDivider(Modifier.padding(vertical = MaterialTheme.spacing.medium))
+
+    OutlinedCard {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(MaterialTheme.spacing.large),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = stringResource(R.string.wifi_credentials_label),
+                    style = MaterialTheme.typography.bodySmall,
+                    textDecoration = TextDecoration.Underline
+                )
+                Spacer(modifier = Modifier.padding(MaterialTheme.spacing.small))
+                Text(text = stringResource(R.string.ssid_label) + ": ${deviceSettings.wifiSsid}")
+                Text(text = stringResource(R.string.password_label_with_placeholder))
+            }
+            TextButton(onClick = { isWifiCredentialsDialogVisible = true }) {
+                Text(text = stringResource(id = R.string.edit_label))
+            }
+        }
+    }
+
     DropdownMenuBox(
         modifier = Modifier.fillMaxWidth(),
         title = stringResource(R.string.device_settings_frame_size_label),
         items = EspCameraFrameSize.entries.map { it.description },
         selectedIndex = deviceSettings.frameSize.ordinal,
         enabled = enabled,
-        onItemClicked = { onChanged(deviceSettings.copy(frameSize = EspCameraFrameSize.entries[it])) }
+        onItemClicked = { onSettingsChanged(deviceSettings.copy(frameSize = EspCameraFrameSize.entries[it])) }
     )
     DropdownMenuBox(
         modifier = Modifier.fillMaxWidth(),
@@ -493,7 +552,7 @@ fun DeviceSettingsContent(
         items = EspCameraPhotoInterval.entries.map { it.description },
         selectedIndex = deviceSettings.photoInterval.ordinal,
         enabled = enabled,
-        onItemClicked = { onChanged(deviceSettings.copy(photoInterval = EspCameraPhotoInterval.entries[it])) }
+        onItemClicked = { onSettingsChanged(deviceSettings.copy(photoInterval = EspCameraPhotoInterval.entries[it])) }
     )
     DropdownMenuBox(
         modifier = Modifier.fillMaxWidth(),
@@ -501,7 +560,7 @@ fun DeviceSettingsContent(
         items = EspCameraSpecialEffect.entries.map { stringResource(id = it.descriptionResId) },
         selectedIndex = deviceSettings.specialEffect.ordinal,
         enabled = enabled,
-        onItemClicked = { onChanged(deviceSettings.copy(specialEffect = EspCameraSpecialEffect.entries[it])) }
+        onItemClicked = { onSettingsChanged(deviceSettings.copy(specialEffect = EspCameraSpecialEffect.entries[it])) }
     )
     DropdownMenuBox(
         modifier = Modifier.fillMaxWidth(),
@@ -509,7 +568,7 @@ fun DeviceSettingsContent(
         items = EspCameraWhiteBalanceMode.entries.map { stringResource(id = it.descriptionResId) },
         selectedIndex = deviceSettings.whiteBalanceMode.ordinal,
         enabled = enabled,
-        onItemClicked = { onChanged(deviceSettings.copy(whiteBalanceMode = EspCameraWhiteBalanceMode.entries[it])) }
+        onItemClicked = { onSettingsChanged(deviceSettings.copy(whiteBalanceMode = EspCameraWhiteBalanceMode.entries[it])) }
     )
     IntSliderRow(
         label = stringResource(R.string.device_settings_quality_label),
@@ -517,7 +576,7 @@ fun DeviceSettingsContent(
         steps = 54,
         enabled = enabled,
         valueRange = 10f..63f,
-        onValueChange = { newValue -> onChanged(deviceSettings.copy(jpegQuality = newValue)) }
+        onValueChange = { newValue -> onSettingsChanged(deviceSettings.copy(jpegQuality = newValue)) }
     )
     IntSliderRow(
         label = stringResource(R.string.device_settings_brightness_label),
@@ -525,7 +584,7 @@ fun DeviceSettingsContent(
         steps = 3,
         enabled = enabled,
         valueRange = -2f..2f,
-        onValueChange = { newValue -> onChanged(deviceSettings.copy(brightness = newValue)) }
+        onValueChange = { newValue -> onSettingsChanged(deviceSettings.copy(brightness = newValue)) }
     )
     IntSliderRow(
         label = stringResource(R.string.device_settings_contrast_label),
@@ -533,7 +592,7 @@ fun DeviceSettingsContent(
         steps = 3,
         enabled = enabled,
         valueRange = -2f..2f,
-        onValueChange = { newValue -> onChanged(deviceSettings.copy(contrast = newValue)) }
+        onValueChange = { newValue -> onSettingsChanged(deviceSettings.copy(contrast = newValue)) }
     )
     IntSliderRow(
         label = stringResource(R.string.device_settings_saturation_label),
@@ -541,28 +600,28 @@ fun DeviceSettingsContent(
         steps = 3,
         enabled = enabled,
         valueRange = -2f..2f,
-        onValueChange = { newValue -> onChanged(deviceSettings.copy(saturation = newValue)) }
+        onValueChange = { newValue -> onSettingsChanged(deviceSettings.copy(saturation = newValue)) }
     )
     SwitchWithLabel(
         modifier = Modifier.fillMaxWidth(),
         label = stringResource(R.string.device_settings_flash_led_label),
         isChecked = deviceSettings.flashOn,
         enabled = enabled,
-        onCheckedChange = { newValue -> onChanged(deviceSettings.copy(flashOn = newValue)) }
+        onCheckedChange = { newValue -> onSettingsChanged(deviceSettings.copy(flashOn = newValue)) }
     )
     SwitchWithLabel(
         modifier = Modifier.fillMaxWidth(),
         label = stringResource(R.string.device_settings_vertical_flip_label),
         isChecked = deviceSettings.verticalFlip,
         enabled = enabled,
-        onCheckedChange = { newValue -> onChanged(deviceSettings.copy(verticalFlip = newValue)) }
+        onCheckedChange = { newValue -> onSettingsChanged(deviceSettings.copy(verticalFlip = newValue)) }
     )
     SwitchWithLabel(
         modifier = Modifier.fillMaxWidth(),
         label = stringResource(R.string.device_settings_horizontal_mirror_label),
         isChecked = deviceSettings.horizontalMirror,
         enabled = enabled,
-        onCheckedChange = { newValue -> onChanged(deviceSettings.copy(horizontalMirror = newValue)) }
+        onCheckedChange = { newValue -> onSettingsChanged(deviceSettings.copy(horizontalMirror = newValue)) }
     )
 }
 //endregion
@@ -579,7 +638,8 @@ private fun DeviceSettingsConnectScreenConnectedPreview() {
                 isBusy = false
             ),
             onDeviceSettingsChanged = {},
-            onDisconnectClicked = {}
+            onDisconnectClicked = {},
+            onWifiCredentialsChanged = {}
         )
     }
 }
@@ -598,7 +658,8 @@ private fun DeviceSettingsConnectScreenConnectingPreview() {
                 isBusy = true
             ),
             onDeviceSettingsChanged = {},
-            onDisconnectClicked = {}
+            onDisconnectClicked = {},
+            onWifiCredentialsChanged = {}
         )
     }
 }
