@@ -43,8 +43,10 @@ import com.julianczaja.esp_monitoring_app.components.DefaultProgressIndicator
 import com.julianczaja.esp_monitoring_app.components.DeviceItem
 import com.julianczaja.esp_monitoring_app.components.ErrorText
 import com.julianczaja.esp_monitoring_app.domain.model.Device
+import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.presentation.devices.DevicesScreenViewModel.UiState
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
+import java.time.LocalDateTime
 
 private const val HEADER_HEIGHT_DP = 70
 
@@ -214,14 +216,15 @@ private fun DevicesListPortrait(
     onEditDeviceClicked: (Device) -> Unit,
 ) {
     LazyColumn(
+        modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium),
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(MaterialTheme.spacing.medium)
     ) {
-        items(uiState.devices, key = { it.id }) {
+        items(uiState.devicesWithLastPhoto.toList(), key = { it.first.id }) {
             DeviceItem(
-                device = it,
+                device = it.first,
+                lastPhotoUri = it.second?.thumbnailUrl,
                 onClicked = onDeviceClicked,
                 onRemoveClicked = onRemoveDeviceClicked,
                 onEditClicked = onEditDeviceClicked
@@ -244,9 +247,10 @@ private fun DevicesListLandscape(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(MaterialTheme.spacing.medium)
     ) {
-        items(uiState.devices, key = { it.id }) {
+        items(uiState.devicesWithLastPhoto.toList(), key = { it.first.id }) {
             DeviceItem(
-                device = it,
+                device = it.first,
+                lastPhotoUri = it.second?.thumbnailUrl,
                 onClicked = onDeviceClicked,
                 onRemoveClicked = onRemoveDeviceClicked,
                 onEditClicked = onEditDeviceClicked
@@ -264,10 +268,10 @@ private fun DevicesScreenSuccessPreview() {
     AppBackground {
         DevicesScreenContent(
             uiState = UiState.Success(
-                listOf(
-                    Device(1, "Device 1"),
-                    Device(12, "Device 2"),
-                    Device(123, "Device 3"),
+                mapOf(
+                    Device(1, "Device 1") to Photo(1, LocalDateTime.now(), "", "", "", ""),
+                    Device(12, "Device 2") to null,
+                    Device(123, "Device 3") to null,
                 )
             ),
             onDeviceClicked = {},

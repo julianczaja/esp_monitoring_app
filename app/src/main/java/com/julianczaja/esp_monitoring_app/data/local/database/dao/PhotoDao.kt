@@ -11,6 +11,9 @@ abstract class PhotoDao : EntityDao<PhotoEntity>() {
     @Query("SELECT * FROM photo where deviceId = :deviceId")
     abstract fun getAll(deviceId: Long): Flow<List<PhotoEntity>>
 
+    @Query("SELECT * FROM photo where deviceId = :deviceId ORDER BY ID LIMIT 1")
+    abstract fun getLast(deviceId: Long): Flow<PhotoEntity?>
+
     @Query("SELECT * FROM photo where fileName = :fileName")
     abstract fun getByFileName(fileName: String): Flow<PhotoEntity?>
 

@@ -37,6 +37,9 @@ class PhotoRepositoryImpl @Inject constructor(
     override fun getAllPhotosLocal(deviceId: Long): Flow<List<Photo>> =
         photoDao.getAll(deviceId).map { photos -> photos.map { it.toPhoto() } }
 
+    override fun getLastPhotoLocal(deviceId: Long): Flow<Photo?> =
+        photoDao.getLast(deviceId).map { it?.toPhoto() }
+
     override fun getPhotoByFileNameLocal(fileName: String): Flow<Photo?> =
         photoDao.getByFileName(fileName).map { photo -> photo?.toPhoto() }
 

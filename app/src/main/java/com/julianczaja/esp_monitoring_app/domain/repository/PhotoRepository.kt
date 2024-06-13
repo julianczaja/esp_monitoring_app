@@ -8,6 +8,8 @@ interface PhotoRepository {
 
     fun getAllPhotosLocal(deviceId: Long): Flow<List<Photo>>
 
+    fun getLastPhotoLocal(deviceId: Long): Flow<Photo?>
+
     fun getPhotoByFileNameLocal(fileName: String): Flow<Photo?>
 
     suspend fun removePhotoByFileNameLocal(fileName: String): Result<Unit>

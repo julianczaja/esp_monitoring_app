@@ -20,6 +20,8 @@ class FakeDeviceRepositoryImpl : DeviceRepository {
     var addNewDeviceThrowsError = false
     var updateDeviceThrowsError = false
 
+    suspend fun emitAllDevicesData(data: List<Device>) = _allDevicesDataFlow.emit(data)
+
     override fun getAllDevices(): Flow<List<Device>> = if (getAllDevicesThrowsError) {
         flow { throw Exception("error") }
     } else {

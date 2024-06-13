@@ -1,17 +1,14 @@
 package com.julianczaja.esp_monitoring_app.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Card
@@ -28,14 +25,23 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import coil.compose.SubcomposeAsyncImage
+import coil.request.CachePolicy
+import coil.request.ImageRequest
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.domain.model.Device
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
@@ -47,6 +53,7 @@ const val DEVICE_ITEM_MIN_WIDTH_DP = 300
 fun DeviceItem(
     modifier: Modifier = Modifier,
     device: Device,
+    lastPhotoUri: String? = null,
     minHeight: Dp = DEVICE_ITEM_MIN_HEIGHT_DP.dp,
     minWidth: Dp = DEVICE_ITEM_MIN_WIDTH_DP.dp,
     onClicked: (Long) -> Unit,
@@ -64,45 +71,69 @@ fun DeviceItem(
                 .weight(1f)
                 .fillMaxWidth()
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(
-                    modifier = Modifier
-                        .size(75.dp)
-                        .padding(start = MaterialTheme.spacing.medium),
-                    painter = painterResource(id = R.drawable.ic_devices),
-                    contentDescription = null
-                )
-                Column(
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.Start,
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .fillMaxWidth(.8f)
-                        .padding(MaterialTheme.spacing.medium)
-                ) {
-                    Text(
-                        text = device.name,
-                        style = MaterialTheme.typography.headlineSmall,
-                        overflow = TextOverflow.Ellipsis,
-                        maxLines = 1
-                    )
-                    Text(
-                        text = stringResource(id = R.string.device_id_label_with_format, device.id),
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
+            Text(
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .fillMaxWidth()
+                    .padding(start = MaterialTheme.spacing.large, end = 60.dp),
+                text = device.name,
+                style = MaterialTheme.typography.headlineSmall,
+                overflow = TextOverflow.Ellipsis,
+                maxLines = 1
+            )
+            if (lastPhotoUri != null) {
+                LastPhoto(lastPhotoUri)
             }
-            MoreMenuButton(device, onRemoveClicked, onEditClicked)
+            MoreMenuButton(
+                device = device,
+                addIconBackground = lastPhotoUri != null,
+                onRemoveClicked = onRemoveClicked,
+                onEditClicked = onEditClicked
+            )
         }
     }
+}
+
+@Composable
+private fun BoxScope.LastPhoto(lastPhotoUri: String) {
+    val context = LocalContext.current
+
+    SubcomposeAsyncImage(
+        modifier = Modifier
+            .fillMaxHeight()
+            .align(Alignment.CenterEnd)
+            .graphicsLayer { alpha = 0.99f }
+            .drawWithContent {
+                val colors = listOf(
+                    Color.Black,
+                    Color.Transparent
+                )
+                drawContent()
+                drawRect(
+                    brush = Brush.horizontalGradient(
+                        colors = colors,
+                        startX = Float.POSITIVE_INFINITY,
+                        endX = 0.0f
+                    ),
+                    blendMode = BlendMode.DstIn
+                )
+            },
+        contentScale = ContentScale.FillHeight,
+        contentDescription = null,
+        model = ImageRequest.Builder(context)
+            .data(lastPhotoUri)
+            .memoryCachePolicy(CachePolicy.ENABLED)
+            .diskCachePolicy(CachePolicy.ENABLED)
+            .crossfade(true)
+            .build(),
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun BoxScope.MoreMenuButton(
     device: Device,
+    addIconBackground: Boolean = false,
     onRemoveClicked: (Long) -> Unit,
     onEditClicked: (Device) -> Unit,
 ) {
@@ -118,10 +149,30 @@ private fun BoxScope.MoreMenuButton(
         modifier = Modifier.align(Alignment.TopEnd)
     ) {
         IconButton(
+            modifier = Modifier
+                .menuAnchor()
+                .run {
+                    if (addIconBackground) {
+                        val brush = Brush.radialGradient(0.3f to Color.Black, 0.7f to Color.Transparent)
+
+                        this
+                            .graphicsLayer { alpha = 0.99f }
+                            .drawWithContent {
+                                drawContent()
+                                drawRect(brush = brush, blendMode = BlendMode.DstIn)
+                            }
+                            .background(MaterialTheme.colorScheme.surface.copy(alpha = .3f))
+                    } else {
+                        this
+                    }
+                },
             onClick = {},
-            modifier = Modifier.menuAnchor()
         ) {
-            Icon(imageVector = Icons.Default.MoreVert, contentDescription = null)
+            Icon(
+
+                imageVector = Icons.Default.MoreVert,
+                contentDescription = null
+            )
         }
         DefaultDropdownMenu(
             isExpanded = expanded,

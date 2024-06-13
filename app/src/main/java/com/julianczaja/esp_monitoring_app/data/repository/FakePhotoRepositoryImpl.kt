@@ -3,14 +3,16 @@ package com.julianczaja.esp_monitoring_app.data.repository
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.domain.repository.PhotoRepository
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 
 
 class FakePhotoRepositoryImpl : PhotoRepository {
 
     private val _allPhotosLocalFlow = MutableSharedFlow<List<Photo>>(replay = 1, extraBufferCapacity = 1)
 
+    var getLastPhotoLocalThrowsError = false
     var updateAllPhotosReturnsException = false
     var removePhotoByFileNameLocalReturnsException = false
     var removePhotoByFileNameRemoteReturnsException = false
@@ -20,9 +22,13 @@ class FakePhotoRepositoryImpl : PhotoRepository {
 
     override fun getAllPhotosLocal(deviceId: Long) = _allPhotosLocalFlow
 
-    override fun getPhotoByFileNameLocal(fileName: String): Flow<Photo?> {
-        TODO("Not yet implemented")
+    override fun getLastPhotoLocal(deviceId: Long) = when (getLastPhotoLocalThrowsError) {
+        true -> flow { throw Exception("error") }
+        else -> _allPhotosLocalFlow.map { photos -> photos.firstOrNull { it.deviceId == deviceId } }
     }
+
+    override fun getPhotoByFileNameLocal(fileName: String) =
+        _allPhotosLocalFlow.map { photos -> photos.firstOrNull { it.fileName == fileName } }
 
     override suspend fun updateAllPhotosRemote(deviceId: Long): Result<Unit> {
         delay(1000)
