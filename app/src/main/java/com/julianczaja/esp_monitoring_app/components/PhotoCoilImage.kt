@@ -27,7 +27,7 @@ fun PhotoCoilImage(
 
     SubcomposeAsyncImage(
         modifier = modifier.height(height),
-        contentScale = ContentScale.Fit,
+        contentScale = ContentScale.Crop,
         contentDescription = null,
         model = ImageRequest.Builder(context)
             .data(data)

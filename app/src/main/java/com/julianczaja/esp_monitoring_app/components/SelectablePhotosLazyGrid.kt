@@ -6,7 +6,6 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -222,14 +221,18 @@ private fun LazyGridItemScope.SelectableDevicePhoto(
     Box(
         modifier = Modifier
             .clip(RoundedCornerShape(MaterialTheme.shape.photoCorners))
-            .background(MaterialTheme.colorScheme.surfaceBright)
-            .border(
-                width = 1.dp,
-                color = MaterialTheme.colorScheme.primary,
-                shape = CircleShape.copy(CornerSize(MaterialTheme.shape.photoCorners))
-            )
+            .run {
+                if (selectablePhoto.isSelected) {
+                    this.border(
+                        width = 2.dp,
+                        color = MaterialTheme.colorScheme.primary,
+                        shape = CircleShape.copy(CornerSize(MaterialTheme.shape.photoCorners))
+                    )
+                } else {
+                    this
+                }
+            }
             .animateItem()
-            .clickable(onClick = { onClick(selectablePhoto) })
             .combinedClickable(
                 onClick = { onClick(selectablePhoto) },
                 onLongClick = {
