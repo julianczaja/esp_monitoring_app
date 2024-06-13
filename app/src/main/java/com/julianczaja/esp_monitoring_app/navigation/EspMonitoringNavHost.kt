@@ -14,6 +14,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.dialog
+import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.presentation.addeditdevice.AddEditDeviceScreen
 import com.julianczaja.esp_monitoring_app.presentation.appsettings.AppSettingsScreen
 import com.julianczaja.esp_monitoring_app.presentation.device.DeviceScreen
@@ -22,6 +23,7 @@ import com.julianczaja.esp_monitoring_app.presentation.devicesettings.DeviceSett
 import com.julianczaja.esp_monitoring_app.presentation.photopreview.PhotoPreviewDialog
 import com.julianczaja.esp_monitoring_app.presentation.removedevice.RemoveDeviceDialog
 import com.julianczaja.esp_monitoring_app.presentation.removephotos.RemovePhotosDialog
+import com.julianczaja.esp_monitoring_app.presentation.timelapsecreator.TimelapseCreatorScreen
 import kotlin.reflect.typeOf
 
 @Composable
@@ -56,7 +58,8 @@ fun EspMonitoringNavHost(
                 onSetAppBarTitle = onSetAppBarTitle,
                 snackbarHostState = snackbarHostState,
                 navigateToPhotoPreview = navController::navigateToPhotoPreview,
-                navigateToRemovePhotosDialog = navController::navigateToRemovePhotosDialog
+                navigateToRemovePhotosDialog = navController::navigateToRemovePhotosDialog,
+                navigateToTimelapseCreatorScreen = navController::navigateToTimelapseCreatorScreen
             )
         }
         composable<DeviceSettingsScreen>(
@@ -93,6 +96,13 @@ fun EspMonitoringNavHost(
         ) {
             RemovePhotosDialog(
                 onDismiss = onBackClick
+            )
+        }
+        composable<TimelapseCreatorScreen>(
+            typeMap = mapOf(typeOf<List<Photo>>() to parcelableCollectionType<Photo>())
+        ) {
+            TimelapseCreatorScreen(
+                onSetAppBarTitle = onSetAppBarTitle,
             )
         }
         composable<AppSettingsScreen>(

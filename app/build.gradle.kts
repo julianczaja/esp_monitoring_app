@@ -119,6 +119,9 @@ dependencies {
     // Kable
     implementation(libs.kable.core)
 
+    // FFMPEG
+    implementation(libs.ffmpeg)
+
     // Tests
     testImplementation(libs.junit)
     testImplementation(libs.robolectric)

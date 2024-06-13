@@ -212,9 +212,17 @@ class DevicePhotosScreenViewModel @Inject constructor(
         }
     }
 
+    fun createTimelapseFromSelectedPhotos() {
+        viewModelScope.launch {
+            eventFlow.emit(Event.NavigateToTimelapseCreatorScreen(_selectedPhotos.value))
+            resetSelectedPhotos()
+        }
+    }
+
     sealed class Event {
         data class NavigateToPhotoPreview(val photo: Photo) : Event()
         data class NavigateToRemovePhotosDialog(val photos: List<String>) : Event()
+        data class NavigateToTimelapseCreatorScreen(val photos: List<Photo>) : Event()
         data class ShowSavedInfo(val totalCount: Int, val savedCount: Int) : Event()
         data class ShowError(val messageId: Int) : Event()
     }

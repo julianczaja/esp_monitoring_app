@@ -73,6 +73,7 @@ const val DEFAULT_PHOTO_WIDTH = 150
 fun DevicePhotosScreen(
     snackbarHostState: SnackbarHostState,
     navigateToPhotoPreview: (Long, String) -> Unit,
+    navigateToTimelapseCreatorScreen: (List<Photo>) -> Unit,
     navigateToRemovePhotosDialog: (List<String>) -> Unit,
     viewModel: DevicePhotosScreenViewModel = hiltViewModel(),
 ) {
@@ -119,6 +120,7 @@ fun DevicePhotosScreen(
 
                 is Event.NavigateToPhotoPreview -> navigateToPhotoPreview(event.photo.deviceId, event.photo.fileName)
                 is Event.NavigateToRemovePhotosDialog -> navigateToRemovePhotosDialog(event.photos)
+                is Event.NavigateToTimelapseCreatorScreen -> navigateToTimelapseCreatorScreen(event.photos)
             }
         }
     }
@@ -153,6 +155,7 @@ fun DevicePhotosScreen(
                 onDenied = { readExternalStoragePermissionLauncher.launch(storagePermissionName) }
             )
         },
+        createTimelapseFromSelectedPhotos = viewModel::createTimelapseFromSelectedPhotos,
         removeSelectedPhotos = viewModel::removeSelectedPhotos,
         onPhotoClick = viewModel::onPhotoClick,
         onPhotoLongClick = viewModel::onPhotoLongClick,
@@ -168,6 +171,7 @@ private fun DevicePhotosScreenContent(
     updatePhotos: () -> Unit,
     resetSelections: () -> Unit,
     saveSelectedPhotos: () -> Unit,
+    createTimelapseFromSelectedPhotos: () -> Unit,
     removeSelectedPhotos: () -> Unit,
     onPhotoClick: (SelectablePhoto) -> Unit,
     onPhotoLongClick: (SelectablePhoto) -> Unit,
@@ -199,6 +203,7 @@ private fun DevicePhotosScreenContent(
             SelectedEditBar(
                 isSelectionMode = uiState.isSelectionMode,
                 selectedCount = uiState.selectedCount,
+                createTimelapseFromSelectedPhotos = createTimelapseFromSelectedPhotos,
                 removeSelectedPhotos = removeSelectedPhotos,
                 saveSelectedPhotos = saveSelectedPhotos,
                 resetSelections = resetSelections
@@ -354,7 +359,7 @@ private fun DevicePhotosStateItemsPreview() {
                 isRefreshed = true,
                 selectedCount = 0
             ),
-            {}, {}, {}, {}, {}, {}, {}, {}
+            {}, {}, {}, {}, {}, {}, {}, {}, {}
         )
     }
 
@@ -405,7 +410,7 @@ private fun DevicePhotosStateSelectedItemsPreview() {
                 isRefreshed = true,
                 selectedCount = 2
             ),
-            {}, {}, {}, {}, {}, {}, {}, {}
+            {}, {}, {}, {}, {}, {}, {}, {}, {}
         )
     }
 }
@@ -424,7 +429,7 @@ private fun DevicePhotosStateSuccessNoItemsPreview() {
                 isRefreshed = true,
                 selectedCount = 0
             ),
-            {}, {}, {}, {}, {}, {}, {}, {}
+            {}, {}, {}, {}, {}, {}, {}, {}, {}
         )
     }
 }

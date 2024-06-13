@@ -19,6 +19,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.zIndex
 import com.julianczaja.esp_monitoring_app.R
+import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.presentation.deviceinfo.DeviceInfoScreen
 import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DevicePhotosScreen
 import com.julianczaja.esp_monitoring_app.presentation.devicesavedphotos.DeviceSavedPhotosScreen
@@ -31,6 +32,7 @@ fun DeviceScreen(
     snackbarHostState: SnackbarHostState,
     navigateToPhotoPreview: (Long, String) -> Unit,
     navigateToRemovePhotosDialog: (List<String>) -> Unit,
+    navigateToTimelapseCreatorScreen: (List<Photo>) -> Unit,
 ) {
     val coroutineScope = rememberCoroutineScope()
     val pages = listOf(DevicePage.Photos, DevicePage.Saved, DevicePage.Info)
@@ -78,7 +80,8 @@ fun DeviceScreen(
                 DevicePage.Photos.index -> DevicePhotosScreen(
                     snackbarHostState = snackbarHostState,
                     navigateToPhotoPreview = navigateToPhotoPreview,
-                    navigateToRemovePhotosDialog = navigateToRemovePhotosDialog
+                    navigateToRemovePhotosDialog = navigateToRemovePhotosDialog,
+                    navigateToTimelapseCreatorScreen = navigateToTimelapseCreatorScreen
                 )
 
                 DevicePage.Saved.index -> DeviceSavedPhotosScreen(

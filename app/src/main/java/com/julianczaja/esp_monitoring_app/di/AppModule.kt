@@ -12,6 +12,7 @@ import com.julianczaja.esp_monitoring_app.common.Constants
 import com.julianczaja.esp_monitoring_app.data.BleLocationManager
 import com.julianczaja.esp_monitoring_app.data.BluetoothManager
 import com.julianczaja.esp_monitoring_app.data.CoilBitmapDownloader
+import com.julianczaja.esp_monitoring_app.data.LocalTimelapseCreator
 import com.julianczaja.esp_monitoring_app.data.NetworkManager
 import com.julianczaja.esp_monitoring_app.data.local.database.EspMonitoringDatabase
 import com.julianczaja.esp_monitoring_app.data.local.database.dao.DeviceDao
@@ -23,6 +24,7 @@ import com.julianczaja.esp_monitoring_app.data.repository.DeviceInfoRepositoryIm
 import com.julianczaja.esp_monitoring_app.data.repository.DeviceRepositoryImpl
 import com.julianczaja.esp_monitoring_app.data.repository.PhotoRepositoryImpl
 import com.julianczaja.esp_monitoring_app.domain.BitmapDownloader
+import com.julianczaja.esp_monitoring_app.domain.TimelapseCreator
 import com.julianczaja.esp_monitoring_app.domain.model.ResultCallAdapterFactory
 import com.julianczaja.esp_monitoring_app.domain.repository.AppSettingsRepository
 import com.julianczaja.esp_monitoring_app.domain.repository.DeviceInfoRepository
@@ -114,6 +116,14 @@ object AppModule {
         @ApplicationContext context: Context,
         @IoDispatcher ioDispatcher: CoroutineDispatcher
     ): BitmapDownloader = CoilBitmapDownloader(context, ioDispatcher)
+
+    @Provides
+    @Singleton
+    fun provideTimelapseCreator(
+        @ApplicationContext context: Context,
+        bitmapDownloader: BitmapDownloader,
+        @IoDispatcher ioDispatcher: CoroutineDispatcher
+    ): TimelapseCreator = LocalTimelapseCreator(context, bitmapDownloader, ioDispatcher)
 
     @Provides
     @Singleton

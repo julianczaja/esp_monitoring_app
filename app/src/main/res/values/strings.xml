@@ -112,6 +112,7 @@
     <string name="storage_permission_denied_body">This feature requires access to your device\'s storage. You can grant permission in the app settings.</string>
     <string name="storage_permission_needed_title">Storage permission needed</string>
     <string name="storage_permission_rationale_body">This feature requires permission to access your device\'s storage. This allows us to save photos on your disk.</string>
+    <string name="timelapse_creator_screen_title">Timelapse creator</string>
     <string name="unknown_error_message">Unknown error</string>
     <string name="update_label">Update</string>
     <string name="white_balance_auto">Auto</string>

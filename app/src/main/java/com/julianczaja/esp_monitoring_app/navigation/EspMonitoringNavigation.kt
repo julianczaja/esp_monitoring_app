@@ -3,9 +3,11 @@ package com.julianczaja.esp_monitoring_app.navigation
 import android.os.Build
 import android.os.Bundle
 import android.os.Parcelable
+import androidx.navigation.CollectionNavType
 import androidx.navigation.NavController
 import androidx.navigation.NavType
 import com.julianczaja.esp_monitoring_app.domain.model.Device
+import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
@@ -93,6 +95,16 @@ fun NavController.navigateToAppSettings() {
     }
 }
 
+// Timelapse creator
+@Serializable
+data class TimelapseCreatorScreen(val photos: List<Photo>)
+
+fun NavController.navigateToTimelapseCreatorScreen(photos: List<Photo>) {
+    navigate(TimelapseCreatorScreen(photos)) {
+        launchSingleTop = true
+    }
+}
+
 // Args
 object DeviceIdArgs {
     const val KEY = "deviceId"
@@ -104,6 +116,7 @@ inline fun <reified T : Parcelable> parcelableType(
     isNullableAllowed: Boolean = false,
     json: Json = Json,
 ) = object : NavType<T>(isNullableAllowed) {
+
     override fun get(bundle: Bundle, key: String) =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             bundle.getParcelable(key, T::class.java)
@@ -117,4 +130,31 @@ inline fun <reified T : Parcelable> parcelableType(
     override fun serializeAsValue(value: T): String = json.encodeToString(value)
 
     override fun put(bundle: Bundle, key: String, value: T) = bundle.putParcelable(key, value)
+}
+
+inline fun <reified T : Parcelable> parcelableCollectionType(
+    isNullableAllowed: Boolean = false,
+    json: Json = Json,
+) = object : CollectionNavType<List<T>>(isNullableAllowed) {
+
+    override fun emptyCollection(): List<T> = emptyList()
+
+    override fun get(bundle: Bundle, key: String): List<T>? =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            bundle.getParcelableArray(key, T::class.java)?.toList()
+        } else {
+            @Suppress("DEPRECATION")
+            bundle.getParcelableArray(key)?.map { it as T }?.toList()
+        }
+
+    override fun parseValue(value: String): List<T> = json.decodeFromString(value)
+
+    override fun parseValue(value: String, previousValue: List<T>): List<T> =
+        previousValue.plus(json.decodeFromString<T>(value))
+
+    override fun serializeAsValues(value: List<T>): List<String> = value.map { json.encodeToString(it) }
+
+    override fun put(bundle: Bundle, key: String, value: List<T>) {
+        bundle.putParcelableArray(key, value.toTypedArray())
+    }
 }

@@ -204,6 +204,7 @@ private fun DeviceSavedPhotosScreenContent(
             SelectedEditBar(
                 isSelectionMode = isSelectionMode,
                 selectedCount = selectedCount,
+                createTimelapseFromSelectedPhotos = {}, // TODO
                 removeSelectedPhotos = removeSelectedPhotos,
                 resetSelections = resetSelections
             )

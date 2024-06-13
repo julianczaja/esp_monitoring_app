@@ -23,7 +23,7 @@ import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 
 @Composable
 fun SwitchWithLabel(
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
     label: String,
     isChecked: Boolean,
     enabled: Boolean,

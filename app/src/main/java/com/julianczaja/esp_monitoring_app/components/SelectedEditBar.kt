@@ -33,6 +33,7 @@ import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 fun SelectedEditBar(
     isSelectionMode: Boolean,
     selectedCount: Int,
+    createTimelapseFromSelectedPhotos: () -> Unit,
     removeSelectedPhotos: () -> Unit,
     saveSelectedPhotos: (() -> Unit)? = null,
     resetSelections: () -> Unit
@@ -56,6 +57,12 @@ fun SelectedEditBar(
                     horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small, Alignment.End),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
+                    IconButton(onClick = createTimelapseFromSelectedPhotos) {
+                        Icon(
+                            painterResource(id = R.drawable.ic_timelapse),
+                            contentDescription = null
+                        )
+                    }
                     IconButton(onClick = removeSelectedPhotos) {
                         Icon(
                             imageVector = Icons.Default.Delete,
@@ -91,6 +98,7 @@ private fun SelectedEditBarPreview() {
         SelectedEditBar(
             isSelectionMode = true,
             selectedCount = 2,
+            createTimelapseFromSelectedPhotos = {},
             removeSelectedPhotos = {},
             saveSelectedPhotos = {},
             resetSelections = {}
