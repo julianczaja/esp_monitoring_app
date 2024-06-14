@@ -122,6 +122,10 @@ dependencies {
     // FFMPEG
     implementation(libs.ffmpeg)
 
+    // Exoplayer
+    implementation(libs.media.exoplayer)
+    implementation(libs.media.ui)
+
     // Tests
     testImplementation(libs.junit)
     testImplementation(libs.robolectric)
