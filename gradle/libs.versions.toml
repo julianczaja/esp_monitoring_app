@@ -58,7 +58,7 @@ androidx-room-runtime = { group = "androidx.room", name = "room-runtime", versio
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
 androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
 kable-core = { group = "com.juul.kable", name = "core", version.ref = "kable" }
-ffmpeg = { group = "com.arthenica", name = "ffmpeg-kit-min-gpl", version.ref = "ffmpeg" }
+ffmpeg = { group = "com.arthenica", name = "ffmpeg-kit-min", version.ref = "ffmpeg" }
 media-exoplayer = { group = "androidx.media3", name = "media3-exoplayer", version.ref = "media" }
 media-ui = { group = "androidx.media3", name = "media3-ui", version.ref = "media" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -69,6 +69,7 @@ kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-cor
 truth = { group = "com.google.truth", name = "truth", version.ref = "truth" }
 mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
+androidx-navigation-testing = { group = "androidx.navigation", name = "navigation-testing", version.ref = "navigation-compose" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "android-gradle-plugin" }

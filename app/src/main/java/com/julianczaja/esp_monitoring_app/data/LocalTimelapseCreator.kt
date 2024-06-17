@@ -45,7 +45,6 @@ class LocalTimelapseCreator @Inject constructor(
         isHighQuality: Boolean,
         frameRate: Int
     ): Result<TimelapseData> = withContext(ioDispatcher) {
-        isBusy.update { true }
         downloadProgress.update { 0f }
         processProgress.update { 0f }
 
@@ -69,13 +68,17 @@ class LocalTimelapseCreator @Inject constructor(
         }
 
         val outputPath = File(cacheDir, "timelapse.mp4").path
-        val formatArgs = "-c:v libx264 -pix_fmt yuv420p"
-        val inputArgs = "-i '$cacheDir/$photoPrefix%4d.jpeg'"
-        val command = "-y -framerate $frameRate $inputArgs $formatArgs -r $frameRate $outputPath"
+        val command = listOf(
+            "-y",
+            "-framerate", frameRate.toString(),
+            "-i", "$cacheDir/$photoPrefix%4d.jpeg",
+            "-c:v", "mpeg4",
+            "-q:v", "3",
+            "-r", frameRate.toString(),
+            outputPath
+        )
 
-        val session = FFmpegKit.execute(command)
-
-        isBusy.update { false }
+        val session = FFmpegKit.execute(command.joinToString(" "))
 
         when {
             session.returnCode.isValueError -> {
