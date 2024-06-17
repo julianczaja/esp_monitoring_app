@@ -26,3 +26,4 @@ ___
 This project is licensed under the MIT License. See the LICENSE file for details.
 
 This project uses [Kable library](https://github.com/JuulLabs/kable) - Licensed under the Apache License 2.0
+This project uses [ffmpeg-kit](https://github.com/arthenica/ffmpeg-kit) - Licensed under the LGPL-3.0 license 
