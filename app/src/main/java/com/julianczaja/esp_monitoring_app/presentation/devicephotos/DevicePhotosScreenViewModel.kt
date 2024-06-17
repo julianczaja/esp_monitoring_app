@@ -214,8 +214,12 @@ class DevicePhotosScreenViewModel @Inject constructor(
 
     fun createTimelapseFromSelectedPhotos() {
         viewModelScope.launch {
-            eventFlow.emit(Event.NavigateToTimelapseCreatorScreen(_selectedPhotos.value))
-            resetSelectedPhotos()
+            if (_selectedPhotos.value.size >= 2) {
+                eventFlow.emit(Event.NavigateToTimelapseCreatorScreen(_selectedPhotos.value))
+                resetSelectedPhotos()
+            } else {
+                eventFlow.emit(Event.ShowNotEnoughSelectedInfo)
+            }
         }
     }
 
@@ -225,6 +229,7 @@ class DevicePhotosScreenViewModel @Inject constructor(
         data class NavigateToTimelapseCreatorScreen(val photos: List<Photo>) : Event()
         data class ShowSavedInfo(val totalCount: Int, val savedCount: Int) : Event()
         data class ShowError(val messageId: Int) : Event()
+        data object ShowNotEnoughSelectedInfo : Event()
     }
 
     @Immutable

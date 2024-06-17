@@ -118,13 +118,14 @@
     <string name="storage_permission_needed_title">Storage permission needed</string>
     <string name="storage_permission_rationale_body">This feature requires permission to access your device\'s storage. This allows us to save photos on your disk.</string>
     <string name="timelapse_creator_screen_title">Timelapse creator</string>
-    <string name="timelapse_downloading_label">Downloading...</string>
+    <string name="timelapse_downloading_label">Downloading…</string>
     <string name="timelapse_duration_label">"Duration: "</string>
     <string name="timelapse_estimated_time_label">"Estimated time: "</string>
     <string name="timelapse_newest_photo_label">"Newest photo: "</string>
+    <string name="timelapse_not_enough_photos_selected_message">Select at least 2 photos to create timelapse</string>
     <string name="timelapse_oldest_photo_label">"Oldest photo: "</string>
     <string name="timelapse_photos_count_label">"Photos count: "</string>
-    <string name="timelapse_processing_label">Processing...</string>
+    <string name="timelapse_processing_label">Processing…</string>
     <string name="timelapse_saved">Timelapse saved</string>
     <string name="timelapse_size_label">"Size: "</string>
     <string name="unknown_error_message">Unknown error</string>

@@ -118,6 +118,11 @@ fun DevicePhotosScreen(
                     duration = SnackbarDuration.Short
                 )
 
+                Event.ShowNotEnoughSelectedInfo -> snackbarHostState.showSnackbar(
+                    message = context.getString(R.string.timelapse_not_enough_photos_selected_message),
+                    duration = SnackbarDuration.Short
+                )
+
                 is Event.NavigateToPhotoPreview -> navigateToPhotoPreview(event.photo.deviceId, event.photo.fileName)
                 is Event.NavigateToRemovePhotosDialog -> navigateToRemovePhotosDialog(event.photos)
                 is Event.NavigateToTimelapseCreatorScreen -> navigateToTimelapseCreatorScreen(event.photos)
