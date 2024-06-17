@@ -7,6 +7,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -48,6 +49,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
@@ -82,6 +84,7 @@ import com.julianczaja.esp_monitoring_app.domain.model.PermissionState
 import com.julianczaja.esp_monitoring_app.domain.model.WifiCredentials
 import com.julianczaja.esp_monitoring_app.presentation.devicesettings.DeviceSettingsScreenViewModel.Event
 import com.julianczaja.esp_monitoring_app.presentation.devicesettings.DeviceSettingsScreenViewModel.UiState
+import com.julianczaja.esp_monitoring_app.presentation.devicesettings.components.ServerInfoEditDialog
 import com.julianczaja.esp_monitoring_app.presentation.devicesettings.components.WiFiCredentialsEditDialog
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 
@@ -164,6 +167,7 @@ fun DeviceSettingsScreen(
         onDeviceClicked = viewModel::connectDevice,
         onDeviceSettingsChanged = viewModel::updateDeviceSettings,
         onWifiCredentialsChanged = viewModel::updateDeviceWifiCredentials,
+        onDeviceServerUrlChanged = viewModel::updateDeviceServerUrl,
         onDisconnectClicked = viewModel::disconnectDevice
     )
 }
@@ -185,6 +189,7 @@ private fun DeviceSettingsScreenContent(
     onDeviceClicked: (String) -> Unit,
     onDeviceSettingsChanged: (DeviceSettings) -> Unit,
     onWifiCredentialsChanged: (WifiCredentials) -> Unit,
+    onDeviceServerUrlChanged: (String) -> Unit,
     onDisconnectClicked: () -> Unit,
 ) {
     when (uiState) {
@@ -213,7 +218,8 @@ private fun DeviceSettingsScreenContent(
             uiState = uiState,
             onDeviceSettingsChanged = onDeviceSettingsChanged,
             onDisconnectClicked = onDisconnectClicked,
-            onWifiCredentialsChanged = onWifiCredentialsChanged
+            onWifiCredentialsChanged = onWifiCredentialsChanged,
+            onDeviceServerUrlChanged = onDeviceServerUrlChanged
         )
     }
 }
@@ -453,6 +459,7 @@ private fun DeviceSettingsConnectScreen(
     uiState: UiState.Connect,
     onDeviceSettingsChanged: (DeviceSettings) -> Unit,
     onWifiCredentialsChanged: (WifiCredentials) -> Unit,
+    onDeviceServerUrlChanged: (String) -> Unit,
     onDisconnectClicked: () -> Unit
 ) {
     when (uiState.deviceStatus) {
@@ -468,7 +475,8 @@ private fun DeviceSettingsConnectScreen(
                     deviceSettings = uiState.deviceSettings,
                     enabled = !uiState.isBusy,
                     onSettingsChanged = onDeviceSettingsChanged,
-                    onWifiCredentialsChanged = onWifiCredentialsChanged
+                    onWifiCredentialsChanged = onWifiCredentialsChanged,
+                    onDeviceServerUrlChanged = onDeviceServerUrlChanged,
                 )
                 Button(
                     modifier = Modifier
@@ -499,16 +507,16 @@ private fun DeviceSettingsContent(
     deviceSettings: DeviceSettings,
     enabled: Boolean,
     onSettingsChanged: (DeviceSettings) -> Unit,
-    onWifiCredentialsChanged: (WifiCredentials) -> Unit
+    onWifiCredentialsChanged: (WifiCredentials) -> Unit,
+    onDeviceServerUrlChanged: (String) -> Unit,
 ) {
     var isWifiCredentialsDialogVisible by rememberSaveable { mutableStateOf(false) }
+    var isServerInfoDialogVisible by rememberSaveable { mutableStateOf(false) }
 
     if (isWifiCredentialsDialogVisible) {
         WiFiCredentialsEditDialog(
             initialSsid = deviceSettings.wifiSsid,
-            onDismiss = {
-                isWifiCredentialsDialogVisible = false
-            },
+            onDismiss = { isWifiCredentialsDialogVisible = false },
             onApply = { ssid, password ->
                 onWifiCredentialsChanged(WifiCredentials(ssid, password))
                 isWifiCredentialsDialogVisible = false
@@ -516,33 +524,40 @@ private fun DeviceSettingsContent(
         )
     }
 
+    if (isServerInfoDialogVisible) {
+        ServerInfoEditDialog(
+            initialUrl = deviceSettings.serverUrl,
+            onDismiss = { isServerInfoDialogVisible = false },
+            onApply = { url ->
+                onDeviceServerUrlChanged(url)
+                isServerInfoDialogVisible = false
+            }
+        )
+    }
+
     Text(text = stringResource(R.string.device_id_label_with_format, deviceSettings.deviceId))
     HorizontalDivider(Modifier.padding(vertical = MaterialTheme.spacing.medium))
 
-    OutlinedCard {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(MaterialTheme.spacing.large),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Text(
-                    text = stringResource(R.string.wifi_credentials_label),
-                    style = MaterialTheme.typography.bodySmall,
-                    textDecoration = TextDecoration.Underline
-                )
-                Spacer(modifier = Modifier.padding(MaterialTheme.spacing.small))
-                Text(text = stringResource(R.string.ssid_label) + ": ${deviceSettings.wifiSsid}")
-                Text(text = stringResource(R.string.password_label_with_placeholder))
-            }
-            TextButton(onClick = { isWifiCredentialsDialogVisible = true }) {
-                Text(text = stringResource(id = R.string.edit_label))
-            }
-        }
+    OutlinedCardWithEditButton(
+        title = stringResource(R.string.wifi_credentials_label),
+        enabled = enabled,
+        onEditClicked = { isWifiCredentialsDialogVisible = true }
+    ) {
+        Text(text = stringResource(R.string.ssid_label) + ": ${deviceSettings.wifiSsid}")
+        Text(text = stringResource(R.string.password_label_with_placeholder))
     }
-
+    OutlinedCardWithEditButton(
+        title = stringResource(R.string.server_info_label),
+        enabled = enabled,
+        onEditClicked = { isServerInfoDialogVisible = true }
+    ) {
+        Text(
+            modifier = Modifier.fillMaxWidth(.7f),
+            text = stringResource(R.string.url_label) + ": ${deviceSettings.serverUrl}",
+            overflow = TextOverflow.Ellipsis,
+            maxLines = 1
+        )
+    }
     DropdownMenuBox(
         modifier = Modifier.fillMaxWidth(),
         title = stringResource(R.string.device_settings_frame_size_label),
@@ -629,6 +644,42 @@ private fun DeviceSettingsContent(
         onCheckedChange = { newValue -> onSettingsChanged(deviceSettings.copy(horizontalMirror = newValue)) }
     )
 }
+
+@Composable
+private fun OutlinedCardWithEditButton(
+    modifier: Modifier = Modifier,
+    title: String,
+    enabled: Boolean,
+    onEditClicked: () -> Unit,
+    content: @Composable (ColumnScope.() -> Unit)
+) {
+    OutlinedCard {
+        Row(
+            modifier = modifier
+                .fillMaxWidth()
+                .padding(MaterialTheme.spacing.large),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.bodySmall,
+                    textDecoration = TextDecoration.Underline
+                )
+                Spacer(modifier = Modifier.padding(MaterialTheme.spacing.small))
+                content()
+            }
+            TextButton(
+                onClick = onEditClicked,
+                enabled = enabled
+            ) {
+                Text(text = stringResource(id = R.string.edit_label))
+            }
+        }
+    }
+}
+
 //endregion
 
 //region Preview
@@ -639,12 +690,13 @@ private fun DeviceSettingsConnectScreenConnectedPreview() {
         DeviceSettingsConnectScreen(
             uiState = UiState.Connect(
                 deviceStatus = DeviceStatus.Connected,
-                deviceSettings = DeviceSettings(),
+                deviceSettings = DeviceSettings(serverUrl = "http://192.168.1.1:1234/"),
                 isBusy = false
             ),
             onDeviceSettingsChanged = {},
             onDisconnectClicked = {},
-            onWifiCredentialsChanged = {}
+            onWifiCredentialsChanged = {},
+            onDeviceServerUrlChanged = {}
         )
     }
 }
@@ -664,7 +716,8 @@ private fun DeviceSettingsConnectScreenConnectingPreview() {
             ),
             onDeviceSettingsChanged = {},
             onDisconnectClicked = {},
-            onWifiCredentialsChanged = {}
+            onWifiCredentialsChanged = {},
+            onDeviceServerUrlChanged = {}
         )
     }
 }

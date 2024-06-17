@@ -97,6 +97,7 @@
     <string name="save_photo_to_external_storage_result_message">%1$d/%2$d photos saved</string>
     <string name="saved_tab_label">Saved</string>
     <string name="selected_photos_count_format">Selected: %1$d</string>
+    <string name="server_info_label">Server info</string>
     <string name="special_effect_blue_tint">Blue Tint</string>
     <string name="special_effect_grayscale">Grayscale</string>
     <string name="special_effect_green_tint">Green Tint</string>
@@ -114,6 +115,7 @@
     <string name="storage_permission_rationale_body">This feature requires permission to access your device\'s storage. This allows us to save photos on your disk.</string>
     <string name="unknown_error_message">Unknown error</string>
     <string name="update_label">Update</string>
+    <string name="url_label">URL</string>
     <string name="white_balance_auto">Auto</string>
     <string name="white_balance_cloudy">Cloudy</string>
     <string name="white_balance_home">Home</string>
