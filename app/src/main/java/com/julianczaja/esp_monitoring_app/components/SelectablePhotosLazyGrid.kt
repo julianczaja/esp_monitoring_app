@@ -1,6 +1,8 @@
 package com.julianczaja.esp_monitoring_app.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -179,8 +181,8 @@ private fun BoxScope.ScrollToTopButton(
             .align(Alignment.BottomCenter)
             .padding(MaterialTheme.spacing.large),
         visible = isVisible,
-        enter = slideInVertically(initialOffsetY = { it }),
-        exit = slideOutVertically(targetOffsetY = { it * 2 })
+        enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+        exit = slideOutVertically(targetOffsetY = { it * 2 }) + fadeOut()
     ) {
         val progressColor = MaterialTheme.colorScheme.onPrimaryContainer
 
