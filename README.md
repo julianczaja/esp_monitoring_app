@@ -2,7 +2,14 @@
 
 ##### Esp Monitoring APP is an application developed using Jetpack Compose, designed to facilitate control over dedicated ESP32 devices equipped with a camera module via Bluetooth Low Energy (BLE). This versatile tool allows users to manage device settings and preview as well as manage photos captured by the device.
 
+https://github.com/julianczaja/esp_monitoring_app/assets/42813582/eb8be2f6-b18b-4699-b3e8-c5a6ff5b8545
+
+<details>
+  <summary>Old demos</summary>
+  
 https://github.com/julianczaja/esp_monitoring_app/assets/42813582/d650156d-0b3f-4211-84f9-fbc240e18faa
+
+</details>
 
 <p align="center">
 🔥 More comming soon 🔥
