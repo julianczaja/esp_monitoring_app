@@ -1,6 +1,5 @@
 package com.julianczaja.esp_monitoring_app.presentation.timelapsecreator
 
-import androidx.annotation.StringRes
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -10,7 +9,10 @@ import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.domain.model.TimelapseData
 import com.julianczaja.esp_monitoring_app.domain.model.getErrorMessageId
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -45,67 +47,79 @@ class TimelapseCreatorScreenViewModel @Inject constructor(
         timelapseCreator.clear()
     }
 
-    private val _uiState: MutableStateFlow<UiState> = MutableStateFlow(
-        UiState.Configure(
-            photosCount = photos.size,
-            oldestPhotoDateTime = photos.last().dateTime,
-            newestPhotoDateTime = photos.first().dateTime,
-            estimatedTime = photos.size.toFloat() / DEFAULT_FRAME_RATE
-        )
-    )
+    private val _uiState: MutableStateFlow<UiState> = MutableStateFlow(UiState.initial(photos))
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
+
+    val eventFlow = MutableSharedFlow<Event>()
+
+    private var lastFrameRate = DEFAULT_FRAME_RATE
+    private var lastIsHighQuality = false
+
+    private var processTimelapseJob: Job? = null
+    private var createTimelapseJob: Job? = null
+
+    fun onBackPressed() {
+        val uiState = uiState.value
+
+        when (uiState) {
+            is UiState.Configure -> Unit
+            is UiState.Preview, is UiState.Process -> {
+                timelapseCreator.cancel()
+                processTimelapseJob?.cancel()
+                createTimelapseJob?.cancel()
+                _uiState.update { UiState.initial(photos, lastFrameRate, lastIsHighQuality) }
+            }
+        }
+    }
 
     fun updateFrameRate(newFrameRate: Int) {
         (_uiState.value as? UiState.Configure)?.let { uiState ->
+            lastFrameRate = newFrameRate
             _uiState.update {
                 uiState.copy(
                     estimatedTime = photos.size / newFrameRate.toFloat(),
                     frameRate = newFrameRate
                 )
             }
-        } ?: run {
-            Timber.e("Error: start() - UI state is not UiState.Configure (${_uiState.value})")
         }
     }
 
     fun updateIsHighQuality(newIsHighQuality: Boolean) {
         (_uiState.value as? UiState.Configure)?.let { uiState ->
+            lastIsHighQuality = newIsHighQuality
             _uiState.update { uiState.copy(isHighQuality = newIsHighQuality) }
-        } ?: run {
-            Timber.e("Error: start() - UI state is not UiState.Configure (${_uiState.value})")
         }
     }
 
     fun start() {
         (_uiState.value as? UiState.Configure)?.let { uiState ->
 
-            _uiState.update { UiState.Process(false, 0f, 0f) }
+            _uiState.update { UiState.Process(0f, 0f) }
 
-            viewModelScope.launch(ioDispatcher) {
+            processTimelapseJob = viewModelScope.launch(ioDispatcher) {
                 combine(
-                    timelapseCreator.isBusy,
                     timelapseCreator.downloadProgress,
                     timelapseCreator.processProgress,
-                ) { isBusy, downloadProgress, processProgress ->
-                    _uiState.update { UiState.Process(isBusy, downloadProgress, processProgress) }
+                ) { downloadProgress, processProgress ->
+                    _uiState.update { UiState.Process(downloadProgress, processProgress) }
                 }.collect()
             }
 
-            viewModelScope.launch(ioDispatcher) {
+            createTimelapseJob = viewModelScope.launch(ioDispatcher) {
                 try {
                     timelapseCreator.createTimelapse(
                         photos = photos,
                         isHighQuality = uiState.isHighQuality,
                         frameRate = uiState.frameRate
                     ).onSuccess { timelapseData ->
-                        _uiState.update { UiState.Done(timelapseData) }
+                        _uiState.update { UiState.Preview(timelapseData) }
                     }.onFailure { e ->
-                        Timber.e("Error: start() onFailure - $e")
-                        _uiState.update { UiState.Error(e.getErrorMessageId()) }
+                        onError(e)
                     }
+                } catch (e: CancellationException) {
+                    Timber.d("createTimelapseJob cancelled")
                 } catch (e: Exception) {
-                    Timber.e("Error: start() - $e")
-                    _uiState.update { UiState.Error(e.getErrorMessageId()) }
+                    onError(e)
                 }
             }
         } ?: run {
@@ -113,23 +127,34 @@ class TimelapseCreatorScreenViewModel @Inject constructor(
         }
     }
 
-    fun onBackPressed() {
-        val uiState = uiState.value
-        if (uiState is UiState.Done || uiState is UiState.Error) {
-            _uiState.update {
-                UiState.Configure(
-                    photosCount = photos.size,
-                    oldestPhotoDateTime = photos.last().dateTime,
-                    newestPhotoDateTime = photos.first().dateTime,
-                    estimatedTime = photos.size.toFloat() / DEFAULT_FRAME_RATE
-                )
-            }
+    fun saveTimelapse() = viewModelScope.launch(ioDispatcher) {
+        (_uiState.value as? UiState.Preview)?.let { uiState ->
+            _uiState.update { uiState.copy(isBusy = true) }
         }
+        timelapseCreator.saveTimelapse(photos.first().deviceId)
+            .onFailure { e -> onError(e) }
+            .onSuccess {
+                (_uiState.value as? UiState.Preview)?.let { uiState ->
+                    _uiState.update { uiState.copy(isBusy = false, isSaved = true) }
+                }
+                eventFlow.emit(Event.ShowSaved)
+            }
+    }
+
+    private fun onError(throwable: Throwable) = viewModelScope.launch {
+        Timber.e(throwable)
+        _uiState.update { UiState.initial(photos, lastFrameRate, lastIsHighQuality) }
+        eventFlow.emit(Event.ShowError(throwable.getErrorMessageId()))
     }
 
     override fun onCleared() {
         timelapseCreator.clear()
         super.onCleared()
+    }
+
+    sealed class Event {
+        data class ShowError(val messageId: Int) : Event()
+        data object ShowSaved : Event()
     }
 
     sealed class UiState {
@@ -138,12 +163,34 @@ class TimelapseCreatorScreenViewModel @Inject constructor(
             val oldestPhotoDateTime: LocalDateTime,
             val newestPhotoDateTime: LocalDateTime,
             val estimatedTime: Float,
-            val frameRate: Int = DEFAULT_FRAME_RATE,
-            val isHighQuality: Boolean = false
+            val frameRate: Int,
+            val isHighQuality: Boolean
         ) : UiState()
 
-        data class Process(val isBusy: Boolean, val downloadProgress: Float, val processProgress: Float) : UiState()
-        data class Done(val timelapseData: TimelapseData) : UiState()
-        data class Error(@StringRes val messageId: Int) : UiState()
+        data class Process(
+            val downloadProgress: Float,
+            val processProgress: Float
+        ) : UiState()
+
+        data class Preview(
+            val timelapseData: TimelapseData,
+            val isBusy: Boolean = false,
+            val isSaved: Boolean = false
+        ) : UiState()
+
+        companion object {
+            fun initial(
+                photos: List<Photo>,
+                frameRate: Int = DEFAULT_FRAME_RATE,
+                isHighQuality: Boolean = false
+            ) = Configure(
+                photosCount = photos.size,
+                oldestPhotoDateTime = photos.last().dateTime,
+                newestPhotoDateTime = photos.first().dateTime,
+                estimatedTime = photos.size.toFloat() / DEFAULT_FRAME_RATE,
+                frameRate = frameRate,
+                isHighQuality = isHighQuality
+            )
+        }
     }
 }

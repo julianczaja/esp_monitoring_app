@@ -1,11 +1,13 @@
 package com.julianczaja.esp_monitoring_app.data
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
 import com.arthenica.ffmpegkit.FFmpegKit
 import com.arthenica.ffmpegkit.FFmpegKitConfig
 import com.arthenica.ffmpegkit.FFprobeKit
 import com.arthenica.ffmpegkit.MediaInformationSession
+import com.julianczaja.esp_monitoring_app.data.utils.createTimelapseUri
 import com.julianczaja.esp_monitoring_app.di.IoDispatcher
 import com.julianczaja.esp_monitoring_app.domain.BitmapDownloader
 import com.julianczaja.esp_monitoring_app.domain.TimelapseCreator
@@ -17,13 +19,15 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.io.File
+import java.io.FileInputStream
+import java.io.IOException
 import javax.inject.Inject
 import kotlin.math.log10
 import kotlin.math.pow
 
 
 class LocalTimelapseCreator @Inject constructor(
-    context: Context,
+    private val context: Context,
     private val bitmapDownloader: BitmapDownloader,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : TimelapseCreator {
@@ -104,6 +108,41 @@ class LocalTimelapseCreator @Inject constructor(
         }
     }
 
+    override suspend fun saveTimelapse(deviceId: Long): Result<Unit> = withContext(ioDispatcher) {
+        val timelapseCacheFile = File(cacheDir, "timelapse.mp4")
+        if (!timelapseCacheFile.exists() || !timelapseCacheFile.isFile) {
+            return@withContext Result.failure(Exception("Cannot find cached timelapse file"))
+        }
+
+        val externalTimelapseUri = createTimelapseUri(context, deviceId)
+            ?: return@withContext Result.failure(Exception("externalTimelapseUri is null"))
+
+
+        return@withContext try {
+            isBusy.emit(true)
+            FileInputStream(timelapseCacheFile).use { input ->
+                context.contentResolver.openOutputStream(externalTimelapseUri)?.use { output ->
+                    val buffer = ByteArray(1024)
+                    var bytesRead: Int
+                    while (input.read(buffer).also { bytesRead = it } != -1) {
+                        output.write(buffer, 0, bytesRead)
+                    }
+                    Timber.d("Timelapse file successfully copied to external storage")
+                }
+            }
+            Result.success(Unit)
+        } catch (e: IOException) {
+            Timber.e("Failed to copy file to external storage: ${e.message}")
+            Result.failure(e)
+        } finally {
+            isBusy.emit(false)
+        }
+    }
+
+    override fun cancel() {
+        FFmpegKit.cancel()
+    }
+
     override fun clear() {
         cacheDir.deleteRecursively()
     }
@@ -119,6 +158,9 @@ class LocalTimelapseCreator @Inject constructor(
             }
             val photoFile = File(cacheDir, "$photoPrefix%04d.jpeg".format(index))
 
+            if (photoFile.exists() && photoFile.length() == 0L) {
+                photoFile.delete()
+            }
             if (!photoFile.exists()) {
                 photoFile.createNewFile()
 
@@ -135,24 +177,25 @@ class LocalTimelapseCreator @Inject constructor(
         }
     }
 
+    @SuppressLint("DefaultLocale")
     private fun MediaInformationSession.toTimelapseData(path: String): TimelapseData {
+        fun formatBytes(bytes: Long): String {
+            if (bytes <= 0) return "0 B"
+            val units = arrayOf("B", "KB", "MB")
+            val digitGroups = (log10(bytes.toDouble()) / log10(1024.0)).toInt()
+            return String.format("%.1f %s", bytes / 1024.0.pow(digitGroups.toDouble()), units[digitGroups])
+        }
+
         val size = mediaInformation.size.toLongOrNull() ?: 0L
         val sizeString = formatBytes(size)
 
         val duration = mediaInformation.duration
-        val durationString = duration.split(".").let { "${it[0]}.${it[1].take(2)} s" }
+        val durationString = duration.split(".").let { "${it[0]}.${it[1].take(1)} s" }
 
         return TimelapseData(
             path = path,
             size = sizeString,
             duration = durationString
         )
-    }
-
-    private fun formatBytes(bytes: Long): String {
-        if (bytes <= 0) return "0 B"
-        val units = arrayOf("B", "KB", "MB")
-        val digitGroups = (log10(bytes.toDouble()) / log10(1024.0)).toInt()
-        return String.format("%.1f %s", bytes / 1024.0.pow(digitGroups.toDouble()), units[digitGroups])
     }
 }

@@ -103,6 +103,7 @@ fun EspMonitoringNavHost(
         ) {
             TimelapseCreatorScreen(
                 onSetAppBarTitle = onSetAppBarTitle,
+                snackbarHostState = snackbarHostState
             )
         }
         composable<AppSettingsScreen>(

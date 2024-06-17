@@ -1,8 +1,8 @@
 package com.julianczaja.esp_monitoring_app.presentation.timelapsecreator
 
 import androidx.activity.compose.BackHandler
+import androidx.annotation.OptIn
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,11 +15,14 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -27,15 +30,19 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.components.AppBackground
-import com.julianczaja.esp_monitoring_app.components.ErrorText
 import com.julianczaja.esp_monitoring_app.components.IntSliderRow
 import com.julianczaja.esp_monitoring_app.components.SwitchWithLabel
 import com.julianczaja.esp_monitoring_app.data.utils.toPrettyString
@@ -47,24 +54,43 @@ import java.time.LocalDateTime
 @Composable
 fun TimelapseCreatorScreen(
     onSetAppBarTitle: (Int) -> Unit,
+    snackbarHostState: SnackbarHostState,
     viewModel: TimelapseCreatorScreenViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    BackHandler(enabled = uiState is UiState.Done || uiState is UiState.Error) {
+    BackHandler(enabled = uiState !is UiState.Configure) {
         viewModel.onBackPressed()
     }
 
     LaunchedEffect(true) {
         onSetAppBarTitle(R.string.timelapse_creator_screen_title)
+        viewModel.eventFlow.collect { event ->
+            when (event) {
+                is TimelapseCreatorScreenViewModel.Event.ShowError -> snackbarHostState.showSnackbar(
+                    message = context.getString(event.messageId),
+                    duration = SnackbarDuration.Short
+                )
+
+                TimelapseCreatorScreenViewModel.Event.ShowSaved -> snackbarHostState.showSnackbar(
+                    message = context.getString(R.string.timelapse_saved),
+                    duration = SnackbarDuration.Short
+                )
+            }
+        }
     }
 
+
     TimelapseCreatorScreenContent(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(MaterialTheme.spacing.large),
         uiState = uiState,
         onFrameRateChanged = viewModel::updateFrameRate,
         onIsHighQualityChanged = viewModel::updateIsHighQuality,
-        onStartClicked = viewModel::start
+        onStartClicked = viewModel::start,
+        onSaveTimelapseClicked = viewModel::saveTimelapse
     )
 }
 
@@ -74,7 +100,8 @@ private fun TimelapseCreatorScreenContent(
     uiState: UiState,
     onFrameRateChanged: (Int) -> Unit,
     onIsHighQualityChanged: (Boolean) -> Unit,
-    onStartClicked: () -> Unit
+    onStartClicked: () -> Unit,
+    onSaveTimelapseClicked: () -> Unit,
 ) {
     when (uiState) {
         is UiState.Configure -> TimelapseCreatorConfigureScreen(
@@ -90,14 +117,10 @@ private fun TimelapseCreatorScreenContent(
             uiState = uiState
         )
 
-        is UiState.Done -> TimelapseCreatorDoneScreen(
+        is UiState.Preview -> TimelapseCreatorPreviewScreen(
             modifier = modifier,
-            uiState = uiState
-        )
-
-        is UiState.Error -> TimelapseCreatorErrorScreen(
-            modifier = modifier,
-            uiState = uiState
+            uiState = uiState,
+            onSaveTimelapseClicked = onSaveTimelapseClicked
         )
     }
 }
@@ -111,55 +134,58 @@ private fun TimelapseCreatorConfigureScreen(
     onStartClicked: () -> Unit
 ) {
     Column(
-        modifier = modifier.padding(MaterialTheme.spacing.medium),
+        modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top
+        verticalArrangement = Arrangement.SpaceBetween
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+        Column(
+            verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small)
         ) {
-            Text(text = "Photos count: ")
-            Text(text = uiState.photosCount.toString())
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(text = stringResource(R.string.timelapse_photos_count_label))
+                Text(text = uiState.photosCount.toString())
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(text = stringResource(R.string.timelapse_newest_photo_label))
+                Text(text = uiState.newestPhotoDateTime.toPrettyString())
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(text = stringResource(R.string.timelapse_oldest_photo_label))
+                Text(text = uiState.oldestPhotoDateTime.toPrettyString())
+            }
+            HorizontalDivider(modifier = Modifier.padding(top = MaterialTheme.spacing.medium))
+            IntSliderRow(
+                label = stringResource(R.string.frame_rate_label),
+                value = uiState.frameRate,
+                steps = 60,
+                enabled = true,
+                valueRange = 1f..60f,
+                onValueChange = onFrameRateChanged
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(text = stringResource(R.string.timelapse_estimated_time_label))
+                Text(text = stringResource(R.string.seconds_format).format(uiState.estimatedTime))
+            }
+            HorizontalDivider(modifier = Modifier.padding(top = MaterialTheme.spacing.medium))
+            SwitchWithLabel(
+                label = stringResource(R.string.high_quality_label),
+                isChecked = uiState.isHighQuality,
+                enabled = true,
+                onCheckedChange = onIsHighQualityChanged
+            )
         }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(text = "Newest photo: ")
-            Text(text = uiState.newestPhotoDateTime.toPrettyString())
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(text = "Oldest photo: ")
-            Text(text = uiState.oldestPhotoDateTime.toPrettyString())
-        }
-        HorizontalDivider(Modifier.padding(vertical = MaterialTheme.spacing.medium))
-        IntSliderRow(
-            label = stringResource(R.string.frame_rate_label),
-            value = uiState.frameRate,
-            steps = 60,
-            enabled = true,
-            valueRange = 1f..60f,
-            onValueChange = onFrameRateChanged
-        )
-        SwitchWithLabel(
-            label = stringResource(R.string.high_quality_label),
-            isChecked = uiState.isHighQuality,
-            enabled = true,
-            onCheckedChange = onIsHighQualityChanged
-        )
-        HorizontalDivider(Modifier.padding(vertical = MaterialTheme.spacing.medium))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(text = stringResource(R.string.timelapse_estimated_time_label))
-            Text(text = stringResource(R.string.seconds_format).format(uiState.estimatedTime))
-        }
-        HorizontalDivider(Modifier.padding(vertical = MaterialTheme.spacing.medium))
         Button(onClick = onStartClicked) {
             Text(text = stringResource(id = R.string.start_action))
         }
@@ -173,30 +199,17 @@ private fun TimelapseCreatorProcessScreen(
 ) {
     Column(
         modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        if (uiState.isBusy) {
-            LinearProgressIndicator(Modifier.fillMaxWidth())
-        }
-
-        Spacer(modifier = Modifier.height(MaterialTheme.spacing.large))
-
-        Text(text = "Download progress")
-        LinearProgressIndicator(
-            progress = { uiState.downloadProgress },
-            strokeCap = StrokeCap.Round,
-            modifier = Modifier
-                .padding(MaterialTheme.spacing.medium)
-                .height(MaterialTheme.spacing.medium)
-                .fillMaxWidth()
+        Text(
+            text = when {
+                uiState.processProgress > 0f -> stringResource(R.string.timelapse_processing_label)
+                else -> stringResource(R.string.timelapse_downloading_label)
+            }
         )
-
-        Spacer(modifier = Modifier.height(MaterialTheme.spacing.large))
-
-        Text(text = "Process progress")
         LinearProgressIndicator(
-            progress = { uiState.processProgress },
+            progress = { if (uiState.processProgress > 0f) uiState.processProgress else uiState.downloadProgress },
             strokeCap = StrokeCap.Round,
             modifier = Modifier
                 .padding(MaterialTheme.spacing.medium)
@@ -206,17 +219,26 @@ private fun TimelapseCreatorProcessScreen(
     }
 }
 
+@OptIn(UnstableApi::class)
 @Composable
-private fun TimelapseCreatorDoneScreen(
+private fun TimelapseCreatorPreviewScreen(
     modifier: Modifier = Modifier,
-    uiState: UiState.Done
+    uiState: UiState.Preview,
+    onSaveTimelapseClicked: () -> Unit
 ) {
     val context = LocalContext.current
-    val exoPlayer = ExoPlayer.Builder(context).build()
+    val exoPlayer = remember {
+        ExoPlayer.Builder(context)
+            .setVideoScalingMode(C.VIDEO_SCALING_MODE_DEFAULT)
+            .build()
+            .apply {
+                repeatMode = Player.REPEAT_MODE_ALL
+                playWhenReady = true
+            }
+    }
 
     LaunchedEffect(key1 = uiState) {
         exoPlayer.apply {
-            playWhenReady = false
             setMediaItem(MediaItem.fromUri(uiState.timelapseData.path))
             prepare()
         }
@@ -229,86 +251,90 @@ private fun TimelapseCreatorDoneScreen(
     }
 
     Column(
-        modifier = modifier.padding(MaterialTheme.spacing.medium),
+        modifier = modifier,
+        verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        AndroidView(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(MaterialTheme.spacing.medium)),
-            factory = { ctx ->
-                PlayerView(ctx).apply {
-                    player = exoPlayer
-                    useController = true
-                    hideController()
-                    setShowRewindButton(false)
-                    setShowFastForwardButton(false)
-                    setShowNextButton(false)
-                    setShowPreviousButton(false)
+        Column {
+            AndroidView(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(MaterialTheme.spacing.medium)),
+                factory = { ctx ->
+                    PlayerView(ctx).apply {
+                        player = exoPlayer
+                        useController = true
+                        resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIXED_WIDTH
+                        hideController()
+                        setShowRewindButton(false)
+                        setShowFastForwardButton(false)
+                        setShowNextButton(false)
+                        setShowPreviousButton(false)
+                    }
                 }
+            )
+            Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(text = stringResource(R.string.timelapse_size_label))
+                Text(text = uiState.timelapseData.size)
             }
-        )
-        Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(text = stringResource(R.string.timelapse_size_label))
-            Text(text = uiState.timelapseData.size)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(text = stringResource(R.string.timelapse_duration_label))
+                Text(text = uiState.timelapseData.duration)
+            }
         }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(text = stringResource(R.string.timelapse_duration_label))
-            Text(text = uiState.timelapseData.duration)
+        if (!uiState.isSaved) {
+            Button(
+                onClick = onSaveTimelapseClicked,
+                enabled = !uiState.isBusy
+            ) {
+                Text(text = stringResource(id = R.string.save_action))
+            }
         }
-    }
-}
-
-@Composable
-private fun TimelapseCreatorErrorScreen(
-    modifier: Modifier = Modifier,
-    uiState: UiState.Error
-) {
-    Box(modifier) {
-        ErrorText(text = stringResource(uiState.messageId), modifier = Modifier.align(Alignment.Center))
     }
 }
 
 //region Preview
 @PreviewLightDark
 @Composable
-private fun TimelapseCreatorConfigureScreenPreview() {
-    AppBackground {
-        TimelapseCreatorConfigureScreen(
+private fun TimelapseCreatorConfigureDialogPreview() {
+    AppBackground(Modifier.height(400.dp)) {
+        TimelapseCreatorScreenContent(
+            modifier = Modifier.fillMaxSize(),
             uiState = UiState.Configure(
                 photosCount = 321,
                 newestPhotoDateTime = LocalDateTime.of(2024, 6, 14, 14, 44),
                 oldestPhotoDateTime = LocalDateTime.of(2024, 5, 14, 14, 44),
                 frameRate = 30,
+                isHighQuality = true,
                 estimatedTime = 10.2f
             ),
             onFrameRateChanged = {},
             onIsHighQualityChanged = {},
-            onStartClicked = {}
+            onStartClicked = {},
+            onSaveTimelapseClicked = {}
         )
     }
 }
 
 @PreviewLightDark
 @Composable
-private fun TimelapseCreatorProcessScreenPreview() {
-    AppBackground {
-        TimelapseCreatorProcessScreen(uiState = UiState.Process(true, .5f, 0f))
-    }
-}
-
-@PreviewLightDark
-@Composable
-private fun TimelapseCreatorErrorScreenPreview() {
-    AppBackground {
-        TimelapseCreatorErrorScreen(uiState = UiState.Error(R.string.unknown_error_message))
+private fun TimelapseCreatorProcessDialogPreview() {
+    AppBackground(Modifier.height(400.dp)) {
+        TimelapseCreatorScreenContent(
+            modifier = Modifier.fillMaxSize(),
+            uiState = UiState.Process(.5f, 0.2f),
+            onFrameRateChanged = {},
+            onIsHighQualityChanged = {},
+            onStartClicked = {},
+            onSaveTimelapseClicked = {}
+        )
     }
 }
 //endregion

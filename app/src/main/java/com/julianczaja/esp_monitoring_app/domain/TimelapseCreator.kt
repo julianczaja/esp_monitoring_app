@@ -16,5 +16,9 @@ interface TimelapseCreator {
         frameRate: Int = 60
     ): Result<TimelapseData>
 
+    suspend fun saveTimelapse(deviceId: Long) : Result<Unit>
+
+    fun cancel()
+
     fun clear()
 }

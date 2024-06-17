@@ -11,12 +11,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import timber.log.Timber
+import java.time.LocalDateTime
 import kotlin.coroutines.resume
 
 // https://github.com/android/storage-samples/blob/main/ScopedStorage/app/src/main/java/com/samples/storage/scopedstorage/common/MediaStoreUtils.kt
 
 const val PHOTOS_DIR_PATH_FORMAT = "Pictures/ESP_Monitoring/%d"
 const val PHOTO_MIME_TYPE = "image/jpg"
+
+const val TIMELAPSES_DIR_PATH_FORMAT = "Movies/ESP_Monitoring/%d"
+const val TIMELAPSE_MIME_TYPE = "video/mp4"
 
 
 fun checkIfPhotoExists(context: Context, photo: Photo): Boolean {
@@ -60,10 +64,26 @@ suspend fun createPhotoUri(context: Context, photo: Photo): Uri? {
         val content = ContentValues().apply {
             put(MediaStore.Images.Media.DISPLAY_NAME, photo.fileName)
             put(MediaStore.Images.Media.DATE_TAKEN, photo.dateTime.toEpochMillis())
-            put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+            put(MediaStore.Images.Media.MIME_TYPE, PHOTO_MIME_TYPE)
             put(MediaStore.Images.Media.RELATIVE_PATH, PHOTOS_DIR_PATH_FORMAT.format(photo.deviceId))
         }
         return@withContext context.contentResolver.insert(imageCollection, content)
+    }
+}
+
+suspend fun createTimelapseUri(context: Context, deviceId: Long): Uri? {
+    val videoCollection = MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+
+    return withContext(Dispatchers.IO) {
+        val content = ContentValues().apply {
+            val now = LocalDateTime.now()
+            now.toPrettyString()
+            put(MediaStore.Images.Media.DISPLAY_NAME, now.toDefaultFormatString())
+            put(MediaStore.Images.Media.DATE_TAKEN, now.toEpochMillis())
+            put(MediaStore.Images.Media.MIME_TYPE, TIMELAPSE_MIME_TYPE)
+            put(MediaStore.Images.Media.RELATIVE_PATH, TIMELAPSES_DIR_PATH_FORMAT.format(deviceId))
+        }
+        return@withContext context.contentResolver.insert(videoCollection, content)
     }
 }
 
