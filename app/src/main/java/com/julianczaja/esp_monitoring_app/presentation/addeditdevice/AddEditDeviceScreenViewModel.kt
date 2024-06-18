@@ -15,8 +15,13 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -46,14 +51,18 @@ class AddEditDeviceScreenViewModel @Inject constructor(
     private val _name = MutableStateFlow("")
     val name = _name.asStateFlow()
 
-    private val _nameError = MutableStateFlow<Int?>(null)
-    val nameError = _nameError.asStateFlow()
-
     private val _id = MutableStateFlow("")
     val id = _id.asStateFlow()
 
-    private val _idError = MutableStateFlow<Int?>(null)
-    val idError = _idError.asStateFlow()
+    val nameError: StateFlow<Int?> = _name
+        .drop(1)
+        .map(::validateName)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    val idError: StateFlow<Int?> = _id
+        .drop(1)
+        .map(::validateId)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     val isIdEnabled = mode == Mode.Add
 
@@ -67,28 +76,10 @@ class AddEditDeviceScreenViewModel @Inject constructor(
 
     fun updateName(newVal: String) {
         _name.update { newVal }
-
-        if (newVal.isEmpty()) {
-            _nameError.update { R.string.add_device_error_wrong_name }
-        } else if (newVal.length > DEVICE_NAME_MAX_LENGTH) {
-            _nameError.update { R.string.add_device_error_name_too_long }
-        } else {
-            _nameError.update { null }
-        }
     }
 
     fun updateId(newId: String) {
         _id.update { newId }
-
-        try {
-            if (newId.toLong() < 0) {
-                _idError.update { R.string.add_device_error_below_zero }
-            } else {
-                _idError.update { null }
-            }
-        } catch (e: NumberFormatException) {
-            _idError.update { R.string.add_device_error_wrong_id }
-        }
     }
 
     fun apply() = viewModelScope.launch(ioDispatcher) {
@@ -98,25 +89,28 @@ class AddEditDeviceScreenViewModel @Inject constructor(
         }
     }
 
+    private suspend fun validateId(id: String): Int? {
+        val newId = id.toLongOrNull() ?: return R.string.add_device_error_wrong_id
+
+        return when {
+            newId < 0 -> R.string.add_device_error_below_zero
+            deviceRepository.doesDeviceWithGivenIdAlreadyExist(newId) -> R.string.add_device_error_id_exists
+            else -> null
+        }
+    }
+
+    private suspend fun validateName(name: String) = when {
+        name.isEmpty() -> R.string.add_device_error_wrong_name
+        name.length > DEVICE_NAME_MAX_LENGTH -> R.string.add_device_error_name_too_long
+        name == localDevice?.name -> null
+        deviceRepository.doesDeviceWithGivenNameAlreadyExist(name) -> R.string.add_device_error_name_exists
+        else -> null
+    }
+
     private suspend fun addDevice() {
-        if (nameError.value != null || idError.value != null) return // should never happen coz btn is locked when err
+        if (nameError.value != null || idError.value != null) return
 
-        val deviceId = id.value.toLong()
-        var isError = false
-
-        if (deviceRepository.doesDeviceWithGivenIdAlreadyExist(deviceId)) {
-            _idError.update { R.string.add_device_error_id_exists }
-            isError = true
-        }
-
-        if (deviceRepository.doesDeviceWithGivenNameAlreadyExist(name.value)) {
-            _nameError.update { R.string.add_device_error_name_exists }
-            isError = true
-        }
-
-        if (isError) return
-
-        deviceRepository.addNew(Device(deviceId, name.value))
+        deviceRepository.addNew(Device(id.value.toLong(), name.value))
             .onFailure {
                 Timber.e(it)
                 eventFlow.emit(Event.ShowError(R.string.cant_add_device))
@@ -125,21 +119,26 @@ class AddEditDeviceScreenViewModel @Inject constructor(
     }
 
     private suspend fun updateDevice() {
-        if (nameError.value != null || idError.value != null) return // should never happen coz btn is locked when err
+        if (nameError.value != null || idError.value != null) return
 
-        if (name.value == localDevice?.name || deviceRepository.doesDeviceWithGivenNameAlreadyExist(name.value)) {
-            _nameError.update { R.string.add_device_error_name_exists }
+        val updatedDevice = localDevice?.copy(name = _name.value)
+
+        if (updatedDevice == null) {
+            eventFlow.emit(Event.ShowError(R.string.cant_update_device))
             return
         }
 
-        localDevice?.copy(name = _name.value)?.let { device ->
-            deviceRepository.update(device)
-                .onFailure {
-                    Timber.e(it)
-                    eventFlow.emit(Event.ShowError(R.string.cant_update_device))
-                }
-                .onSuccess { eventFlow.emit(Event.DeviceUpdated) }
+        if (localDevice == updatedDevice) {
+            eventFlow.emit(Event.DeviceUpdated)
+            return
         }
+
+        deviceRepository.update(updatedDevice)
+            .onFailure {
+                Timber.e(it)
+                eventFlow.emit(Event.ShowError(R.string.cant_update_device))
+            }
+            .onSuccess { eventFlow.emit(Event.DeviceUpdated) }
     }
 
     enum class Mode { Edit, Add }

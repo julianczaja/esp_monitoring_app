@@ -3,12 +3,12 @@ package com.julianczaja.esp_monitoring_app.presentation.addeditdevice
 import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
+import com.julianczaja.esp_monitoring_app.MainDispatcherRule
 import com.julianczaja.esp_monitoring_app.data.repository.FakeDeviceRepositoryImpl
 import com.julianczaja.esp_monitoring_app.domain.model.Device
 import com.julianczaja.esp_monitoring_app.domain.repository.DeviceRepository
 import com.julianczaja.esp_monitoring_app.navigation.DeviceIdArgs
 import com.julianczaja.esp_monitoring_app.presentation.addeditdevice.AddEditDeviceScreenViewModel.Event
-import com.julianczaja.esp_monitoring_app.MainDispatcherRule
 import io.mockk.coVerify
 import io.mockk.spyk
 import kotlinx.coroutines.test.runTest
@@ -33,36 +33,30 @@ class AddEditDeviceScreenViewModelTest {
     //region Adding new device
     @Test
     fun `add device when duplicate id exists gives idError`() = runTest {
-        val deviceRepository = spyk(FakeDeviceRepositoryImpl())
+        val deviceRepository = spyk(FakeDeviceRepositoryImpl()).apply {
+            addNew(Device(1L, "name"))
+        }
         val viewModel = getViewModel(deviceRepository = deviceRepository)
-
-        deviceRepository.addNew(Device(1L, "name"))
 
         viewModel.idError.test {
             assertThat(awaitItem()).isNull()
             viewModel.updateId("1")
-            viewModel.updateName("different name")
-            viewModel.apply()
             assertThat(awaitItem()).isNotNull()
         }
-        coVerify(exactly = 0) { deviceRepository.addNew(Device(1L, "different name")) }
     }
 
     @Test
     fun `add device when duplicate name exists gives nameError`() = runTest {
-        val deviceRepository = spyk(FakeDeviceRepositoryImpl())
+        val deviceRepository = spyk(FakeDeviceRepositoryImpl()).apply {
+            addNew(Device(1L, "name"))
+        }
         val viewModel = getViewModel(deviceRepository = deviceRepository)
-
-        deviceRepository.addNew(Device(1L, "name"))
 
         viewModel.nameError.test {
             assertThat(awaitItem()).isNull()
-            viewModel.updateId("2")
             viewModel.updateName("name")
-            viewModel.apply()
             assertThat(awaitItem()).isNotNull()
         }
-        coVerify(exactly = 0) { deviceRepository.addNew(Device(2L, "name")) }
     }
 
     @Test
@@ -71,9 +65,9 @@ class AddEditDeviceScreenViewModelTest {
         val viewModel = getViewModel(deviceRepository = deviceRepository)
 
         viewModel.nameError.test {
-            assertThat(awaitItem()).isNull()
-            viewModel.updateId("1")
             viewModel.updateName("name")
+            viewModel.updateId("1")
+            assertThat(awaitItem()).isNull()
             viewModel.apply()
             expectNoEvents()
         }
@@ -83,58 +77,63 @@ class AddEditDeviceScreenViewModelTest {
 
     //region Updating device
     @Test
-    fun `update device when name is the same as before gives nameError`() = runTest {
-        val deviceId = 1L
-        val deviceInDatabase = Device(deviceId, "name")
-        val savedStateHandle = SavedStateHandle().apply { set(DeviceIdArgs.KEY, deviceId) }
-        val deviceRepository = spyk(FakeDeviceRepositoryImpl())
-        val viewModel = getViewModel(savedStateHandle, deviceRepository)
-
-        deviceRepository.addNew(deviceInDatabase)
+    fun `update device with unchanged name does not return nameError or update the database`() = runTest {
+        val deviceInDatabase = Device(1L, "name")
+        val deviceRepository = spyk(FakeDeviceRepositoryImpl()).apply {
+            addNew(deviceInDatabase)
+        }
+        val viewModel = getViewModel(
+            savedStateHandle = SavedStateHandle(mapOf(DeviceIdArgs.KEY to deviceInDatabase.id)),
+            deviceRepository = deviceRepository
+        )
 
         viewModel.nameError.test {
+            viewModel.updateName("different name")
             assertThat(awaitItem()).isNull()
-            viewModel.updateName("name")
+            viewModel.updateName(deviceInDatabase.name)
+            expectNoEvents()
             viewModel.apply()
-            assertThat(awaitItem()).isNotNull()
         }
-        coVerify(exactly = 0) { deviceRepository.update(Device(deviceId, "name")) }
+        coVerify(exactly = 0) { deviceRepository.update(any()) }
     }
 
     @Test
     fun `update device when duplicate name exists gives nameError`() = runTest {
-        val deviceId = 1L
-        val duplicateName = "name"
-        val deviceInDatabase = Device(2L, duplicateName)
-        val savedStateHandle = SavedStateHandle().apply { set(DeviceIdArgs.KEY, deviceId) }
-        val deviceRepository = spyk(FakeDeviceRepositoryImpl())
-        val viewModel = getViewModel(savedStateHandle, deviceRepository)
-
-        deviceRepository.addNew(deviceInDatabase)
+        val deviceInDatabase1 = Device(1L, "name1")
+        val deviceInDatabase2 = Device(2L, "name2")
+        val deviceRepository = spyk(FakeDeviceRepositoryImpl()).apply {
+            addNew(deviceInDatabase1)
+            addNew(deviceInDatabase2)
+        }
+        val viewModel = getViewModel(
+            savedStateHandle = SavedStateHandle(mapOf(DeviceIdArgs.KEY to deviceInDatabase1.id)),
+            deviceRepository = deviceRepository
+        )
 
         viewModel.nameError.test {
             assertThat(awaitItem()).isNull()
-            viewModel.updateName(duplicateName)
-            viewModel.apply()
+            viewModel.updateName(deviceInDatabase2.name)
             assertThat(awaitItem()).isNotNull()
         }
-        coVerify(exactly = 0) { deviceRepository.update(Device(deviceId, duplicateName)) }
     }
 
     @Test
     fun `update device with unique name success`() = runTest {
         val deviceId = 1L
         val deviceInDatabase = Device(deviceId, "name")
-        val savedStateHandle = SavedStateHandle().apply { set(DeviceIdArgs.KEY, deviceId) }
-        val deviceRepository = spyk(FakeDeviceRepositoryImpl().apply { addNew(deviceInDatabase) })
-        val viewModel = getViewModel(savedStateHandle, deviceRepository)
+        val deviceRepository = spyk(FakeDeviceRepositoryImpl()).apply {
+            addNew(deviceInDatabase)
+        }
+        val viewModel = getViewModel(
+            savedStateHandle = SavedStateHandle(mapOf(DeviceIdArgs.KEY to deviceInDatabase.id)),
+            deviceRepository = deviceRepository
+        )
 
         viewModel.nameError.test {
             assertThat(awaitItem()).isNull()
-            viewModel.updateId("1")
             viewModel.updateName("new name")
-            viewModel.apply()
             expectNoEvents()
+            viewModel.apply()
         }
         coVerify(exactly = 1) { deviceRepository.update(Device(deviceId, "new name")) }
     }
@@ -155,10 +154,9 @@ class AddEditDeviceScreenViewModelTest {
     }
 
     @Test
-    fun `DeviceUpdated event is emitted when device is added`() = runTest {
-        val deviceId = 1L
-        val deviceInDatabase = Device(deviceId, "name")
-        val savedStateHandle = SavedStateHandle().apply { set(DeviceIdArgs.KEY, deviceId) }
+    fun `DeviceUpdated event is emitted when device is updated`() = runTest {
+        val deviceInDatabase = Device(1L, "name")
+        val savedStateHandle = SavedStateHandle().apply { set(DeviceIdArgs.KEY, deviceInDatabase.id) }
         val deviceRepository = FakeDeviceRepositoryImpl().apply { addNew(deviceInDatabase) }
         val viewModel = getViewModel(savedStateHandle, deviceRepository)
 
@@ -172,10 +170,8 @@ class AddEditDeviceScreenViewModelTest {
 
     @Test
     fun `ShowError event is emitted when exception thrown during adding device`() = runTest {
-        val deviceRepository = FakeDeviceRepositoryImpl()
+        val deviceRepository = FakeDeviceRepositoryImpl().apply { addNewDeviceThrowsError = true }
         val viewModel = getViewModel(deviceRepository = deviceRepository)
-
-        deviceRepository.addNewDeviceThrowsError = true
 
         viewModel.eventFlow.test {
             viewModel.updateId("1")
@@ -188,9 +184,8 @@ class AddEditDeviceScreenViewModelTest {
 
     @Test
     fun `ShowError event is emitted when exception thrown during updating device`() = runTest {
-        val deviceId = 1L
-        val deviceInDatabase = Device(deviceId, "name")
-        val savedStateHandle = SavedStateHandle().apply { set(DeviceIdArgs.KEY, deviceId) }
+        val deviceInDatabase = Device(1L, "name")
+        val savedStateHandle = SavedStateHandle().apply { set(DeviceIdArgs.KEY, deviceInDatabase.id) }
         val deviceRepository = FakeDeviceRepositoryImpl().apply {
             addNew(deviceInDatabase)
             updateDeviceThrowsError = true
@@ -252,10 +247,11 @@ class AddEditDeviceScreenViewModelTest {
     }
 
     @Test
-    fun `when name is empty nameError contains null`() = runTest {
+    fun `when name is empty nameError contains error`() = runTest {
         val viewModel = getViewModel()
 
         viewModel.nameError.test {
+            viewModel.updateName("valid name")
             assertThat(awaitItem()).isNull()
             viewModel.updateName("")
             assertThat(awaitItem()).isNotNull()

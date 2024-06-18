@@ -59,12 +59,6 @@ fun AddEditDeviceScreen(
         }
     }
 
-    val titleId = rememberSaveable {
-        when (viewModel.mode) {
-            Mode.Edit -> R.string.edit_device_label
-            Mode.Add -> R.string.add_new_device_label
-        }
-    }
     val applyButtonLabelId = rememberSaveable {
         when (viewModel.mode) {
             Mode.Edit -> R.string.update_label
@@ -91,7 +85,7 @@ fun AddEditDeviceScreen(
     }
 
     AddEditDeviceScreenContent(
-        titleId = titleId,
+        modifier = Modifier.fillMaxSize(),
         applyButtonLabelId = applyButtonLabelId,
         id = id,
         idError = idError,
@@ -106,7 +100,7 @@ fun AddEditDeviceScreen(
 
 @Composable
 fun AddEditDeviceScreenContent(
-    titleId: Int,
+    modifier: Modifier = Modifier,
     applyButtonLabelId: Int,
     id: String,
     idError: Int?,
@@ -118,12 +112,11 @@ fun AddEditDeviceScreenContent(
     apply: () -> Unit,
 ) {
     Column(
-        verticalArrangement = Arrangement.SpaceBetween,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .fillMaxSize()
+        modifier = modifier
             .padding(MaterialTheme.spacing.large)
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.SpaceBetween,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -131,6 +124,9 @@ fun AddEditDeviceScreenContent(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             OutlinedTextField(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = MaterialTheme.spacing.veryLarge),
                 value = name,
                 label = { Text(stringResource(R.string.device_name_label)) },
                 onValueChange = updateName,
@@ -144,10 +140,12 @@ fun AddEditDeviceScreenContent(
                         )
                     }
                 },
-                singleLine = true,
-                modifier = Modifier.padding(top = MaterialTheme.spacing.veryLarge)
+                singleLine = true
             )
             OutlinedTextField(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = MaterialTheme.spacing.medium),
                 value = id,
                 enabled = isIdEnabled,
                 label = { Text(stringResource(R.string.device_id_label)) },
@@ -163,8 +161,7 @@ fun AddEditDeviceScreenContent(
                     }
                 },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                singleLine = true,
-                modifier = Modifier.padding(top = MaterialTheme.spacing.medium)
+                singleLine = true
             )
         }
         Button(
@@ -172,17 +169,17 @@ fun AddEditDeviceScreenContent(
             enabled = (idError == null) && (nameError == null) && id.isNotEmpty() && name.isNotEmpty(),
             modifier = Modifier.fillMaxWidth(0.5f)
         ) {
-            Text(text = stringResource(id = applyButtonLabelId), style = MaterialTheme.typography.labelLarge)
+            Text(text = stringResource(id = applyButtonLabelId))
         }
     }
 }
 
+//region Preview
 @PreviewLightDark
 @Composable
 private fun AddEditDeviceScreenContentPreview() {
     AppBackground {
         AddEditDeviceScreenContent(
-            titleId = R.string.add_new_device_label,
             applyButtonLabelId = R.string.add_label,
             id = "12",
             idError = null,
@@ -201,7 +198,6 @@ private fun AddEditDeviceScreenContentPreview() {
 private fun AddEditDeviceScreenContentWithErrorsPreview() {
     AppBackground {
         AddEditDeviceScreenContent(
-            titleId = R.string.add_new_device_label,
             applyButtonLabelId = R.string.update_label,
             id = "12",
             idError = R.string.add_device_error_id_exists,
@@ -214,3 +210,4 @@ private fun AddEditDeviceScreenContentWithErrorsPreview() {
         )
     }
 }
+//endregion
