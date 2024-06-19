@@ -7,14 +7,24 @@ import android.view.View
 import android.view.animation.AnticipateInterpolator
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import androidx.core.animation.doOnEnd
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.julianczaja.esp_monitoring_app.common.Constants
 import com.julianczaja.esp_monitoring_app.components.AppBackground
+import com.julianczaja.esp_monitoring_app.domain.repository.AppSettingsRepository
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @Inject
+    lateinit var appSettingsRepository: AppSettingsRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         setupSplashScreen()
@@ -23,7 +33,14 @@ class MainActivity : ComponentActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
         setContent {
-            AppBackground {
+
+            val dynamicColor by appSettingsRepository.getDynamicColor()
+                .collectAsStateWithLifecycle(Constants.DEFAULT_IS_DYNAMIC_COLOR)
+
+            AppBackground(
+                modifier = Modifier.fillMaxSize(),
+                dynamicColor = dynamicColor
+            ) {
                 AppContent()
             }
         }

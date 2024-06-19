@@ -81,6 +81,10 @@ class AppSettingsScreenViewModel @Inject constructor(
         setBaseUrl(Constants.defaultBaseUrl)
     }
 
+    fun setDynamicColor(dynamicColor: Boolean) = viewModelScope.launch(ioDispatcher) {
+        appSettingsRepository.setDynamicColor(dynamicColor)
+    }
+
     sealed class Event {
         data object BaseUrlSaved : Event()
     }

@@ -13,5 +13,7 @@ object Constants {
 
     const val DEFAULT_DEVICE_NAME = "ESP Monitoring device"
 
+    const val DEFAULT_IS_DYNAMIC_COLOR = false
+
     const val SCAN_DURATION_MILLIS = 5000L
 }

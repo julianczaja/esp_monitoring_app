@@ -1,5 +1,6 @@
 package com.julianczaja.esp_monitoring_app.presentation.appsettings
 
+import android.os.Build
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -18,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -30,6 +33,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.components.AppBackground
 import com.julianczaja.esp_monitoring_app.components.DefaultProgressIndicator
+import com.julianczaja.esp_monitoring_app.components.SwitchWithLabel
 import com.julianczaja.esp_monitoring_app.domain.model.AppSettings
 import com.julianczaja.esp_monitoring_app.presentation.appsettings.AppSettingsScreenViewModel.UiState
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
@@ -61,6 +65,7 @@ fun AppSettingsScreen(
         onBaseUrlUpdate = viewModel::setBaseUrl,
         onBaseUrlApply = viewModel::applyBaseUrl,
         onBaseUrlRestoreDefault = viewModel::onBaseUrlRestoreDefault,
+        onDynamicColorChanged = viewModel::setDynamicColor
     )
 }
 
@@ -71,6 +76,7 @@ private fun AppSettingsScreenContent(
     onBaseUrlUpdate: (String) -> Unit,
     onBaseUrlApply: () -> Unit,
     onBaseUrlRestoreDefault: () -> Unit,
+    onDynamicColorChanged: (Boolean) -> Unit,
 ) {
     when (uiState) {
         UiState.Loading -> LoadingScreen(modifier)
@@ -79,7 +85,8 @@ private fun AppSettingsScreenContent(
             uiState = uiState,
             onBaseUrlUpdate = onBaseUrlUpdate,
             onBaseUrlApply = onBaseUrlApply,
-            onBaseUrlRestoreDefault = onBaseUrlRestoreDefault
+            onBaseUrlRestoreDefault = onBaseUrlRestoreDefault,
+            onDynamicColorChanged = onDynamicColorChanged
         )
     }
 }
@@ -98,8 +105,10 @@ private fun SuccessScreen(
     onBaseUrlUpdate: (String) -> Unit,
     onBaseUrlApply: () -> Unit,
     onBaseUrlRestoreDefault: () -> Unit,
+    onDynamicColorChanged: (Boolean) -> Unit,
 ) {
     val focusManager = LocalFocusManager.current
+    val shouldShowDynamicColorSettings = remember { Build.VERSION.SDK_INT >= 31 }
 
     Column(
         modifier = modifier.padding(MaterialTheme.spacing.large),
@@ -142,6 +151,18 @@ private fun SuccessScreen(
                 Text(text = stringResource(id = R.string.update_label))
             }
         }
+
+        HorizontalDivider(Modifier.padding(vertical = MaterialTheme.spacing.large))
+
+        if (shouldShowDynamicColorSettings) {
+            SwitchWithLabel(
+                modifier = Modifier.fillMaxWidth(),
+                label = stringResource(R.string.dynamic_color_label),
+                isChecked = uiState.appSettings.isDynamicColor,
+                onCheckedChange = onDynamicColorChanged,
+                enabled = true
+            )
+        }
     }
 }
 
@@ -160,13 +181,14 @@ private fun SuccessScreenNoBaseUrlErrorPreview() {
     AppBackground {
         SuccessScreen(
             uiState = UiState.Success(
-                AppSettings("goodBaseUrl", false),
+                AppSettings("goodBaseUrl", false, false),
                 baseUrlFieldValue = "goodBaseUrl",
                 baseUrlFieldError = null
             ),
             onBaseUrlUpdate = {},
             onBaseUrlApply = {},
-            onBaseUrlRestoreDefault = {}
+            onBaseUrlRestoreDefault = {},
+            onDynamicColorChanged = {}
         )
     }
 }
@@ -177,13 +199,14 @@ private fun SuccessScreenBaseUrlErrorPreview() {
     AppBackground {
         SuccessScreen(
             uiState = UiState.Success(
-                AppSettings("badBaseUrl", false),
+                AppSettings("badBaseUrl", false, true),
                 baseUrlFieldValue = "badBaseUrl",
                 baseUrlFieldError = R.string.base_url_invalid
             ),
             onBaseUrlUpdate = {},
             onBaseUrlApply = {},
-            onBaseUrlRestoreDefault = {}
+            onBaseUrlRestoreDefault = {},
+            onDynamicColorChanged = {}
         )
     }
 }
