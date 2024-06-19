@@ -35,19 +35,18 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
+import java.time.Duration
 import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
 
-    @OptIn(ExperimentalSerializationApi::class)
     @Provides
     @Singleton
     fun provideJson(): Json = Json {
@@ -69,6 +68,8 @@ object AppModule {
                     if (BuildConfig.DEBUG)
                         addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
                 }
+                .connectTimeout(Duration.ofSeconds(Constants.CONNECT_TIMEOUT_SECONDS))
+                .readTimeout(Duration.ofSeconds(Constants.READ_TIMEOUT_SECONDS))
                 .build()
         )
         .addCallAdapterFactory(ResultCallAdapterFactory())
