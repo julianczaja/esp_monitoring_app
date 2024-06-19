@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyGridItemScope
@@ -179,6 +180,7 @@ private fun BoxScope.ScrollToTopButton(
     AnimatedVisibility(
         modifier = Modifier
             .align(Alignment.BottomCenter)
+            .safeDrawingPadding()
             .padding(MaterialTheme.spacing.large),
         visible = isVisible,
         enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),

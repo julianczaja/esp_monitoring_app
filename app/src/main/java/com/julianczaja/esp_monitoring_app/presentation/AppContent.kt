@@ -2,20 +2,15 @@ package com.julianczaja.esp_monitoring_app.presentation
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.consumeWindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -32,7 +27,7 @@ fun AppContent(modifier: Modifier = Modifier) {
 
     val appState = rememberEspMonitoringAppState(rememberNavController())
     val snackbarHostState = remember { SnackbarHostState() }
-    var appBarTitleId by remember { mutableStateOf(R.string.app_name) }
+    var appBarTitleId by remember { mutableIntStateOf(R.string.app_name) }
 
     Scaffold(
         modifier = modifier,
@@ -48,11 +43,7 @@ fun AppContent(modifier: Modifier = Modifier) {
             )
         }
     ) { paddingValues ->
-        Box(
-            modifier = modifier
-                .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
-        ) {
+        Box(modifier) {
             EspMonitoringNavHost(
                 onSetAppBarTitle = { appBarTitleId = it },
                 navController = appState.navController,
