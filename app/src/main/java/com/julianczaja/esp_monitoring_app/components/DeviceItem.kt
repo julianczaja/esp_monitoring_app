@@ -17,6 +17,7 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -150,7 +151,7 @@ private fun BoxScope.MoreMenuButton(
     ) {
         IconButton(
             modifier = Modifier
-                .menuAnchor()
+                .menuAnchor(MenuAnchorType.PrimaryEditable)
                 .run {
                     if (addIconBackground) {
                         val brush = Brush.radialGradient(0.3f to Color.Black, 0.7f to Color.Transparent)

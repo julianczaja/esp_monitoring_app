@@ -6,7 +6,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -20,7 +19,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -33,7 +32,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -174,36 +172,25 @@ private fun DevicePhotosScreenContent(
     onFilterDateClicked: (SelectableLocalDate) -> Unit,
     onSelectDeselectAllClick: (LocalDate) -> Unit,
 ) {
-    val pullRefreshState = rememberPullToRefreshState(enabled = { uiState.isOnline })
+    val pullRefreshState = rememberPullToRefreshState()
 
-    if (pullRefreshState.isRefreshing) {
-        LaunchedEffect(true) {
-            updatePhotos()
-        }
-    }
-    if (!uiState.isLoading) {
-        LaunchedEffect(true) {
-            pullRefreshState.endRefresh()
-        }
-    }
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .nestedScroll(pullRefreshState.nestedScrollConnection)
+    Column(
+        modifier = Modifier.fillMaxSize()
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize()
+        StateBar(isVisible = !uiState.isOnline, title = R.string.you_are_offline)
+        SelectedEditBar(
+            isSelectionMode = uiState.isSelectionMode,
+            selectedCount = uiState.selectedCount,
+            removeSelectedPhotos = removeSelectedPhotos,
+            saveSelectedPhotos = saveSelectedPhotos,
+            resetSelections = resetSelections
+        )
+        PullToRefreshBox(
+            modifier = Modifier.fillMaxSize(),
+            state = pullRefreshState,
+            isRefreshing = uiState.isLoading,
+            onRefresh = updatePhotos
         ) {
-            StateBar(isVisible = !uiState.isOnline, title = R.string.you_are_offline)
-            SelectedEditBar(
-                isSelectionMode = uiState.isSelectionMode,
-                selectedCount = uiState.selectedCount,
-                removeSelectedPhotos = removeSelectedPhotos,
-                saveSelectedPhotos = saveSelectedPhotos,
-                resetSelections = resetSelections
-            )
-
             when (uiState.dateGroupedSelectablePhotos.isEmpty()) {
                 true -> DevicePhotosEmptyScreen(uiState.isRefreshed)
                 false -> DevicePhotosNotEmptyScreen(
@@ -216,10 +203,6 @@ private fun DevicePhotosScreenContent(
                 )
             }
         }
-        PullToRefreshContainer(
-            modifier = Modifier.align(Alignment.TopCenter),
-            state = pullRefreshState,
-        )
     }
 }
 

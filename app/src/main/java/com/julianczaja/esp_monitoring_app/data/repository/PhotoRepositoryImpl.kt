@@ -91,7 +91,7 @@ class PhotoRepositoryImpl @Inject constructor(
             }
             scanPhotoUri(context, photoUri)
         } catch (e: IOException) {
-            e.printStackTrace()
+            Timber.e(e)
             return Result.failure(e)
         }
 

@@ -9,7 +9,7 @@ enum class DevicePage(
     @StringRes val titleId: Int,
     @DrawableRes val drawableId: Int,
 ) {
-    Photos(0, R.string.photos_tab_label, R.drawable.ic_baseline_photo_24),
-    Saved(1, R.string.saved_tab_label, R.drawable.ic_baseline_bookmarks_24),
+    Photos(0, R.string.photos_tab_label, R.drawable.ic_photo_24),
+    Saved(1, R.string.saved_tab_label, R.drawable.ic_save_24),
     Info(2, R.string.info_tab_label, R.drawable.ic_info_24)
 }

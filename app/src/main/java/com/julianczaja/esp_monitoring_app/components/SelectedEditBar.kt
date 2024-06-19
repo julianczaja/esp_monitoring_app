@@ -10,9 +10,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -25,6 +22,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 
@@ -38,8 +36,9 @@ fun SelectedEditBar(
     resetSelections: () -> Unit
 ) {
     AnimatedVisibility(
+        modifier = Modifier.zIndex(0f),
         visible = isSelectionMode,
-        enter = slideInVertically(initialOffsetY = { -it / 2 }),
+        enter = slideInVertically(initialOffsetY = { -it/2 }),
         exit = slideOutVertically(targetOffsetY = { -it })
     ) {
         Column {
@@ -53,26 +52,25 @@ fun SelectedEditBar(
             ) {
                 Text(text = stringResource(R.string.selected_photos_count_format, selectedCount))
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small, Alignment.End),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     IconButton(onClick = removeSelectedPhotos) {
                         Icon(
-                            imageVector = Icons.Default.Delete,
+                            painter = painterResource(id = R.drawable.ic_delete),
                             contentDescription = null
                         )
                     }
                     saveSelectedPhotos?.let { action ->
                         IconButton(onClick = action) {
                             Icon(
-                                painter = painterResource(id = R.drawable.ic_baseline_save_24),
+                                painter = painterResource(id = R.drawable.ic_save_24),
                                 contentDescription = null
                             )
                         }
                     }
                     IconButton(onClick = resetSelections) {
                         Icon(
-                            imageVector = Icons.Default.Clear,
+                            painter = painterResource(id = R.drawable.ic_x),
                             contentDescription = null
                         )
                     }

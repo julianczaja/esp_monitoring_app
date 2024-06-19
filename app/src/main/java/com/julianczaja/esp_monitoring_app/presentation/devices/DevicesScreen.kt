@@ -137,7 +137,7 @@ fun DevicesScreenSuccessContent(
             item {
                 CardButton(
                     labelId = R.string.add_new_device_label,
-                    iconId = R.drawable.ic_baseline_add_24,
+                    iconId = R.drawable.ic_add_24,
                     onClicked = onAddDeviceClicked
                 )
             }
@@ -151,7 +151,7 @@ fun DevicesScreenSuccessContent(
             item {
                 CardButton(
                     labelId = R.string.open_settings_label,
-                    iconId = R.drawable.ic_baseline_settings_24,
+                    iconId = R.drawable.ic_settings_24,
                     onClicked = onAppSettingsClicked
                 )
             }
