@@ -248,7 +248,31 @@ class DeviceSettingsScreenViewModel @Inject constructor(
             Timber.e("updateDeviceWifiCredentials error: $e")
             eventFlow.emit(Event.ShowError(e.getErrorMessageId()))
         }
+    }
 
+    fun updateDeviceServerUrl(serverUrl: String) = viewModelScope.launch(ioDispatcher) {
+        val device = _monitoringDevice
+
+        if (device == null) {
+            Timber.e("updateDeviceServerUrl error: `_monitoringDevice` is null")
+            return@launch
+        }
+
+        if (device.deviceSettings.value.serverUrl == serverUrl) {
+            Timber.e("updateDeviceServerUrl: url the same")
+            return@launch
+        }
+
+        try {
+            device.updateServerUrl(serverUrl)
+        } catch (e: GattStatusException) {
+            Timber.e("updateDeviceServerUrl error: $e")
+            device.disconnect()
+            eventFlow.emit(Event.ShowError(e.getErrorMessageId()))
+        } catch (e: Exception) {
+            Timber.e("updateDeviceServerUrl error: $e")
+            eventFlow.emit(Event.ShowError(e.getErrorMessageId()))
+        }
     }
 
     @Immutable

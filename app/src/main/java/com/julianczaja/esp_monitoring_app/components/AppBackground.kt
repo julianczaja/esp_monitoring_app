@@ -10,9 +10,12 @@ import com.julianczaja.esp_monitoring_app.presentation.theme.AppTheme
 @Composable
 fun AppBackground(
     modifier: Modifier = Modifier,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit,
 ) {
-    AppTheme {
+    AppTheme(
+        dynamicColor = dynamicColor
+    ) {
         Surface(
             color = MaterialTheme.colorScheme.background,
             modifier = modifier,

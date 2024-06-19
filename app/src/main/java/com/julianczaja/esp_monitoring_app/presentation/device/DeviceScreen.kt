@@ -70,7 +70,7 @@ fun DeviceScreen(
                     )
                 }
             },
-            modifier = Modifier.zIndex(1f) // to hide PullRefreshIndicator under TabRow
+            modifier = Modifier.zIndex(1f)
         )
         HorizontalPager(
             state = pagerState,

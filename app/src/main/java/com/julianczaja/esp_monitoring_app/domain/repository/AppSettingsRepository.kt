@@ -14,4 +14,8 @@ interface AppSettingsRepository {
     fun getBaseUrl(): Flow<String>
 
     suspend fun setBaseUrl(baseUrl: String)
+
+    fun getDynamicColor(): Flow<Boolean>
+
+    suspend fun setDynamicColor(isEnabled: Boolean)
 }

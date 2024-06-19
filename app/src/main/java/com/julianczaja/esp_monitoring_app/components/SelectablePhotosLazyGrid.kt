@@ -1,6 +1,8 @@
 package com.julianczaja.esp_monitoring_app.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -15,6 +17,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyGridItemScope
@@ -177,10 +180,11 @@ private fun BoxScope.ScrollToTopButton(
     AnimatedVisibility(
         modifier = Modifier
             .align(Alignment.BottomCenter)
+            .safeDrawingPadding()
             .padding(MaterialTheme.spacing.large),
         visible = isVisible,
-        enter = slideInVertically(initialOffsetY = { it }),
-        exit = slideOutVertically(targetOffsetY = { it * 2 })
+        enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+        exit = slideOutVertically(targetOffsetY = { it * 2 }) + fadeOut()
     ) {
         val progressColor = MaterialTheme.colorScheme.onPrimaryContainer
 

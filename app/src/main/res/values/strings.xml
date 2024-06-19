@@ -28,6 +28,7 @@
     <string name="cancel_label">Cancel</string>
     <string name="cant_add_device">Error - can\'t add device.</string>
     <string name="cant_update_device">Error - can\'t update device.</string>
+    <string name="clear_photos_cache_label">Clear photos cache</string>
     <string name="connectable_label">Connectable</string>
     <string name="device_configuration_label">Configure device</string>
     <string name="device_id_label">ID</string>
@@ -59,7 +60,7 @@
     <string name="device_settings_white_balance_mode_label">White balance mode</string>
     <string name="devices_screen_title">Esp monitoring</string>
     <string name="disconnect_label">Disconnect</string>
-    <string name="edit_device_label">Edit device</string>
+    <string name="dynamic_color_label">Dynamic color</string>
     <string name="edit_device_screen_title">Edit device</string>
     <string name="edit_label">Edit</string>
     <string name="enable_label">Enable</string>
@@ -101,6 +102,7 @@
     <string name="saved_tab_label">Saved</string>
     <string name="seconds_format">%.1f s</string>
     <string name="selected_photos_count_format">Selected: %1$d</string>
+    <string name="server_info_label">Server info</string>
     <string name="special_effect_blue_tint">Blue Tint</string>
     <string name="special_effect_grayscale">Grayscale</string>
     <string name="special_effect_green_tint">Green Tint</string>
@@ -130,6 +132,7 @@
     <string name="timelapse_size_label">"Size: "</string>
     <string name="unknown_error_message">Unknown error</string>
     <string name="update_label">Update</string>
+    <string name="url_label">URL</string>
     <string name="white_balance_auto">Auto</string>
     <string name="white_balance_cloudy">Cloudy</string>
     <string name="white_balance_home">Home</string>

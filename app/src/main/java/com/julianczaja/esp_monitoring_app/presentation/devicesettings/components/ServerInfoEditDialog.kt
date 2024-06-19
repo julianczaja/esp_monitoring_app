@@ -5,9 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -18,11 +15,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.components.AppBackground
@@ -30,17 +23,14 @@ import com.julianczaja.esp_monitoring_app.components.DefaultDialog
 import com.julianczaja.esp_monitoring_app.components.DialogTwoButtons
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 
-
 @Composable
-fun WiFiCredentialsEditDialog(
+fun ServerInfoEditDialog(
     modifier: Modifier = Modifier,
-    initialSsid: String = "",
+    initialUrl: String = "",
     onDismiss: () -> Unit,
-    onApply: (String, String) -> Unit
+    onApply: (String) -> Unit
 ) {
-    var ssid by rememberSaveable { mutableStateOf(initialSsid) }
-    var password by rememberSaveable { mutableStateOf("") }
-    var passwordVisible by rememberSaveable { mutableStateOf(false) }
+    var url by rememberSaveable { mutableStateOf(initialUrl) }
 
     DefaultDialog(onDismiss = onDismiss) {
         Column(
@@ -51,40 +41,23 @@ fun WiFiCredentialsEditDialog(
             Text(
                 modifier = Modifier.fillMaxWidth(),
                 style = MaterialTheme.typography.headlineSmall,
-                text = stringResource(R.string.wifi_credentials_label)
+                text = stringResource(R.string.server_info_label)
             )
             Spacer(modifier = Modifier.padding(MaterialTheme.spacing.small))
 
             OutlinedTextField(
                 modifier = Modifier.fillMaxWidth(),
-                value = ssid,
-                onValueChange = { if (it.length < 30) ssid = it },
-                label = { Text(stringResource(R.string.ssid_label)) },
-                singleLine = true,
+                value = url,
+                onValueChange = { if (it.length < 64) url = it },
+                label = { Text(stringResource(R.string.url_label)) },
+                singleLine = false,
+                maxLines = 2
             )
-            OutlinedTextField(
-                modifier = Modifier.fillMaxWidth(),
-                value = password,
-                onValueChange = { if (it.length < 30) password = it },
-                label = { Text(stringResource(R.string.password_label)) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                singleLine = true,
-                trailingIcon = {
-                    val drawableId = when (passwordVisible) {
-                        true -> R.drawable.ic_eye
-                        false -> R.drawable.ic_eye_off
-                    }
 
-                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                        Icon(painter = painterResource(id = drawableId), null)
-                    }
-                }
-            )
             DialogTwoButtons(
                 modifier = Modifier,
                 onFirstButtonClicked = onDismiss,
-                onSecondButtonClicked = { onApply(ssid, password) },
+                onSecondButtonClicked = { onApply(url) },
                 firstButtonLabel = R.string.cancel_label,
                 secondButtonLabel = R.string.update_label
             )
@@ -95,11 +68,11 @@ fun WiFiCredentialsEditDialog(
 //region Preview
 @PreviewLightDark
 @Composable
-private fun WiFiCredentialsEditDialogPreview() {
+private fun ServerInfoEditDialogPreview() {
     AppBackground {
-        WiFiCredentialsEditDialog(
+        ServerInfoEditDialog(
             onDismiss = {},
-            onApply = { ssid, password -> }
+            onApply = { url -> }
         )
     }
 }

@@ -24,12 +24,15 @@ class MonitoringDevice(
 ) : Peripheral by peripheral {
 
     private companion object {
-        const val INFO_SERVICE_UUID = "691ff8e2-b4d3-4c2e-b72f-95b6e5acd64b"
+        const val DEVICE_INFO_SERVICE_UUID = "691ff8e2-b4d3-4c2e-b72f-95b6e5acd64b"
         const val DEVICE_ID_CHARACTERISTIC_UUID = "17a4e7f7-f645-4f67-a618-98037cb4372a"
 
         const val WIFI_CREDENTIALS_SERVICE_UUID = "9717095f-7084-4a9c-a29c-7d030d8a86d2"
         const val WIFI_SSID_CHARACTERISTIC_UUID = "1b5f00db-42f9-4cbd-a6ba-0e19a9192118"
         const val WIFI_PASSWORD_CHARACTERISTIC_UUID = "bf4c3e01-11d0-40b4-9109-51202baebd28"
+
+        const val SERVER_INFO_SERVICE_UUID = "2eb6c3ff-7c3a-4a83-86fb-ac0187067bc3"
+        const val SERVER_URL_CHARACTERISTIC_UUID = "a917d3d5-617b-4291-bb3b-7c63505a0bbe"
 
         const val SETTINGS_SERVICE_UUID = "ecb44d46-93cf-45cc-bd34-b82205e80d7b"
         const val FRAME_SIZE_CHARACTERISTIC_UUID = "2c0980bd-efc9-49e2-8043-ad94bf4bf81e"
@@ -47,10 +50,12 @@ class MonitoringDevice(
         const val WAIT_TIME_MS_AFTER_WRITE = 100L
     }
 
-    private val deviceIdCharacteristic = infoCharacteristicOf(DEVICE_ID_CHARACTERISTIC_UUID)
+    private val deviceIdCharacteristic = deviceInfoCharacteristicOf(DEVICE_ID_CHARACTERISTIC_UUID)
 
     private val wifiSsidCharacteristic = wifiCredentialsCharacteristicOf(WIFI_SSID_CHARACTERISTIC_UUID)
     private val wifiPasswordCharacteristic = wifiCredentialsCharacteristicOf(WIFI_PASSWORD_CHARACTERISTIC_UUID)
+
+    private val serverUrlCharacteristic = serverInfoCharacteristicOf(SERVER_URL_CHARACTERISTIC_UUID)
 
     private val frameSizeCharacteristic = settingsCharacteristicOf(FRAME_SIZE_CHARACTERISTIC_UUID)
     private val photoIntervalCharacteristic = settingsCharacteristicOf(PHOTO_INTERVAL_CHARACTERISTIC_UUID)
@@ -79,11 +84,14 @@ class MonitoringDevice(
         }
     }
 
-    private fun infoCharacteristicOf(characteristic: String): Characteristic =
-        characteristicOf(INFO_SERVICE_UUID, characteristic)
+    private fun deviceInfoCharacteristicOf(characteristic: String): Characteristic =
+        characteristicOf(DEVICE_INFO_SERVICE_UUID, characteristic)
 
     private fun wifiCredentialsCharacteristicOf(characteristic: String): Characteristic =
         characteristicOf(WIFI_CREDENTIALS_SERVICE_UUID, characteristic)
+
+    private fun serverInfoCharacteristicOf(characteristic: String): Characteristic =
+        characteristicOf(SERVER_INFO_SERVICE_UUID, characteristic)
 
     private fun settingsCharacteristicOf(characteristic: String): Characteristic =
         characteristicOf(SETTINGS_SERVICE_UUID, characteristic)
@@ -95,6 +103,7 @@ class MonitoringDevice(
             val timeTaken = measureTime {
                 readDeviceId()
                 readWifiSsid()
+                readServerUrl()
                 readFrameSize()
                 readPhotoInterval()
                 readSpecialEffect()
@@ -141,6 +150,12 @@ class MonitoringDevice(
         _isBusy.update { false }
     }
 
+    suspend fun updateServerUrl(serverUrl: String) {
+        _isBusy.update { true }
+        writeServerUrl(serverUrl)
+        _isBusy.update { false }
+    }
+
     //region read/write
     private suspend fun readDeviceId() {
         val deviceId = readIntCharacteristic(deviceIdCharacteristic).toLong()
@@ -158,6 +173,17 @@ class MonitoringDevice(
         writeStringCharacteristic(wifiPasswordCharacteristic, wifiCredentials.password)
         delay(WAIT_TIME_MS_AFTER_WRITE)
         readWifiSsid()
+    }
+
+    private suspend fun readServerUrl() {
+        val newServerUrl = readStringCharacteristic(serverUrlCharacteristic)
+        _deviceSettings.update { it.copy(serverUrl = newServerUrl) }
+    }
+
+    private suspend fun writeServerUrl(serverUrl: String) {
+        writeStringCharacteristic(serverUrlCharacteristic, serverUrl)
+        delay(WAIT_TIME_MS_AFTER_WRITE)
+        readServerUrl()
     }
 
     private suspend fun readFrameSize() {

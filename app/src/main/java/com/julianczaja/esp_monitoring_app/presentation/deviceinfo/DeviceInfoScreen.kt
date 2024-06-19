@@ -1,7 +1,6 @@
 package com.julianczaja.esp_monitoring_app.presentation.deviceinfo
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,7 +15,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -26,7 +25,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
@@ -80,23 +78,13 @@ private fun DeviceInfoScreenContent(
     uiState: DeviceInfoScreenViewModel.UiState,
     updateDeviceInfo: () -> Unit
 ) {
-    val pullRefreshState = rememberPullToRefreshState(enabled = { uiState.isOnline })
+    val pullRefreshState = rememberPullToRefreshState()
 
-    if (pullRefreshState.isRefreshing) {
-        LaunchedEffect(true) {
-            updateDeviceInfo()
-        }
-    }
-    if (!uiState.isLoading) {
-        LaunchedEffect(true) {
-            pullRefreshState.endRefresh()
-        }
-    }
-
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .nestedScroll(pullRefreshState.nestedScrollConnection)
+    PullToRefreshBox(
+        modifier = modifier.fillMaxSize(),
+        state = pullRefreshState,
+        isRefreshing = uiState.isLoading,
+        onRefresh = updateDeviceInfo
     ) {
         Column(
             modifier = modifier
@@ -112,10 +100,6 @@ private fun DeviceInfoScreenContent(
                 )
             }
         }
-        PullToRefreshContainer(
-            modifier = Modifier.align(Alignment.TopCenter),
-            state = pullRefreshState,
-        )
     }
 }
 

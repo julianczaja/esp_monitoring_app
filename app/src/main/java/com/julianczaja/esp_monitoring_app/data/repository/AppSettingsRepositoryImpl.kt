@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import com.julianczaja.esp_monitoring_app.common.Constants
 import com.julianczaja.esp_monitoring_app.data.local.datastore.AppSettingsDataStoreKeys.BASE_URL_KEY
+import com.julianczaja.esp_monitoring_app.data.local.datastore.AppSettingsDataStoreKeys.DYNAMIC_COLOR_KEY
 import com.julianczaja.esp_monitoring_app.data.local.datastore.AppSettingsDataStoreKeys.FIRST_TIME_USER_KEY
 import com.julianczaja.esp_monitoring_app.domain.model.AppSettings
 import com.julianczaja.esp_monitoring_app.domain.repository.AppSettingsRepository
@@ -20,7 +21,8 @@ class AppSettingsRepositoryImpl @Inject constructor(
         .map { preferences ->
             AppSettings(
                 baseUrl = preferences[BASE_URL_KEY] ?: Constants.defaultBaseUrl,
-                isFirstTimeUser = preferences[FIRST_TIME_USER_KEY] ?: true
+                isFirstTimeUser = preferences[FIRST_TIME_USER_KEY] ?: true,
+                isDynamicColor = preferences[DYNAMIC_COLOR_KEY] ?: Constants.DEFAULT_IS_DYNAMIC_COLOR,
             )
         }
 
@@ -43,6 +45,17 @@ class AppSettingsRepositoryImpl @Inject constructor(
     override suspend fun setBaseUrl(baseUrl: String) {
         dataStore.edit { preferences ->
             preferences[BASE_URL_KEY] = baseUrl
+        }
+    }
+
+    override fun getDynamicColor(): Flow<Boolean> = dataStore.data
+        .map { preferences ->
+            preferences[DYNAMIC_COLOR_KEY] ?: Constants.DEFAULT_IS_DYNAMIC_COLOR
+        }
+
+    override suspend fun setDynamicColor(isEnabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[DYNAMIC_COLOR_KEY] = isEnabled
         }
     }
 }
