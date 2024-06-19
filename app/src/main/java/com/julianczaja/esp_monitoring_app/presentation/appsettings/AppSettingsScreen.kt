@@ -30,6 +30,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.annotation.ExperimentalCoilApi
+import coil.imageLoader
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.components.AppBackground
 import com.julianczaja.esp_monitoring_app.components.DefaultProgressIndicator
@@ -98,6 +100,7 @@ private fun LoadingScreen(modifier: Modifier = Modifier) {
     }
 }
 
+@OptIn(ExperimentalCoilApi::class)
 @Composable
 private fun SuccessScreen(
     modifier: Modifier = Modifier,
@@ -107,6 +110,7 @@ private fun SuccessScreen(
     onBaseUrlRestoreDefault: () -> Unit,
     onDynamicColorChanged: (Boolean) -> Unit,
 ) {
+    val context = LocalContext.current
     val focusManager = LocalFocusManager.current
     val shouldShowDynamicColorSettings = remember { Build.VERSION.SDK_INT >= 31 }
 
@@ -162,6 +166,19 @@ private fun SuccessScreen(
                 onCheckedChange = onDynamicColorChanged,
                 enabled = true
             )
+        }
+
+        HorizontalDivider(Modifier.padding(vertical = MaterialTheme.spacing.large))
+
+        Button(
+            onClick = {
+                context.imageLoader.run {
+                    diskCache?.clear()
+                    memoryCache?.clear()
+                }
+            }
+        ) {
+            Text(text = stringResource(R.string.clear_photos_cache_label))
         }
     }
 }
