@@ -137,6 +137,20 @@ class AddEditDeviceScreenViewModelTest {
         }
         coVerify(exactly = 1) { deviceRepository.update(Device(deviceId, "new name")) }
     }
+
+    @Test
+    fun `id error is null in update mode`() = runTest {
+        val deviceInDatabase = Device(1L, "name")
+        val deviceRepository = spyk(FakeDeviceRepositoryImpl()).apply { addNew(deviceInDatabase) }
+        val viewModel = getViewModel(
+            savedStateHandle = SavedStateHandle(mapOf(DeviceIdArgs.KEY to deviceInDatabase.id)),
+            deviceRepository = deviceRepository
+        )
+
+        viewModel.idError.test {
+            assertThat(awaitItem()).isNull()
+        }
+    }
     //endregion
 
     //region Events flow

@@ -90,6 +90,7 @@ class AddEditDeviceScreenViewModel @Inject constructor(
     }
 
     private suspend fun validateId(id: String): Int? {
+        if (mode == Mode.Edit) return null
         val newId = id.toLongOrNull() ?: return R.string.add_device_error_wrong_id
 
         return when {
