@@ -6,10 +6,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
@@ -81,10 +83,10 @@ fun TimelapseCreatorScreen(
         }
     }
 
-
     TimelapseCreatorScreenContent(
         modifier = Modifier
             .fillMaxSize()
+            .safeDrawingPadding()
             .padding(MaterialTheme.spacing.large),
         uiState = uiState,
         onFrameRateChanged = viewModel::updateFrameRate,
@@ -152,15 +154,15 @@ private fun TimelapseCreatorConfigureScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(text = stringResource(R.string.timelapse_newest_photo_label))
-                Text(text = uiState.newestPhotoDateTime.toPrettyString())
+                Text(text = stringResource(R.string.timelapse_oldest_photo_label))
+                Text(text = uiState.oldestPhotoDateTime.toPrettyString())
             }
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(text = stringResource(R.string.timelapse_oldest_photo_label))
-                Text(text = uiState.oldestPhotoDateTime.toPrettyString())
+                Text(text = stringResource(R.string.timelapse_newest_photo_label))
+                Text(text = uiState.newestPhotoDateTime.toPrettyString())
             }
             HorizontalDivider(modifier = Modifier.padding(top = MaterialTheme.spacing.medium))
             IntSliderRow(
@@ -229,7 +231,7 @@ private fun TimelapseCreatorPreviewScreen(
     val context = LocalContext.current
     val exoPlayer = remember {
         ExoPlayer.Builder(context)
-            .setVideoScalingMode(C.VIDEO_SCALING_MODE_DEFAULT)
+            .setVideoScalingMode(C.VIDEO_SCALING_MODE_SCALE_TO_FIT)
             .build()
             .apply {
                 repeatMode = Player.REPEAT_MODE_ALL
@@ -259,6 +261,7 @@ private fun TimelapseCreatorPreviewScreen(
             AndroidView(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .aspectRatio(exoPlayer.videoSize.pixelWidthHeightRatio)
                     .clip(RoundedCornerShape(MaterialTheme.spacing.medium)),
                 factory = { ctx ->
                     PlayerView(ctx).apply {

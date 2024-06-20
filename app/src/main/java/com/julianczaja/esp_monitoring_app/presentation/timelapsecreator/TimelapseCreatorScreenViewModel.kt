@@ -36,7 +36,7 @@ class TimelapseCreatorScreenViewModel @Inject constructor(
     }
 
     private val photos: List<Photo> = savedStateHandle.get<Array<Photo>>("photos")
-        ?.sortedByDescending { it.dateTime }
+        ?.sortedBy { it.dateTime }
         ?.toList()
         ?: emptyList()
 
@@ -131,7 +131,7 @@ class TimelapseCreatorScreenViewModel @Inject constructor(
         (_uiState.value as? UiState.Preview)?.let { uiState ->
             _uiState.update { uiState.copy(isBusy = true) }
         }
-        timelapseCreator.saveTimelapse(photos.first().deviceId)
+        timelapseCreator.saveTimelapse(photos.last().deviceId)
             .onFailure { e -> onError(e) }
             .onSuccess {
                 (_uiState.value as? UiState.Preview)?.let { uiState ->
@@ -185,8 +185,8 @@ class TimelapseCreatorScreenViewModel @Inject constructor(
                 isHighQuality: Boolean = false
             ) = Configure(
                 photosCount = photos.size,
-                oldestPhotoDateTime = photos.last().dateTime,
-                newestPhotoDateTime = photos.first().dateTime,
+                oldestPhotoDateTime = photos.first().dateTime,
+                newestPhotoDateTime = photos.last().dateTime,
                 estimatedTime = photos.size.toFloat() / DEFAULT_FRAME_RATE,
                 frameRate = frameRate,
                 isHighQuality = isHighQuality
