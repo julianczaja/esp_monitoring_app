@@ -58,7 +58,7 @@ fun IntSliderRow(
             onValueChange = { sliderPosition = it },
             onValueChangeFinished = { onValueChange(sliderPosition.roundToInt()) },
             valueRange = valueRange,
-            steps = steps,
+            steps = if (steps > 9) 0 else steps,
             enabled = enabled,
             interactionSource = interactionSource,
             thumb = {
@@ -101,10 +101,34 @@ private fun IntSliderRowPreview() {
             )
             IntSliderRow(
                 label = "Label",
+                value = 1,
+                steps = 9,
+                enabled = true,
+                valueRange = -5f..5f,
+                onValueChange = {}
+            )
+            IntSliderRow(
+                label = "Label",
                 value = 31,
                 steps = 51,
                 enabled = false,
                 valueRange = 0f..50f,
+                onValueChange = {}
+            )
+            IntSliderRow(
+                label = "Looong long long loooooooooooooong label",
+                value = 5,
+                steps = 10,
+                enabled = false,
+                valueRange = 0f..50f,
+                onValueChange = {}
+            )
+            IntSliderRow(
+                label = "Label",
+                value = 40000,
+                steps = 10,
+                enabled = false,
+                valueRange = 0f..50000f,
                 onValueChange = {}
             )
         }

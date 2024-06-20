@@ -2,11 +2,12 @@ package com.julianczaja.esp_monitoring_app.presentation.addeditdevice
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContentPadding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -117,20 +118,19 @@ fun AddEditDeviceScreenContent(
         modifier = modifier
             .padding(MaterialTheme.spacing.large)
             .verticalScroll(rememberScrollState())
-            .safeContentPadding()
+            .safeDrawingPadding()
             .imePadding(),
         verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        Spacer(Modifier)
         Column(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             OutlinedTextField(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = MaterialTheme.spacing.veryLarge),
+                modifier = Modifier.fillMaxWidth(),
                 value = name,
                 label = { Text(stringResource(R.string.device_name_label)) },
                 onValueChange = updateName,

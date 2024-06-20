@@ -44,7 +44,11 @@ class AppSettingsRepositoryImplTest {
 
     @Test
     fun `Initial app settings are correct`() = runTest {
-        val defaultAppSettings = AppSettings(Constants.defaultBaseUrl, true)
+        val defaultAppSettings = AppSettings(
+            baseUrl = Constants.defaultBaseUrl,
+            isFirstTimeUser = true,
+            isDynamicColor = Constants.DEFAULT_IS_DYNAMIC_COLOR
+        )
 
         appSettingsRepository.getAppSettings().test {
             assertThat(awaitItem()).isEqualTo(defaultAppSettings)
@@ -55,14 +59,16 @@ class AppSettingsRepositoryImplTest {
     fun `Update app settings success`() = runTest {
         val newBaseUrl = "new_base_url"
         val newIsFirstTimeUser = false
+        val isDynamicColor = true
 
         with(appSettingsRepository) {
             setIsFirstTimeUser(newIsFirstTimeUser)
             setBaseUrl(newBaseUrl)
+            setDynamicColor(isDynamicColor)
         }
 
         appSettingsRepository.getAppSettings().test {
-            assertThat(awaitItem()).isEqualTo(AppSettings(newBaseUrl, newIsFirstTimeUser))
+            assertThat(awaitItem()).isEqualTo(AppSettings(newBaseUrl, newIsFirstTimeUser, isDynamicColor))
         }
     }
 }

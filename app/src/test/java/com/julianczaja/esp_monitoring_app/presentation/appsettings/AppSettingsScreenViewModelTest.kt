@@ -42,7 +42,7 @@ class AppSettingsScreenViewModelTest {
         val appSettingsRepository: AppSettingsRepository = mockk()
         every { appSettingsRepository.getAppSettings() } returns flow {
             delay(1000)
-            emit(AppSettings(initialBaseUrl, false))
+            emit(AppSettings(initialBaseUrl, false, false))
         }
         val viewModel = getViewModel(appSettingsRepository)
 
@@ -59,7 +59,7 @@ class AppSettingsScreenViewModelTest {
         val appSettingsRepository: AppSettingsRepository = mockk()
         every { appSettingsRepository.getAppSettings() } returns flow {
             delay(1000)
-            emit(AppSettings(initialBaseUrl, false))
+            emit(AppSettings(initialBaseUrl, false, false))
         }
         val viewModel = getViewModel(appSettingsRepository)
 
@@ -82,7 +82,7 @@ class AppSettingsScreenViewModelTest {
         val appSettingsRepository: AppSettingsRepository = mockk()
         every { appSettingsRepository.getAppSettings() } returns flow {
             delay(1000)
-            emit(AppSettings(initialBaseUrl, false))
+            emit(AppSettings(initialBaseUrl, false, false))
         }
         val viewModel = getViewModel(appSettingsRepository)
 

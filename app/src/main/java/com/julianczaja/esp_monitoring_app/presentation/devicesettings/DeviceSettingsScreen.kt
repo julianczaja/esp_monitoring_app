@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -145,7 +146,9 @@ fun DeviceSettingsScreen(
     }
 
     DeviceSettingsScreenContent(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .safeDrawingPadding(),
         uiState = uiState,
         isBluetoothEnabled = isBluetoothEnabled,
         isBleLocationEnabled = isBleLocationEnabled,
@@ -431,7 +434,7 @@ private fun ScanFloatingActionButton(
         icon = {
             Icon(
                 painter = when (isScanning) {
-                    true ->  painterResource(id = R.drawable.ic_x)
+                    true -> painterResource(id = R.drawable.ic_x)
                     false -> painterResource(id = R.drawable.ic_search)
                 },
                 contentDescription = null,
@@ -541,7 +544,12 @@ private fun DeviceSettingsContent(
         enabled = enabled,
         onEditClicked = { isWifiCredentialsDialogVisible = true }
     ) {
-        Text(text = stringResource(R.string.ssid_label) + ": ${deviceSettings.wifiSsid}")
+        Text(
+            modifier = Modifier.fillMaxWidth(.75f),
+            text = stringResource(R.string.ssid_label) + ": ${deviceSettings.wifiSsid}",
+            overflow = TextOverflow.Ellipsis,
+            maxLines = 1
+        )
         Text(text = stringResource(R.string.password_label_with_placeholder))
     }
     OutlinedCardWithEditButton(
@@ -550,7 +558,7 @@ private fun DeviceSettingsContent(
         onEditClicked = { isServerInfoDialogVisible = true }
     ) {
         Text(
-            modifier = Modifier.fillMaxWidth(.7f),
+            modifier = Modifier.fillMaxWidth(.75f),
             text = stringResource(R.string.url_label) + ": ${deviceSettings.serverUrl}",
             overflow = TextOverflow.Ellipsis,
             maxLines = 1
@@ -688,7 +696,10 @@ private fun DeviceSettingsConnectScreenConnectedPreview() {
         DeviceSettingsConnectScreen(
             uiState = UiState.Connect(
                 deviceStatus = DeviceStatus.Connected,
-                deviceSettings = DeviceSettings(serverUrl = "http://192.168.1.1:1234/"),
+                deviceSettings = DeviceSettings(
+                    wifiSsid = "looooooooooooooooooooooooooooooong",
+                    serverUrl = "http://192.168.1.1:1234/WWWWWWWW"
+                ),
                 isBusy = false
             ),
             onDeviceSettingsChanged = {},
