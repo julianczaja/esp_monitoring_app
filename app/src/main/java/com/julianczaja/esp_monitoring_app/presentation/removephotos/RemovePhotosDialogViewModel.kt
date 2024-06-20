@@ -31,7 +31,7 @@ class RemovePhotosDialogViewModel @Inject constructor(
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
 
-    private val params = savedStateHandle.toRoute<RemovePhotosDialog>().params
+    private val photosFileNames = savedStateHandle.toRoute<RemovePhotosDialog>().photosFileNames
 
     val eventFlow = MutableSharedFlow<Event>()
 
@@ -39,8 +39,8 @@ class RemovePhotosDialogViewModel @Inject constructor(
     val uiState = _uiState.asStateFlow()
 
     init {
-        if (params.photosFileNames.isNotEmpty()) {
-            _uiState.update { UiState.Success(params.photosFileNames) }
+        if (photosFileNames.isNotEmpty()) {
+            _uiState.update { UiState.Success(photosFileNames) }
         } else {
             _uiState.update { UiState.Error(R.string.internal_app_error_message) }
         }
@@ -51,7 +51,7 @@ class RemovePhotosDialogViewModel @Inject constructor(
 
         var isError = false
 
-        params.photosFileNames.forEach { photoFileName ->
+        photosFileNames.forEach { photoFileName ->
             photoRepository.removePhotoByFileNameRemote(photoFileName)
                 .onFailure { e ->
                     Timber.e(e)

@@ -3,10 +3,9 @@ package com.julianczaja.esp_monitoring_app.presentation.removephotos
 import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
+import com.julianczaja.esp_monitoring_app.MainDispatcherRule
 import com.julianczaja.esp_monitoring_app.data.repository.FakePhotoRepositoryImpl
 import com.julianczaja.esp_monitoring_app.domain.repository.PhotoRepository
-import com.julianczaja.esp_monitoring_app.navigation.RemovePhotosDialogParameters
-import com.julianczaja.esp_monitoring_app.MainDispatcherRule
 import io.mockk.coVerify
 import io.mockk.spyk
 import kotlinx.coroutines.test.runTest
@@ -18,21 +17,19 @@ class RemovePhotosDialogViewModelTest {
     @get:Rule
     val dispatcherRule = MainDispatcherRule()
 
-
     private fun getViewModel(
-        parameters: RemovePhotosDialogParameters,
+        photosFileNames: List<String>,
         photoRepository: PhotoRepository? = null
     ) = RemovePhotosDialogViewModel(
-        savedStateHandle = SavedStateHandle(mapOf("params" to parameters)),
+        savedStateHandle = SavedStateHandle(mapOf("photosFileNames" to photosFileNames)),
         photoRepository = photoRepository ?: FakePhotoRepositoryImpl(),
         ioDispatcher = dispatcherRule.testDispatcher
     )
 
-
     @Test
-    fun `UI state is success when params are not empty`() = runTest {
-        val params = RemovePhotosDialogParameters(listOf("fileName1", "fileName1"))
-        val viewModel = getViewModel(params)
+    fun `UI state is success when list of photos file names is not empty`() = runTest {
+        val photosFileNames = listOf("fileName1", "fileName1")
+        val viewModel = getViewModel(photosFileNames)
 
         viewModel.uiState.test {
             assertThat(awaitItem()).isInstanceOf(RemovePhotosDialogViewModel.UiState.Success::class.java)
@@ -40,9 +37,9 @@ class RemovePhotosDialogViewModelTest {
     }
 
     @Test
-    fun `UI state is error when params are empty`() = runTest {
-        val emptyParams = RemovePhotosDialogParameters(emptyList())
-        val viewModel = getViewModel(emptyParams)
+    fun `UI state is error when list of photos file names is empty`() = runTest {
+        val photosFileNames = emptyList<String>()
+        val viewModel = getViewModel(photosFileNames)
 
         viewModel.uiState.test {
             assertThat(awaitItem()).isInstanceOf(RemovePhotosDialogViewModel.UiState.Error::class.java)
@@ -51,9 +48,9 @@ class RemovePhotosDialogViewModelTest {
 
     @Test
     fun `UI state is loading after remove photos success`() = runTest {
-        val params = RemovePhotosDialogParameters(listOf("fileName1", "fileName1"))
+        val photosFileNames = listOf("fileName1", "fileName1")
         val photoRepository = spyk(FakePhotoRepositoryImpl())
-        val viewModel = getViewModel(params, photoRepository)
+        val viewModel = getViewModel(photosFileNames, photoRepository)
 
         viewModel.uiState.test {
             assertThat(awaitItem()).isInstanceOf(RemovePhotosDialogViewModel.UiState.Success::class.java)
@@ -66,11 +63,11 @@ class RemovePhotosDialogViewModelTest {
 
     @Test
     fun `UI state is error when exception thrown during photo removal`() = runTest {
-        val params = RemovePhotosDialogParameters(listOf("fileName1", "fileName1"))
+        val photosFileNames = listOf("fileName1", "fileName1")
         val photoRepository = spyk(
             FakePhotoRepositoryImpl().apply { removePhotoByFileNameRemoteReturnsException = true }
         )
-        val viewModel = getViewModel(params, photoRepository)
+        val viewModel = getViewModel(photosFileNames, photoRepository)
 
         viewModel.uiState.test {
             assertThat(awaitItem()).isInstanceOf(RemovePhotosDialogViewModel.UiState.Success::class.java)
@@ -81,11 +78,11 @@ class RemovePhotosDialogViewModelTest {
 
     @Test
     fun `Local photos not removed when exception thrown during remote photos removal`() = runTest {
-        val params = RemovePhotosDialogParameters(listOf("fileName1", "fileName1"))
+        val photosFileNames = listOf("fileName1", "fileName1")
         val photoRepository = spyk(
             FakePhotoRepositoryImpl().apply { removePhotoByFileNameRemoteReturnsException = true }
         )
-        val viewModel = getViewModel(params, photoRepository)
+        val viewModel = getViewModel(photosFileNames, photoRepository)
 
         viewModel.removePhotos()
 
@@ -95,8 +92,8 @@ class RemovePhotosDialogViewModelTest {
 
     @Test
     fun `Event flow emits PHOTOS_REMOVED after successful photo removal`() = runTest {
-        val params = RemovePhotosDialogParameters(listOf("fileName1"))
-        val viewModel = getViewModel(params)
+        val photosFileNames = listOf("fileName1")
+        val viewModel = getViewModel(photosFileNames)
 
         viewModel.eventFlow.test {
             viewModel.removePhotos()

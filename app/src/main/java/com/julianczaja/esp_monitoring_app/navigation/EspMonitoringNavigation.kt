@@ -8,7 +8,6 @@ import androidx.navigation.NavController
 import androidx.navigation.NavType
 import com.julianczaja.esp_monitoring_app.domain.model.Device
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
-import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -61,16 +60,11 @@ fun NavController.navigateToRemoveDeviceDialog(deviceId: Long) {
 
 // Remove photo
 @Serializable
-data class RemovePhotosDialog(val params: RemovePhotosDialogParameters)
+data class RemovePhotosDialog(val photosFileNames: List<String>)
 
-@Serializable
-@Parcelize
-data class RemovePhotosDialogParameters(
-    val photosFileNames: List<String>
-) : Parcelable
 
 fun NavController.navigateToRemovePhotosDialog(photoFileNames: List<String>) {
-    navigate(RemovePhotosDialog(RemovePhotosDialogParameters(photoFileNames))) {
+    navigate(RemovePhotosDialog(photoFileNames)) {
         launchSingleTop = true
     }
 }

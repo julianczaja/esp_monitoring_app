@@ -91,9 +91,7 @@ fun EspMonitoringNavHost(
                 onDismiss = onBackClick
             )
         }
-        dialog<RemovePhotosDialog>(
-            typeMap = mapOf(typeOf<RemovePhotosDialogParameters>() to parcelableType<RemovePhotosDialogParameters>())
-        ) {
+        dialog<RemovePhotosDialog> {
             RemovePhotosDialog(
                 onDismiss = onBackClick
             )
