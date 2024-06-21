@@ -47,6 +47,7 @@ import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.components.AppBackground
 import com.julianczaja.esp_monitoring_app.components.IntSliderRow
 import com.julianczaja.esp_monitoring_app.components.SwitchWithLabel
+import com.julianczaja.esp_monitoring_app.data.utils.formatBytes
 import com.julianczaja.esp_monitoring_app.data.utils.toPrettyString
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 import com.julianczaja.esp_monitoring_app.presentation.timelapsecreator.TimelapseCreatorScreenViewModel.UiState
@@ -282,14 +283,14 @@ private fun TimelapseCreatorPreviewScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(text = stringResource(R.string.timelapse_size_label))
-                Text(text = uiState.timelapseData.size)
+                Text(text = formatBytes(uiState.timelapseData.sizeBytes))
             }
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(text = stringResource(R.string.timelapse_duration_label))
-                Text(text = uiState.timelapseData.duration)
+                Text(text = stringResource(id = R.string.seconds_format, uiState.timelapseData.durationSeconds))
             }
         }
         if (!uiState.isSaved) {

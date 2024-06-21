@@ -30,6 +30,7 @@
     <string name="cant_update_device">Error - can\'t update device.</string>
     <string name="clear_photos_cache_label">Clear photos cache</string>
     <string name="connectable_label">Connectable</string>
+    <string name="date_format">Date: %1$s</string>
     <string name="device_configuration_label">Configure device</string>
     <string name="device_id_label">ID</string>
     <string name="device_id_label_with_format">ID: %d</string>
@@ -60,6 +61,7 @@
     <string name="device_settings_white_balance_mode_label">White balance mode</string>
     <string name="devices_screen_title">Esp monitoring</string>
     <string name="disconnect_label">Disconnect</string>
+    <string name="duration_seconds_format">"Duration: %.1f s"</string>
     <string name="dynamic_color_label">Dynamic color</string>
     <string name="edit_device_screen_title">Edit device</string>
     <string name="edit_label">Edit</string>
@@ -77,14 +79,13 @@
     <string name="location_permission_rationale_body">Location permissions are needed for BLE functionality in this app, ensuring accurate device connections for an optimal experience. We won\'t use it in any way.</string>
     <string name="no_internet_connection_error_message">No internet connection</string>
     <string name="no_photos_saved_message">No photos saved</string>
+    <string name="no_timelapses_saved_message">No timelapses saved</string>
     <string name="not_connectable_label">Not connectable</string>
     <string name="not_found_error_message">Not found</string>
     <string name="ok_label">OK</string>
     <string name="open_settings_label">Open settings</string>
     <string name="password_label">Password</string>
     <string name="password_label_with_placeholder">Password: ********</string>
-    <string name="photo_preview_date_label">Date: %1$s</string>
-    <string name="photo_preview_size_label">Size: %1$s</string>
     <string name="photos_not_found_message">Photos not found</string>
     <string name="photos_tab_label">Photos</string>
     <string name="remove_device_explanation">This will remove device \"%1$s\" (id: %2$d) and all its photos from phone memory. Photos still will be stored on server.</string>
@@ -103,6 +104,7 @@
     <string name="seconds_format">%.1f s</string>
     <string name="selected_photos_count_format">Selected: %1$d</string>
     <string name="server_info_label">Server info</string>
+    <string name="size_format">Size: %1$s</string>
     <string name="special_effect_blue_tint">Blue Tint</string>
     <string name="special_effect_grayscale">Grayscale</string>
     <string name="special_effect_green_tint">Green Tint</string>
@@ -119,6 +121,7 @@
     <string name="storage_permission_denied_body">This feature requires access to your device\'s storage. You can grant permission in the app settings.</string>
     <string name="storage_permission_needed_title">Storage permission needed</string>
     <string name="storage_permission_rationale_body">This feature requires permission to access your device\'s storage. This allows us to save photos on your disk.</string>
+    <string name="timelapse_cancelled">Timelapse cancelled</string>
     <string name="timelapse_creator_screen_title">Timelapse creator</string>
     <string name="timelapse_downloading_label">Downloading photos…</string>
     <string name="timelapse_duration_label">"Duration: "</string>
@@ -130,6 +133,7 @@
     <string name="timelapse_processing_label">Processing timelapse…</string>
     <string name="timelapse_saved">Timelapse saved</string>
     <string name="timelapse_size_label">"Size: "</string>
+    <string name="timelapses_tab_label">Timelapses</string>
     <string name="unknown_error_message">Unknown error</string>
     <string name="update_label">Update</string>
     <string name="url_label">URL</string>

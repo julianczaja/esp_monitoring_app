@@ -2,18 +2,15 @@ package com.julianczaja.esp_monitoring_app.presentation.photopreview
 
 import android.content.res.Configuration
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.calculateCentroid
 import androidx.compose.foundation.gestures.calculatePan
 import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.pager.HorizontalPager
@@ -21,8 +18,6 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -41,7 +36,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -51,6 +45,7 @@ import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.julianczaja.esp_monitoring_app.components.DefaultProgressIndicator
 import com.julianczaja.esp_monitoring_app.components.ErrorText
+import com.julianczaja.esp_monitoring_app.components.PhotoInfoRow
 import com.julianczaja.esp_monitoring_app.data.utils.toPrettyString
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.presentation.photopreview.PhotoPreviewDialogViewModel.UiState
@@ -203,33 +198,7 @@ private fun ZoomableCoilPhoto(
                     contentDescription = null
                 )
                 if (!isZoomed.value) {
-                    Row(
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .clip(
-                                RoundedCornerShape(
-                                    topEnd = MaterialTheme.shape.photoCorners,
-                                    topStart = MaterialTheme.shape.photoCorners
-                                )
-                            )
-                            .background(MaterialTheme.colorScheme.surface.copy(alpha = .75f))
-                            .padding(MaterialTheme.spacing.medium),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = photo.dateTime.toPrettyString(),
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                        VerticalDivider(
-                            modifier = Modifier
-                                .height(16.dp)
-                                .padding(horizontal = MaterialTheme.spacing.medium)
-                        )
-                        Text(
-                            text = photo.size,
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
+                    PhotoInfoRow(listOf(photo.dateTime.toPrettyString(), photo.size))
                 }
             }
         }

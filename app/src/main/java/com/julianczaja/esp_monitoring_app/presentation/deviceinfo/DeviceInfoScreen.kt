@@ -16,7 +16,6 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -78,11 +77,8 @@ private fun DeviceInfoScreenContent(
     uiState: DeviceInfoScreenViewModel.UiState,
     updateDeviceInfo: () -> Unit
 ) {
-    val pullRefreshState = rememberPullToRefreshState()
-
     PullToRefreshBox(
         modifier = modifier.fillMaxSize(),
-        state = pullRefreshState,
         isRefreshing = uiState.isLoading,
         onRefresh = updateDeviceInfo
     ) {

@@ -20,7 +20,6 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -181,8 +180,6 @@ private fun DevicePhotosScreenContent(
     onFilterDateClicked: (SelectableLocalDate) -> Unit,
     onSelectDeselectAllClick: (LocalDate) -> Unit,
 ) {
-    val pullRefreshState = rememberPullToRefreshState()
-
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -197,7 +194,6 @@ private fun DevicePhotosScreenContent(
         )
         PullToRefreshBox(
             modifier = Modifier.fillMaxSize(),
-            state = pullRefreshState,
             isRefreshing = uiState.isLoading,
             onRefresh = updatePhotos
         ) {

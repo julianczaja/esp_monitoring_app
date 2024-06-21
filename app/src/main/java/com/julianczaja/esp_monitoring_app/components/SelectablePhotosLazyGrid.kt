@@ -258,19 +258,9 @@ private fun LazyGridItemScope.SelectableDevicePhoto(
                 checked = selectablePhoto.isSelected
             )
         }
-        Box(
-            modifier = Modifier
-                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.75f))
-                .fillMaxWidth()
-                .align(Alignment.BottomCenter)
-        ) {
-            Text(
-                text = selectablePhoto.photo.dateTime.toLocalTime().toPrettyString(),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.align(Alignment.Center)
-            )
-        }
+        PhotoInfoRow(
+            listOf(selectablePhoto.photo.dateTime.toLocalTime().toPrettyString())
+        )
     }
 }
 

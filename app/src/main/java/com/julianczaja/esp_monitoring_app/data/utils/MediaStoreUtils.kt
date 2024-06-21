@@ -78,10 +78,9 @@ suspend fun createTimelapseUri(context: Context, deviceId: Long): Uri? {
         val content = ContentValues().apply {
             val now = LocalDateTime.now()
             now.toPrettyString()
-            put(MediaStore.Images.Media.DISPLAY_NAME, now.toDefaultFormatString())
-            put(MediaStore.Images.Media.DATE_TAKEN, now.toEpochMillis())
-            put(MediaStore.Images.Media.MIME_TYPE, TIMELAPSE_MIME_TYPE)
-            put(MediaStore.Images.Media.RELATIVE_PATH, TIMELAPSES_DIR_PATH_FORMAT.format(deviceId))
+            put(MediaStore.Video.Media.DISPLAY_NAME, "${deviceId}_${now.toDefaultFormatString()}")
+            put(MediaStore.Video.Media.MIME_TYPE, TIMELAPSE_MIME_TYPE)
+            put(MediaStore.Video.Media.RELATIVE_PATH, TIMELAPSES_DIR_PATH_FORMAT.format(deviceId))
         }
         return@withContext context.contentResolver.insert(videoCollection, content)
     }

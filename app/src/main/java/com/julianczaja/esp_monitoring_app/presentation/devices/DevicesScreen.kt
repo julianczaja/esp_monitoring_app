@@ -26,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -215,13 +216,17 @@ private fun DevicesListPortrait(
     onRemoveDeviceClicked: (Long) -> Unit,
     onEditDeviceClicked: (Device) -> Unit,
 ) {
+    val devicesWithLastPhotoList = remember(uiState) {
+        uiState.devicesWithLastPhoto.toList()
+    }
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium),
         horizontalAlignment = Alignment.CenterHorizontally,
         contentPadding = PaddingValues(MaterialTheme.spacing.medium)
     ) {
-        items(uiState.devicesWithLastPhoto.toList(), key = { it.first.id }) {
+        items(devicesWithLastPhotoList, key = { it.first.id }) {
             DeviceItem(
                 device = it.first,
                 lastPhotoUri = it.second?.thumbnailUrl,
@@ -240,6 +245,10 @@ private fun DevicesListLandscape(
     onRemoveDeviceClicked: (Long) -> Unit,
     onEditDeviceClicked: (Device) -> Unit,
 ) {
+    val devicesWithLastPhotoList = remember(uiState) {
+        uiState.devicesWithLastPhoto.toList()
+    }
+
     LazyVerticalGrid(
         columns = GridCells.Adaptive(DEVICE_ITEM_MIN_WIDTH_DP.dp),
         verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium),
@@ -247,7 +256,7 @@ private fun DevicesListLandscape(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(MaterialTheme.spacing.medium)
     ) {
-        items(uiState.devicesWithLastPhoto.toList(), key = { it.first.id }) {
+        items(devicesWithLastPhotoList, key = { it.first.id }) {
             DeviceItem(
                 device = it.first,
                 lastPhotoUri = it.second?.thumbnailUrl,

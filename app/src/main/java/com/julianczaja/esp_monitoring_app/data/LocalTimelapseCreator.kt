@@ -6,12 +6,13 @@ import android.graphics.Bitmap
 import com.arthenica.ffmpegkit.FFmpegKit
 import com.arthenica.ffmpegkit.FFmpegKitConfig
 import com.arthenica.ffmpegkit.FFprobeKit
-import com.arthenica.ffmpegkit.MediaInformationSession
+import com.arthenica.ffmpegkit.MediaInformation
 import com.julianczaja.esp_monitoring_app.data.utils.createTimelapseUri
 import com.julianczaja.esp_monitoring_app.di.IoDispatcher
 import com.julianczaja.esp_monitoring_app.domain.BitmapDownloader
 import com.julianczaja.esp_monitoring_app.domain.TimelapseCreator
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
+import com.julianczaja.esp_monitoring_app.domain.model.TimelapseCancelledException
 import com.julianczaja.esp_monitoring_app.domain.model.TimelapseData
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,8 +23,6 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
 import javax.inject.Inject
-import kotlin.math.log10
-import kotlin.math.pow
 
 
 class LocalTimelapseCreator @Inject constructor(
@@ -71,6 +70,9 @@ class LocalTimelapseCreator @Inject constructor(
             Timber.d("Session log: ${log.message}")
         }
 
+        val aspectRatio = findBestAspectRatio(photos)
+        val aspectRatioString = "${aspectRatio.first}:${aspectRatio.second}"
+
         val outputPath = File(cacheDir, "timelapse.mp4").path
         val command = listOf(
             "-y",
@@ -78,6 +80,7 @@ class LocalTimelapseCreator @Inject constructor(
             "-i", "$cacheDir/$photoPrefix%4d.jpeg",
             "-c:v", "mpeg4",
             "-q:v", "3",
+            "-vf", "scale=$aspectRatioString:force_original_aspect_ratio=decrease,pad=$aspectRatioString:(ow-iw)/2:(oh-ih)/2",
             "-r", frameRate.toString(),
             outputPath
         )
@@ -86,24 +89,25 @@ class LocalTimelapseCreator @Inject constructor(
 
         when {
             session.returnCode.isValueError -> {
-                Timber.e("createTimelapse completed with error")
+                Timber.e("createTimelapse completed with error: ${session.failStackTrace}")
                 return@withContext Result.failure(Exception(session.failStackTrace))
             }
 
             session.returnCode.isValueSuccess -> {
                 Timber.e("createTimelapse completed - success")
-                val mediaInformation = FFprobeKit.getMediaInformation(outputPath)
-                return@withContext Result.success(mediaInformation.toTimelapseData(path = outputPath))
+                val mediaInformation = FFprobeKit.getMediaInformation(outputPath).mediaInformation
+                val timelapseData = mediaInformation.toTimelapseData(outputPath)
+                return@withContext Result.success(timelapseData)
             }
 
             session.returnCode.isValueCancel -> {
                 Timber.e("createTimelapse completed - cancelled")
-                return@withContext Result.failure(Exception("Cancelled"))
+                return@withContext Result.failure(TimelapseCancelledException())
             }
 
             else -> {
                 Timber.e("createTimelapse completed - unknown (${session.returnCode})")
-                return@withContext Result.failure(Exception("Unknown"))
+                return@withContext Result.failure(Exception("Unknown timelapse return code (${session.returnCode})"))
             }
         }
     }
@@ -116,7 +120,6 @@ class LocalTimelapseCreator @Inject constructor(
 
         val externalTimelapseUri = createTimelapseUri(context, deviceId)
             ?: return@withContext Result.failure(Exception("externalTimelapseUri is null"))
-
 
         return@withContext try {
             isBusy.emit(true)
@@ -178,24 +181,37 @@ class LocalTimelapseCreator @Inject constructor(
     }
 
     @SuppressLint("DefaultLocale")
-    private fun MediaInformationSession.toTimelapseData(path: String): TimelapseData {
-        fun formatBytes(bytes: Long): String {
-            if (bytes <= 0) return "0 B"
-            val units = arrayOf("B", "KB", "MB")
-            val digitGroups = (log10(bytes.toDouble()) / log10(1024.0)).toInt()
-            return String.format("%.1f %s", bytes / 1024.0.pow(digitGroups.toDouble()), units[digitGroups])
-        }
-
-        val size = mediaInformation.size.toLongOrNull() ?: 0L
-        val sizeString = formatBytes(size)
-
-        val duration = mediaInformation.duration
-        val durationString = duration.split(".").let { "${it[0]}.${it[1].take(1)} s" }
+    private fun MediaInformation.toTimelapseData(path: String): TimelapseData {
+        val durationSeconds = duration
+            .split(".")
+            .let { it[0].toFloat() + (it[1].take(1).toFloat() / 10f) }
 
         return TimelapseData(
             path = path,
-            size = sizeString,
-            duration = durationString
+            sizeBytes = size.toLongOrNull() ?: 0L,
+            durationSeconds = durationSeconds
         )
     }
+
+    /** Returns the most common aspect ratio through all photos */
+    private fun findBestAspectRatio(photos: List<Photo>): Pair<Int, Int> {
+        val ratiosCount = mutableMapOf<Pair<Int, Int>, Int>()
+        val ratios = photos.map { photo ->
+            val split = photo.size
+                .split(" ")
+                .first()
+                .split("x")
+            val width = split[0].toInt()
+            val height = split[1].toInt()
+
+            return@map width to height
+        }
+
+        for (ratio in ratios) {
+            ratiosCount[ratio] = ratiosCount.getOrDefault(ratio, 0) + 1
+        }
+
+        return ratiosCount.maxBy { it.value }.key
+    }
+
 }

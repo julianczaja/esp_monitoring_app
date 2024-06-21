@@ -23,6 +23,7 @@ import com.julianczaja.esp_monitoring_app.data.remote.RetrofitEspMonitoringApi
 import com.julianczaja.esp_monitoring_app.data.repository.DeviceInfoRepositoryImpl
 import com.julianczaja.esp_monitoring_app.data.repository.DeviceRepositoryImpl
 import com.julianczaja.esp_monitoring_app.data.repository.PhotoRepositoryImpl
+import com.julianczaja.esp_monitoring_app.data.repository.TimelapseRepositoryImpl
 import com.julianczaja.esp_monitoring_app.domain.BitmapDownloader
 import com.julianczaja.esp_monitoring_app.domain.TimelapseCreator
 import com.julianczaja.esp_monitoring_app.domain.model.ResultCallAdapterFactory
@@ -30,6 +31,7 @@ import com.julianczaja.esp_monitoring_app.domain.repository.AppSettingsRepositor
 import com.julianczaja.esp_monitoring_app.domain.repository.DeviceInfoRepository
 import com.julianczaja.esp_monitoring_app.domain.repository.DeviceRepository
 import com.julianczaja.esp_monitoring_app.domain.repository.PhotoRepository
+import com.julianczaja.esp_monitoring_app.domain.repository.TimelapseRepository
 import com.julianczaja.esp_monitoring_app.domain.usecase.SelectOrDeselectAllPhotosByDateUseCase
 import dagger.Module
 import dagger.Provides
@@ -145,6 +147,12 @@ object AppModule {
         deviceInfoDao: DeviceInfoDao,
         api: RetrofitEspMonitoringApi
     ): DeviceInfoRepository = DeviceInfoRepositoryImpl(api, deviceInfoDao)
+
+    @Provides
+    @Singleton
+    fun provideTimelapseRepository(
+        @ApplicationContext context: Context
+    ): TimelapseRepository = TimelapseRepositoryImpl(context)
 
     @Provides
     @Singleton

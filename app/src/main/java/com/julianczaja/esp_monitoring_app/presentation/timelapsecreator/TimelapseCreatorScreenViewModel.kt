@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.julianczaja.esp_monitoring_app.di.IoDispatcher
 import com.julianczaja.esp_monitoring_app.domain.TimelapseCreator
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
+import com.julianczaja.esp_monitoring_app.domain.model.TimelapseCancelledException
 import com.julianczaja.esp_monitoring_app.domain.model.TimelapseData
 import com.julianczaja.esp_monitoring_app.domain.model.getErrorMessageId
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -117,7 +118,7 @@ class TimelapseCreatorScreenViewModel @Inject constructor(
                         onError(e)
                     }
                 } catch (e: CancellationException) {
-                    Timber.d("createTimelapseJob cancelled")
+                    onError(TimelapseCancelledException())
                 } catch (e: Exception) {
                     onError(e)
                 }

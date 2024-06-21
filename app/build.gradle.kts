@@ -110,6 +110,7 @@ dependencies {
 
     // Coil
     implementation(libs.coil.compose)
+    implementation(libs.coil.video)
 
     // Room
     implementation(libs.androidx.room.runtime)
