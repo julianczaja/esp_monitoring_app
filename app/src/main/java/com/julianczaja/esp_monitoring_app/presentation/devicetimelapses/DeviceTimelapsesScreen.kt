@@ -2,6 +2,7 @@ package com.julianczaja.esp_monitoring_app.presentation.devicetimelapses
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -51,7 +53,7 @@ import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.components.AppBackground
-import com.julianczaja.esp_monitoring_app.components.GrantPermissionButton
+import com.julianczaja.esp_monitoring_app.components.Notice
 import com.julianczaja.esp_monitoring_app.components.PermissionRationaleDialog
 import com.julianczaja.esp_monitoring_app.components.PhotoInfoRow
 import com.julianczaja.esp_monitoring_app.data.utils.formatBytes
@@ -80,10 +82,30 @@ fun DeviceTimelapsesScreen(
 
     val storagePermissionName = getReadExternalStoragePermissionName()
     var storagePermissionState by rememberSaveable {
-        mutableStateOf(
-            context.getActivity().getPermissionState(storagePermissionName)
-        )
+        mutableStateOf(context.getActivity().getPermissionState(storagePermissionName))
     }
+    var shouldShowPermissionMissingNotice by rememberSaveable {
+        mutableStateOf(storagePermissionState != PermissionState.GRANTED)
+    }
+    var shouldShowPermissionRationaleDialog by rememberSaveable { mutableStateOf(false) }
+
+    val readExternalStoragePermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            when (isGranted) {
+                true -> {
+                    storagePermissionState = PermissionState.GRANTED
+                    shouldShowPermissionRationaleDialog = false
+                    shouldShowPermissionMissingNotice = false
+                }
+
+                false -> {
+                    storagePermissionState = context.getActivity().getPermissionState(storagePermissionName)
+                    shouldShowPermissionRationaleDialog = true
+                }
+            }
+        }
+    )
 
     LaunchedEffect(true) {
         viewModel.eventFlow.collect { event ->
@@ -95,58 +117,6 @@ fun DeviceTimelapsesScreen(
             }
         }
     }
-    if (storagePermissionState == PermissionState.GRANTED) {
-        DeviceTimelapsesScreenContent(
-            modifier = Modifier.fillMaxSize(),
-            timelapses = uiState.timelapses,
-            isLoading = uiState.isLoading,
-            onRefreshTriggered = viewModel::updateTimelapses,
-        )
-    } else {
-        PermissionsRequiredScreen(
-            modifier = Modifier.fillMaxSize(),
-            storagePermissionState = storagePermissionState,
-            storagePermissionName = storagePermissionName,
-            onStoragePermissionChanged = { storagePermissionState = it }
-        )
-    }
-}
-
-
-@Composable
-private fun PermissionsRequiredScreen(
-    modifier: Modifier = Modifier,
-    storagePermissionState: PermissionState,
-    storagePermissionName: String,
-    onStoragePermissionChanged: (PermissionState) -> Unit,
-) {
-    val context = LocalContext.current
-    var shouldShowPermissionRationaleDialog by rememberSaveable { mutableStateOf(false) }
-
-    val storagePermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission(),
-        onResult = { isGranted ->
-            when (isGranted) {
-                true -> {
-                    onStoragePermissionChanged(PermissionState.GRANTED)
-                    shouldShowPermissionRationaleDialog = false
-                }
-
-                false -> {
-                    onStoragePermissionChanged(context.getActivity().getPermissionState(storagePermissionName))
-                    shouldShowPermissionRationaleDialog = true
-                }
-            }
-        }
-    )
-
-    Box(modifier) {
-        GrantPermissionButton(
-            modifier = Modifier.align(Alignment.Center),
-            titleId = R.string.storage_permission_needed_title,
-            onButtonClicked = { storagePermissionLauncher.launch(storagePermissionName) }
-        )
-    }
 
     if (shouldShowPermissionRationaleDialog) {
         PermissionRationaleDialog(
@@ -156,7 +126,7 @@ private fun PermissionsRequiredScreen(
             permissionState = storagePermissionState,
             onRequestPermission = {
                 if (storagePermissionState == PermissionState.RATIONALE_NEEDED) {
-                    storagePermissionLauncher.launch(storagePermissionName)
+                    readExternalStoragePermissionLauncher.launch(storagePermissionName)
                 } else {
                     context.getActivity().openAppSettings()
                 }
@@ -164,6 +134,16 @@ private fun PermissionsRequiredScreen(
             onDismiss = { shouldShowPermissionRationaleDialog = false }
         )
     }
+
+    DeviceTimelapsesScreenContent(
+        modifier = Modifier.fillMaxSize(),
+        timelapses = uiState.timelapses,
+        isLoading = uiState.isLoading,
+        shouldShowPermissionMissingNotice = shouldShowPermissionMissingNotice,
+        onPermissionNoticeActionClicked = { readExternalStoragePermissionLauncher.launch(storagePermissionName) },
+        onPermissionNoticeIgnoreClicked = { shouldShowPermissionMissingNotice = false },
+        onRefreshTriggered = viewModel::updateTimelapses,
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -172,6 +152,9 @@ private fun DeviceTimelapsesScreenContent(
     modifier: Modifier = Modifier,
     timelapses: List<Timelapse>,
     isLoading: Boolean,
+    shouldShowPermissionMissingNotice: Boolean,
+    onPermissionNoticeActionClicked: () -> Unit,
+    onPermissionNoticeIgnoreClicked: () -> Unit,
     onRefreshTriggered: () -> Unit
 ) {
     LaunchedEffect(true) {
@@ -199,10 +182,19 @@ private fun DeviceTimelapsesScreenContent(
         onRefresh = onRefreshTriggered
     ) {
         when (timelapses.isEmpty()) {
-            true -> EmptyScreen(modifier)
+            true -> EmptyScreen(
+                modifier = modifier,
+                shouldShowPermissionMissingNotice = shouldShowPermissionMissingNotice,
+                onPermissionNoticeActionClicked = onPermissionNoticeActionClicked,
+                onPermissionNoticeIgnoreClicked = onPermissionNoticeIgnoreClicked,
+            )
+
             false -> TimelapsesScreen(
                 modifier = modifier,
                 timelapses = timelapses,
+                shouldShowPermissionMissingNotice = shouldShowPermissionMissingNotice,
+                onPermissionNoticeActionClicked = onPermissionNoticeActionClicked,
+                onPermissionNoticeIgnoreClicked = onPermissionNoticeIgnoreClicked,
                 onTimelapseClicked = {
                     timelapseData = it
                     isTimelapsePreviewDialogVisible = true
@@ -216,6 +208,9 @@ private fun DeviceTimelapsesScreenContent(
 private fun TimelapsesScreen(
     modifier: Modifier,
     timelapses: List<Timelapse>,
+    shouldShowPermissionMissingNotice: Boolean,
+    onPermissionNoticeActionClicked: () -> Unit,
+    onPermissionNoticeIgnoreClicked: () -> Unit,
     onTimelapseClicked: (TimelapseData) -> Unit
 ) {
     val context = LocalContext.current
@@ -228,8 +223,19 @@ private fun TimelapsesScreen(
     LazyColumn(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium),
-        contentPadding = PaddingValues(8.dp)
+        contentPadding = PaddingValues(MaterialTheme.spacing.medium)
     ) {
+        if (shouldShowPermissionMissingNotice) {
+            item {
+                Notice(
+                    modifier = Modifier.fillMaxWidth(),
+                    text = stringResource(id = R.string.storage_timelapses_permission_notice),
+                    actionText = stringResource(id = R.string.grant_permission_button_label),
+                    onActionClicked = onPermissionNoticeActionClicked,
+                    onIgnoreClicked = onPermissionNoticeIgnoreClicked
+                )
+            }
+        }
         items(items = timelapses, key = { it.data.path }) {
             Box {
                 AsyncImage(
@@ -276,7 +282,12 @@ private fun TimelapsesScreen(
 }
 
 @Composable
-private fun EmptyScreen(modifier: Modifier = Modifier) {
+private fun EmptyScreen(
+    modifier: Modifier = Modifier,
+    shouldShowPermissionMissingNotice: Boolean,
+    onPermissionNoticeActionClicked: () -> Unit,
+    onPermissionNoticeIgnoreClicked: () -> Unit,
+) {
     Column(
         verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.veryLarge, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -286,7 +297,7 @@ private fun EmptyScreen(modifier: Modifier = Modifier) {
     ) {
         Icon(
             modifier = Modifier.size(200.dp),
-            painter = painterResource(id = R.drawable.ic_timelapse),
+            painter = painterResource(id = R.drawable.ic_timelapse_thin),
             contentDescription = null
         )
         Text(
@@ -294,6 +305,20 @@ private fun EmptyScreen(modifier: Modifier = Modifier) {
             style = MaterialTheme.typography.headlineSmall,
             textAlign = TextAlign.Center
         )
+    }
+    AnimatedVisibility(visible = shouldShowPermissionMissingNotice) {
+        Box {
+            Notice(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(MaterialTheme.spacing.medium)
+                    .align(Alignment.TopCenter),
+                text = stringResource(id = R.string.storage_timelapses_permission_notice),
+                actionText = stringResource(id = R.string.grant_permission_button_label),
+                onActionClicked = onPermissionNoticeActionClicked,
+                onIgnoreClicked = onPermissionNoticeIgnoreClicked
+            )
+        }
     }
 }
 
@@ -308,9 +333,41 @@ private fun DeviceTimelapsesSuccessPreview() {
                 Timelapse(
                     addedDateTime = LocalDateTime.now(),
                     data = TimelapseData(path = "path", sizeBytes = 5000, durationSeconds = 3.5f)
+                ),
+                Timelapse(
+                    addedDateTime = LocalDateTime.now(),
+                    data = TimelapseData(path = "path 2", sizeBytes = 55000, durationSeconds = 23.5f)
                 )
             ),
             isLoading = false,
+            shouldShowPermissionMissingNotice = false,
+            onPermissionNoticeActionClicked = {},
+            onPermissionNoticeIgnoreClicked = {},
+            onRefreshTriggered = {}
+        )
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun DeviceTimelapsesSuccessWithNoticePreview() {
+    AppBackground {
+        DeviceTimelapsesScreenContent(
+            modifier = Modifier.fillMaxSize(),
+            timelapses = listOf(
+                Timelapse(
+                    addedDateTime = LocalDateTime.now(),
+                    data = TimelapseData(path = "path", sizeBytes = 5000, durationSeconds = 3.5f)
+                ),
+                Timelapse(
+                    addedDateTime = LocalDateTime.now(),
+                    data = TimelapseData(path = "path 2", sizeBytes = 55000, durationSeconds = 23.5f)
+                )
+            ),
+            isLoading = false,
+            shouldShowPermissionMissingNotice = true,
+            onPermissionNoticeActionClicked = {},
+            onPermissionNoticeIgnoreClicked = {},
             onRefreshTriggered = {}
         )
     }
@@ -321,20 +378,23 @@ private fun DeviceTimelapsesSuccessPreview() {
 private fun DeviceTimelapsesSuccessNoItemsPreview() {
     AppBackground {
         EmptyScreen(
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize(),
+            shouldShowPermissionMissingNotice = false,
+            onPermissionNoticeActionClicked = {},
+            onPermissionNoticeIgnoreClicked = {}
         )
     }
 }
 
 @PreviewLightDark
 @Composable
-private fun DeviceTimelapsesPermissionRequiredPreview() {
+private fun DeviceTimelapsesSuccessNoItemsWithNoticePreview() {
     AppBackground {
-        PermissionsRequiredScreen(
+        EmptyScreen(
             modifier = Modifier.fillMaxSize(),
-            storagePermissionState = PermissionState.DENIED,
-            storagePermissionName = "",
-            onStoragePermissionChanged = {}
+            shouldShowPermissionMissingNotice = true,
+            onPermissionNoticeActionClicked = {},
+            onPermissionNoticeIgnoreClicked = {}
         )
     }
 }

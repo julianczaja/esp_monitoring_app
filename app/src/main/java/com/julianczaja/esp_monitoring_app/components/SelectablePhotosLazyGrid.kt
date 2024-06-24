@@ -73,6 +73,7 @@ fun SelectablePhotosLazyGrid(
     isSelectionMode: Boolean,
     minSize: Dp = DEFAULT_PHOTO_WIDTH.dp,
     state: LazyGridState = rememberLazyGridState(),
+    noticeContent: (@Composable () -> Unit)? = null,
     onPhotoClick: (Selectable<Photo>) -> Unit,
     onPhotoLongClick: (Selectable<Photo>) -> Unit,
     onSelectDeselectAllClick: (LocalDate) -> Unit,
@@ -103,6 +104,9 @@ fun SelectablePhotosLazyGrid(
             horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium),
             verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium)
         ) {
+            noticeContent?.let {
+                header { it.invoke() }
+            }
             dateGroupedSelectablePhotos.onEachIndexed { index, (localDate, photos) ->
                 header(key = localDate) {
                     Column {
@@ -290,7 +294,7 @@ private fun BoxScope.SavedIcon() {
 @PreviewLightDark
 @Preview(device = "spec: width = 411dp, height = 891dp, orientation = landscape, dpi = 420", showSystemUi = true)
 @Composable
-fun SelectableDevicePhotoPreview() {
+fun SelectableDevicePhotosPreview() {
     val dateGroupedSelectablePhotos = mapOf(
         LocalDate.of(2023, 1, 1) to listOf(
             Selectable(
@@ -329,6 +333,59 @@ fun SelectableDevicePhotoPreview() {
     AppBackground {
         SelectablePhotosLazyGrid(
             dateGroupedSelectablePhotos = dateGroupedSelectablePhotos,
+            isSelectionMode = true,
+            onPhotoClick = {},
+            onPhotoLongClick = {},
+            onSelectDeselectAllClick = {}
+        )
+    }
+}
+
+@PreviewLightDark
+@Preview(device = "spec: width = 411dp, height = 891dp, orientation = landscape, dpi = 420", showSystemUi = true)
+@Composable
+fun SelectableDevicePhotosWithNoticePreview() {
+    val dateGroupedSelectablePhotos = mapOf(
+        LocalDate.of(2023, 1, 1) to listOf(
+            Selectable(
+                item = Photo(
+                    123L,
+                    LocalDateTime.of(2023, 1, 1, 10, 10),
+                    "fileName 1",
+                    "1600x1200",
+                    "url",
+                    "url",
+                    true
+                ),
+                isSelected = true
+            ),
+            Selectable(
+                item = Photo(123L, LocalDateTime.of(2023, 1, 1, 10, 11), "fileName 2", "1600x1200", "url", "url"),
+                isSelected = true
+            ),
+            Selectable(
+                item = Photo(123L, LocalDateTime.of(2023, 1, 1, 10, 12), "fileName 3", "1600x1200", "url", "url"),
+                isSelected = false
+            ),
+        ),
+        LocalDate.of(2023, 1, 2) to listOf(
+            Selectable(
+                item = Photo(123L, LocalDateTime.of(2023, 1, 2, 10, 13), "fileName 4", "1600x1200", "url", "url"),
+                isSelected = false
+            ),
+            Selectable(
+                item = Photo(123L, LocalDateTime.of(2023, 1, 2, 10, 14), "fileName 5", "1600x1200", "url", "url"),
+                isSelected = false
+            ),
+        )
+    )
+
+    AppBackground {
+        SelectablePhotosLazyGrid(
+            dateGroupedSelectablePhotos = dateGroupedSelectablePhotos,
+            noticeContent = {
+                Notice(text = "Some text", actionText = "Action", onIgnoreClicked = { }, onActionClicked = {})
+            },
             isSelectionMode = true,
             onPhotoClick = {},
             onPhotoLongClick = {},

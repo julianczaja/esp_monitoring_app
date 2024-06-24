@@ -6,6 +6,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -42,11 +43,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.components.AppBackground
+import com.julianczaja.esp_monitoring_app.components.Notice
 import com.julianczaja.esp_monitoring_app.components.PermissionRationaleDialog
 import com.julianczaja.esp_monitoring_app.components.SelectablePhotosLazyGrid
 import com.julianczaja.esp_monitoring_app.components.SelectedEditBar
 import com.julianczaja.esp_monitoring_app.components.StateBar
-import com.julianczaja.esp_monitoring_app.data.utils.checkPermissionAndDoAction
 import com.julianczaja.esp_monitoring_app.data.utils.getActivity
 import com.julianczaja.esp_monitoring_app.data.utils.getPermissionState
 import com.julianczaja.esp_monitoring_app.data.utils.getReadExternalStoragePermissionName
@@ -76,17 +77,30 @@ fun DevicePhotosScreen(
 ) {
     val uiState by viewModel.devicePhotosUiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    val storagePermissionName = getReadExternalStoragePermissionName()
-    var storagePermissionState by rememberSaveable { mutableStateOf<PermissionState?>(null) }
     var updatePhotosCalled by rememberSaveable { mutableStateOf(false) }
+
+    val storagePermissionName = getReadExternalStoragePermissionName()
+    var storagePermissionState by rememberSaveable {
+        mutableStateOf(context.getActivity().getPermissionState(storagePermissionName))
+    }
+    var shouldShowPermissionMissingNotice by rememberSaveable {
+        mutableStateOf(storagePermissionState != PermissionState.GRANTED)
+    }
+    var shouldShowPermissionRationaleDialog by rememberSaveable { mutableStateOf(false) }
 
     val readExternalStoragePermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
         onResult = { isGranted ->
             when (isGranted) {
-                true -> viewModel.saveSelectedPhotos()
+                true -> {
+                    storagePermissionState = PermissionState.GRANTED
+                    shouldShowPermissionRationaleDialog = false
+                    shouldShowPermissionMissingNotice = false
+                }
+
                 false -> {
                     storagePermissionState = context.getActivity().getPermissionState(storagePermissionName)
+                    shouldShowPermissionRationaleDialog = true
                 }
             }
         }
@@ -127,43 +141,38 @@ fun DevicePhotosScreen(
         }
     }
 
-    storagePermissionState?.let { permissionState ->
+    if (shouldShowPermissionRationaleDialog) {
         PermissionRationaleDialog(
             title = R.string.storage_permission_needed_title,
             bodyRationale = R.string.storage_permission_rationale_body,
             bodyDenied = R.string.storage_permission_denied_body,
-            permissionState = permissionState,
+            permissionState = storagePermissionState,
             onRequestPermission = {
-                if (permissionState == PermissionState.RATIONALE_NEEDED) {
+                if (storagePermissionState == PermissionState.RATIONALE_NEEDED) {
                     readExternalStoragePermissionLauncher.launch(storagePermissionName)
                 } else {
                     context.getActivity().openAppSettings()
                 }
-                storagePermissionState = null
             },
-            onDismiss = { storagePermissionState = null }
+            onDismiss = { shouldShowPermissionRationaleDialog = false }
         )
     }
 
     DevicePhotosScreenContent(
         uiState = uiState,
+        shouldShowPermissionMissingNotice = shouldShowPermissionMissingNotice,
         updatePhotos = viewModel::updatePhotos,
         resetSelections = viewModel::resetSelectedPhotos,
-        saveSelectedPhotos = {
-            checkPermissionAndDoAction(
-                context = context,
-                permission = storagePermissionName,
-                onGranted = viewModel::saveSelectedPhotos,
-                onDenied = { readExternalStoragePermissionLauncher.launch(storagePermissionName) }
-            )
-        },
+        saveSelectedPhotos = viewModel::saveSelectedPhotos,
         createTimelapseFromSelectedPhotos = viewModel::createTimelapseFromSelectedPhotos,
         removeSelectedPhotos = viewModel::removeSelectedPhotos,
         onPhotoClick = viewModel::onPhotoClick,
         onPhotoLongClick = viewModel::onPhotoLongClick,
         onFilterDateClicked = viewModel::onFilterDateClicked,
         onSelectDeselectAllClick = viewModel::onSelectDeselectAllClicked,
-        onFilterSavedOnlyClicked = viewModel::onFilterSavedOnlyClicked
+        onFilterSavedOnlyClicked = viewModel::onFilterSavedOnlyClicked,
+        onPermissionNoticeActionClicked = { readExternalStoragePermissionLauncher.launch(storagePermissionName) },
+        onPermissionNoticeIgnoreClicked = { shouldShowPermissionMissingNotice = false }
     )
 }
 
@@ -171,6 +180,7 @@ fun DevicePhotosScreen(
 @Composable
 private fun DevicePhotosScreenContent(
     uiState: UiState,
+    shouldShowPermissionMissingNotice: Boolean,
     updatePhotos: () -> Unit,
     resetSelections: () -> Unit,
     saveSelectedPhotos: () -> Unit,
@@ -181,6 +191,8 @@ private fun DevicePhotosScreenContent(
     onFilterDateClicked: (Selectable<LocalDate>) -> Unit,
     onSelectDeselectAllClick: (LocalDate) -> Unit,
     onFilterSavedOnlyClicked: (Boolean) -> Unit,
+    onPermissionNoticeActionClicked: () -> Unit,
+    onPermissionNoticeIgnoreClicked: () -> Unit,
 ) {
     Column(
         modifier = Modifier.fillMaxSize()
@@ -200,15 +212,24 @@ private fun DevicePhotosScreenContent(
             onRefresh = updatePhotos
         ) {
             when (uiState.dateGroupedSelectablePhotos.isEmpty()) {
-                true -> DevicePhotosEmptyScreen(uiState.isRefreshed)
+                true -> DevicePhotosEmptyScreen(
+                    isRefreshed = uiState.isRefreshed,
+                    shouldShowPermissionMissingNotice = shouldShowPermissionMissingNotice,
+                    onPermissionNoticeActionClicked = onPermissionNoticeActionClicked,
+                    onPermissionNoticeIgnoreClicked = onPermissionNoticeIgnoreClicked
+                )
+
                 false -> DevicePhotosNotEmptyScreen(
                     modifier = Modifier.fillMaxSize(),
                     uiState = uiState,
+                    shouldShowPermissionMissingNotice = shouldShowPermissionMissingNotice,
                     onPhotoClick = onPhotoClick,
                     onPhotoLongClick = onPhotoLongClick,
                     onFilterDateClicked = onFilterDateClicked,
                     onSelectDeselectAllClick = onSelectDeselectAllClick,
-                    onFilterSavedOnlyClicked = onFilterSavedOnlyClicked
+                    onFilterSavedOnlyClicked = onFilterSavedOnlyClicked,
+                    onPermissionNoticeActionClicked = onPermissionNoticeActionClicked,
+                    onPermissionNoticeIgnoreClicked = onPermissionNoticeIgnoreClicked
                 )
             }
         }
@@ -219,11 +240,14 @@ private fun DevicePhotosScreenContent(
 private fun DevicePhotosNotEmptyScreen(
     modifier: Modifier = Modifier,
     uiState: UiState,
+    shouldShowPermissionMissingNotice: Boolean,
     onPhotoClick: (Selectable<Photo>) -> Unit,
     onPhotoLongClick: (Selectable<Photo>) -> Unit,
     onFilterDateClicked: (Selectable<LocalDate>) -> Unit,
     onFilterSavedOnlyClicked: (Boolean) -> Unit,
     onSelectDeselectAllClick: (LocalDate) -> Unit,
+    onPermissionNoticeActionClicked: () -> Unit,
+    onPermissionNoticeIgnoreClicked: () -> Unit,
 ) {
     val coroutineScope = rememberCoroutineScope()
     val lazyGridState = rememberLazyGridState()
@@ -264,6 +288,17 @@ private fun DevicePhotosNotEmptyScreen(
             dateGroupedSelectablePhotos = uiState.dateGroupedSelectablePhotos,
             isSelectionMode = uiState.isSelectionMode,
             state = lazyGridState,
+            noticeContent = if (shouldShowPermissionMissingNotice) {
+                {
+                    Notice(
+                        modifier = Modifier.fillMaxWidth(),
+                        text = stringResource(id = R.string.storage_photos_permission_notice),
+                        actionText = stringResource(id = R.string.grant_permission_button_label),
+                        onActionClicked = onPermissionNoticeActionClicked,
+                        onIgnoreClicked = onPermissionNoticeIgnoreClicked
+                    )
+                }
+            } else null,
             onPhotoClick = onPhotoClick,
             onPhotoLongClick = onPhotoLongClick,
             onSelectDeselectAllClick = onSelectDeselectAllClick
@@ -272,7 +307,12 @@ private fun DevicePhotosNotEmptyScreen(
 }
 
 @Composable
-private fun DevicePhotosEmptyScreen(isRefreshed: Boolean) {
+private fun DevicePhotosEmptyScreen(
+    isRefreshed: Boolean,
+    shouldShowPermissionMissingNotice: Boolean,
+    onPermissionNoticeActionClicked: () -> Unit,
+    onPermissionNoticeIgnoreClicked: () -> Unit,
+) {
     AnimatedVisibility(
         visible = isRefreshed,
         enter = fadeIn()
@@ -282,18 +322,31 @@ private fun DevicePhotosEmptyScreen(isRefreshed: Boolean) {
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(MaterialTheme.spacing.large)
                 .verticalScroll(rememberScrollState())
         ) {
             Icon(
                 modifier = Modifier.size(200.dp),
-                painter = painterResource(id = R.drawable.ic_image_question),
+                painter = painterResource(id = R.drawable.ic_image_question_thin),
                 contentDescription = null
             )
             Text(
                 text = stringResource(R.string.photos_not_found_message),
                 style = MaterialTheme.typography.headlineSmall,
                 textAlign = TextAlign.Center
+            )
+        }
+    }
+    AnimatedVisibility(visible = shouldShowPermissionMissingNotice) {
+        Box {
+            Notice(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(MaterialTheme.spacing.medium)
+                    .align(Alignment.TopCenter),
+                text = stringResource(id = R.string.storage_photos_permission_notice),
+                actionText = stringResource(id = R.string.grant_permission_button_label),
+                onActionClicked = onPermissionNoticeActionClicked,
+                onIgnoreClicked = onPermissionNoticeIgnoreClicked
             )
         }
     }
@@ -347,7 +400,8 @@ private fun DevicePhotosStateItemsPreview() {
                 filterSavedOnly = false,
                 isSavedPhotosListEmpty = false
             ),
-            {}, {}, {}, {}, {}, {}, {}, {}, {}, {}
+            shouldShowPermissionMissingNotice = true,
+            {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}
         )
     }
 
@@ -400,7 +454,8 @@ private fun DevicePhotosStateSelectedItemsPreview() {
                 filterSavedOnly = false,
                 isSavedPhotosListEmpty = false
             ),
-            {}, {}, {}, {}, {}, {}, {}, {}, {}, {}
+            shouldShowPermissionMissingNotice = false,
+            {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}
         )
     }
 }
@@ -421,7 +476,30 @@ private fun DevicePhotosStateSuccessNoItemsPreview() {
                 filterSavedOnly = false,
                 isSavedPhotosListEmpty = false
             ),
-            {}, {}, {}, {}, {}, {}, {}, {}, {}, {}
+            shouldShowPermissionMissingNotice = false,
+            {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}
+        )
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun DevicePhotosStateSuccessNoItemsWithNoticePreview() {
+    AppBackground {
+        DevicePhotosScreenContent(
+            UiState(
+                dateGroupedSelectablePhotos = emptyMap(),
+                isLoading = false,
+                isOnline = true,
+                isSelectionMode = false,
+                selectableFilterDates = emptyList(),
+                isRefreshed = true,
+                selectedCount = 0,
+                filterSavedOnly = false,
+                isSavedPhotosListEmpty = false
+            ),
+            shouldShowPermissionMissingNotice = true,
+            {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}
         )
     }
 }
