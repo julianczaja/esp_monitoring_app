@@ -8,7 +8,7 @@ import androidx.navigation.toRoute
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.di.IoDispatcher
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
-import com.julianczaja.esp_monitoring_app.domain.model.SelectablePhoto
+import com.julianczaja.esp_monitoring_app.domain.model.Selectable
 import com.julianczaja.esp_monitoring_app.domain.model.getErrorMessageId
 import com.julianczaja.esp_monitoring_app.domain.repository.PhotoRepository
 import com.julianczaja.esp_monitoring_app.domain.usecase.SelectOrDeselectAllPhotosByDateUseCase
@@ -86,19 +86,19 @@ class DeviceSavedPhotosScreenViewModel @Inject constructor(
         readSavedPhotos()
     }
 
-    fun onPhotoClick(selectablePhoto: SelectablePhoto) {
+    fun onPhotoClick(selectablePhoto: Selectable<Photo>) {
         when (_isSelectionMode) {
             true -> onPhotoLongClick(selectablePhoto)
-            false -> viewModelScope.launch { eventFlow.emit(Event.NavigateToPhotoPreview(selectablePhoto.photo)) }
+            false -> viewModelScope.launch { eventFlow.emit(Event.NavigateToPhotoPreview(selectablePhoto.item)) }
         }
     }
 
-    fun onPhotoLongClick(selectablePhoto: SelectablePhoto) {
+    fun onPhotoLongClick(selectablePhoto: Selectable<Photo>) {
         _selectedPhotos.update { photos ->
-            if (!photos.contains(selectablePhoto.photo)) {
-                photos + selectablePhoto.photo
+            if (!photos.contains(selectablePhoto.item)) {
+                photos + selectablePhoto.item
             } else {
-                photos - selectablePhoto.photo
+                photos - selectablePhoto.item
             }
         }
     }
@@ -152,8 +152,8 @@ class DeviceSavedPhotosScreenViewModel @Inject constructor(
     }
 
     private fun groupPhotosByDayDesc(photos: List<Photo>) = photos
-        .map { SelectablePhoto(photo = it, isSelected = _selectedPhotos.value.contains(it)) }
-        .groupBy { it.photo.dateTime.toLocalDate() }
+        .map { photo -> Selectable(item = photo, isSelected = _selectedPhotos.value.contains(photo)) }
+        .groupBy { it.item.dateTime.toLocalDate() }
 
     sealed class Event {
         data class NavigateToPhotoPreview(val photo: Photo) : Event()
@@ -163,7 +163,7 @@ class DeviceSavedPhotosScreenViewModel @Inject constructor(
 
     @Immutable
     data class UiState(
-        val dateGroupedSelectablePhotos: Map<LocalDate, List<SelectablePhoto>>,
+        val dateGroupedSelectablePhotos: Map<LocalDate, List<Selectable<Photo>>>,
         val isLoading: Boolean,
         val isSelectionMode: Boolean,
         val selectedCount: Int

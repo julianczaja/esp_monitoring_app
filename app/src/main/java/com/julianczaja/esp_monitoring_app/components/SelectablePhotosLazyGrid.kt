@@ -56,7 +56,7 @@ import androidx.compose.ui.unit.dp
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.data.utils.toPrettyString
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
-import com.julianczaja.esp_monitoring_app.domain.model.SelectablePhoto
+import com.julianczaja.esp_monitoring_app.domain.model.Selectable
 import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DEFAULT_PHOTO_WIDTH
 import com.julianczaja.esp_monitoring_app.presentation.theme.shape
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
@@ -69,12 +69,12 @@ private const val NUMBER_OF_ITEMS_TO_SCROLL_TO_SHOW_SCROLL_TO_TOP_BUTTON = 20
 @Composable
 fun SelectablePhotosLazyGrid(
     modifier: Modifier = Modifier,
-    dateGroupedSelectablePhotos: Map<LocalDate, List<SelectablePhoto>>,
+    dateGroupedSelectablePhotos: Map<LocalDate, List<Selectable<Photo>>>,
     isSelectionMode: Boolean,
     minSize: Dp = DEFAULT_PHOTO_WIDTH.dp,
     state: LazyGridState = rememberLazyGridState(),
-    onPhotoClick: (SelectablePhoto) -> Unit,
-    onPhotoLongClick: (SelectablePhoto) -> Unit,
+    onPhotoClick: (Selectable<Photo>) -> Unit,
+    onPhotoLongClick: (Selectable<Photo>) -> Unit,
     onSelectDeselectAllClick: (LocalDate) -> Unit,
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -133,7 +133,7 @@ fun SelectablePhotosLazyGrid(
                                 )
                             }
                             val allPhotosWithDateAreSelected = photos
-                                .filter { it.photo.dateTime.toLocalDate() == localDate }
+                                .filter { it.item.dateTime.toLocalDate() == localDate }
                                 .all { it.isSelected }
 
                             val selectDeselectIcon = when (allPhotosWithDateAreSelected) {
@@ -152,7 +152,7 @@ fun SelectablePhotosLazyGrid(
                         }
                     }
                 }
-                items(photos, key = { it.photo.dateTime }) { selectablePhoto ->
+                items(photos, key = { it.item.dateTime }) { selectablePhoto ->
                     SelectableDevicePhoto(
                         selectablePhoto = selectablePhoto,
                         isSelectionMode = isSelectionMode,
@@ -214,11 +214,11 @@ private fun BoxScope.ScrollToTopButton(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun LazyGridItemScope.SelectableDevicePhoto(
-    selectablePhoto: SelectablePhoto,
+    selectablePhoto: Selectable<Photo>,
     isSelectionMode: Boolean,
     minSize: Dp,
-    onClick: (SelectablePhoto) -> Unit,
-    onLongClick: (SelectablePhoto) -> Unit,
+    onClick: (Selectable<Photo>) -> Unit,
+    onLongClick: (Selectable<Photo>) -> Unit,
 ) {
     val haptics = LocalHapticFeedback.current
 
@@ -247,10 +247,10 @@ private fun LazyGridItemScope.SelectableDevicePhoto(
     ) {
         PhotoCoilImage(
             modifier = Modifier.align(Alignment.Center),
-            data = selectablePhoto.photo.thumbnailUrl,
+            data = selectablePhoto.item.thumbnailUrl,
             height = minSize,
         )
-        if (selectablePhoto.photo.isSaved) {
+        if (selectablePhoto.item.isSaved) {
             SavedIcon()
         }
         if (isSelectionMode) {
@@ -262,7 +262,7 @@ private fun LazyGridItemScope.SelectableDevicePhoto(
             )
         }
         PhotoInfoRow(
-            listOf(selectablePhoto.photo.dateTime.toLocalTime().toPrettyString())
+            listOf(selectablePhoto.item.dateTime.toLocalTime().toPrettyString())
         )
     }
 }
@@ -293,8 +293,8 @@ private fun BoxScope.SavedIcon() {
 fun SelectableDevicePhotoPreview() {
     val dateGroupedSelectablePhotos = mapOf(
         LocalDate.of(2023, 1, 1) to listOf(
-            SelectablePhoto(
-                photo = Photo(
+            Selectable(
+                item = Photo(
                     123L,
                     LocalDateTime.of(2023, 1, 1, 10, 10),
                     "fileName 1",
@@ -305,22 +305,22 @@ fun SelectableDevicePhotoPreview() {
                 ),
                 isSelected = true
             ),
-            SelectablePhoto(
-                photo = Photo(123L, LocalDateTime.of(2023, 1, 1, 10, 11), "fileName 2", "1600x1200", "url", "url"),
+            Selectable(
+                item = Photo(123L, LocalDateTime.of(2023, 1, 1, 10, 11), "fileName 2", "1600x1200", "url", "url"),
                 isSelected = true
             ),
-            SelectablePhoto(
-                photo = Photo(123L, LocalDateTime.of(2023, 1, 1, 10, 12), "fileName 3", "1600x1200", "url", "url"),
+            Selectable(
+                item = Photo(123L, LocalDateTime.of(2023, 1, 1, 10, 12), "fileName 3", "1600x1200", "url", "url"),
                 isSelected = false
             ),
         ),
         LocalDate.of(2023, 1, 2) to listOf(
-            SelectablePhoto(
-                photo = Photo(123L, LocalDateTime.of(2023, 1, 2, 10, 13), "fileName 4", "1600x1200", "url", "url"),
+            Selectable(
+                item = Photo(123L, LocalDateTime.of(2023, 1, 2, 10, 13), "fileName 4", "1600x1200", "url", "url"),
                 isSelected = false
             ),
-            SelectablePhoto(
-                photo = Photo(123L, LocalDateTime.of(2023, 1, 2, 10, 14), "fileName 5", "1600x1200", "url", "url"),
+            Selectable(
+                item = Photo(123L, LocalDateTime.of(2023, 1, 2, 10, 14), "fileName 5", "1600x1200", "url", "url"),
                 isSelected = false
             ),
         )

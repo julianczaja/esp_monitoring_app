@@ -45,7 +45,8 @@ import com.julianczaja.esp_monitoring_app.data.utils.getPermissionState
 import com.julianczaja.esp_monitoring_app.data.utils.getReadExternalStoragePermissionName
 import com.julianczaja.esp_monitoring_app.data.utils.openAppSettings
 import com.julianczaja.esp_monitoring_app.domain.model.PermissionState
-import com.julianczaja.esp_monitoring_app.domain.model.SelectablePhoto
+import com.julianczaja.esp_monitoring_app.domain.model.Photo
+import com.julianczaja.esp_monitoring_app.domain.model.Selectable
 import com.julianczaja.esp_monitoring_app.navigation.DeviceIdArgs
 import com.julianczaja.esp_monitoring_app.presentation.devicesavedphotos.DeviceSavedPhotosScreenViewModel.Event
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
@@ -167,15 +168,15 @@ private fun PermissionsRequiredScreen(
 @Composable
 private fun DeviceSavedPhotosScreenContent(
     modifier: Modifier = Modifier,
-    savedPhotos: Map<LocalDate, List<SelectablePhoto>>,
+    savedPhotos: Map<LocalDate, List<Selectable<Photo>>>,
     isLoading: Boolean,
     isSelectionMode: Boolean,
     selectedCount: Int,
     onRefreshTriggered: () -> Unit,
     resetSelections: () -> Unit,
     removeSelectedPhotos: () -> Unit,
-    onPhotoClick: (SelectablePhoto) -> Unit,
-    onPhotoLongClick: (SelectablePhoto) -> Unit,
+    onPhotoClick: (Selectable<Photo>) -> Unit,
+    onPhotoLongClick: (Selectable<Photo>) -> Unit,
     onSelectDeselectAllClick: (LocalDate) -> Unit,
 ) {
     LaunchedEffect(true) {

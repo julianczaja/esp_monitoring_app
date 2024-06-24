@@ -1,7 +1,7 @@
 package com.julianczaja.esp_monitoring_app.domain.usecase
 
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
-import com.julianczaja.esp_monitoring_app.domain.model.SelectablePhoto
+import com.julianczaja.esp_monitoring_app.domain.model.Selectable
 import java.time.LocalDate
 import javax.inject.Inject
 
@@ -19,7 +19,7 @@ class SelectOrDeselectAllPhotosByDateUseCase @Inject constructor() {
      * @param date The date used to filter photos for selection or deselection.
      */
     operator fun invoke(
-        allSelectablePhotosWithDate: List<SelectablePhoto>,
+        allSelectablePhotosWithDate: List<Selectable<Photo>>,
         allSelectedPhotos: List<Photo>,
         date: LocalDate
     ): List<Photo> {
@@ -28,7 +28,7 @@ class SelectOrDeselectAllPhotosByDateUseCase @Inject constructor() {
         return when {
             shouldSelectAll -> {
                 val selectedPhotosWithDifferentDate = allSelectedPhotos.filter { it.dateTime.toLocalDate() != date }
-                selectedPhotosWithDifferentDate + allSelectablePhotosWithDate.map { it.photo }
+                selectedPhotosWithDifferentDate + allSelectablePhotosWithDate.map { it.item }
             }
 
             else -> {

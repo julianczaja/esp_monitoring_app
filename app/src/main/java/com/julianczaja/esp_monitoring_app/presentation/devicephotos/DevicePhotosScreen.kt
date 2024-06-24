@@ -53,8 +53,7 @@ import com.julianczaja.esp_monitoring_app.data.utils.getReadExternalStoragePermi
 import com.julianczaja.esp_monitoring_app.data.utils.openAppSettings
 import com.julianczaja.esp_monitoring_app.domain.model.PermissionState
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
-import com.julianczaja.esp_monitoring_app.domain.model.SelectableLocalDate
-import com.julianczaja.esp_monitoring_app.domain.model.SelectablePhoto
+import com.julianczaja.esp_monitoring_app.domain.model.Selectable
 import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DevicePhotosScreenViewModel.Event
 import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DevicePhotosScreenViewModel.UiState
 import com.julianczaja.esp_monitoring_app.presentation.devicephotos.components.FilterBar
@@ -177,9 +176,9 @@ private fun DevicePhotosScreenContent(
     saveSelectedPhotos: () -> Unit,
     createTimelapseFromSelectedPhotos: () -> Unit,
     removeSelectedPhotos: () -> Unit,
-    onPhotoClick: (SelectablePhoto) -> Unit,
-    onPhotoLongClick: (SelectablePhoto) -> Unit,
-    onFilterDateClicked: (SelectableLocalDate) -> Unit,
+    onPhotoClick: (Selectable<Photo>) -> Unit,
+    onPhotoLongClick: (Selectable<Photo>) -> Unit,
+    onFilterDateClicked: (Selectable<LocalDate>) -> Unit,
     onSelectDeselectAllClick: (LocalDate) -> Unit,
     onFilterSavedOnlyClicked: (Boolean) -> Unit,
 ) {
@@ -220,9 +219,9 @@ private fun DevicePhotosScreenContent(
 private fun DevicePhotosNotEmptyScreen(
     modifier: Modifier = Modifier,
     uiState: UiState,
-    onPhotoClick: (SelectablePhoto) -> Unit,
-    onPhotoLongClick: (SelectablePhoto) -> Unit,
-    onFilterDateClicked: (SelectableLocalDate) -> Unit,
+    onPhotoClick: (Selectable<Photo>) -> Unit,
+    onPhotoLongClick: (Selectable<Photo>) -> Unit,
+    onFilterDateClicked: (Selectable<LocalDate>) -> Unit,
     onFilterSavedOnlyClicked: (Boolean) -> Unit,
     onSelectDeselectAllClick: (LocalDate) -> Unit,
 ) {
@@ -308,26 +307,26 @@ private fun DevicePhotosStateItemsPreview() {
     val date2 = LocalDate.of(2023, 1, 11)
     val dateGroupedSelectablePhotos = mapOf(
         date1 to listOf(
-            SelectablePhoto(
-                photo = Photo(1L, date1.atTime(10, 10), "fileName 1", "1600x1200", "url", "url"),
+            Selectable(
+                item = Photo(1L, date1.atTime(10, 10), "fileName 1", "1600x1200", "url", "url"),
                 isSelected = false
             ),
-            SelectablePhoto(
-                photo = Photo(2L, date1.atTime(10, 11), "fileName 2", "1600x1200", "url", "url"),
+            Selectable(
+                item = Photo(2L, date1.atTime(10, 11), "fileName 2", "1600x1200", "url", "url"),
                 isSelected = false
             ),
-            SelectablePhoto(
-                photo = Photo(3L, date1.atTime(10, 12), "fileName 3", "1600x1200", "url", "url"),
+            Selectable(
+                item = Photo(3L, date1.atTime(10, 12), "fileName 3", "1600x1200", "url", "url"),
                 isSelected = false
             ),
         ),
         date2 to listOf(
-            SelectablePhoto(
-                photo = Photo(4L, date2.atTime(10, 13), "fileName 4", "1600x1200", "url", "url"),
+            Selectable(
+                item = Photo(4L, date2.atTime(10, 13), "fileName 4", "1600x1200", "url", "url"),
                 isSelected = false
             ),
-            SelectablePhoto(
-                photo = Photo(5L, date2.atTime(10, 14), "fileName 5", "1600x1200", "url", "url"),
+            Selectable(
+                item = Photo(5L, date2.atTime(10, 14), "fileName 5", "1600x1200", "url", "url"),
                 isSelected = false
             ),
         )
@@ -340,8 +339,8 @@ private fun DevicePhotosStateItemsPreview() {
                 isOnline = false,
                 isSelectionMode = false,
                 selectableFilterDates = listOf(
-                    SelectableLocalDate(date2, false),
-                    SelectableLocalDate(date1, false),
+                    Selectable(date2, false),
+                    Selectable(date1, false),
                 ),
                 isRefreshed = true,
                 selectedCount = 0,
@@ -361,26 +360,26 @@ private fun DevicePhotosStateSelectedItemsPreview() {
     val date2 = LocalDate.of(2023, 1, 11)
     val dateGroupedSelectablePhotos = mapOf(
         date1 to listOf(
-            SelectablePhoto(
-                photo = Photo(1L, date1.atTime(10, 10), "fileName 1", "1600x1200", "url", "url"),
+            Selectable(
+                item = Photo(1L, date1.atTime(10, 10), "fileName 1", "1600x1200", "url", "url"),
                 isSelected = true
             ),
-            SelectablePhoto(
-                photo = Photo(2L, date1.atTime(10, 11), "fileName 2", "1600x1200", "url", "url"),
+            Selectable(
+                item = Photo(2L, date1.atTime(10, 11), "fileName 2", "1600x1200", "url", "url"),
                 isSelected = true
             ),
-            SelectablePhoto(
-                photo = Photo(3L, date1.atTime(10, 12), "fileName 3", "1600x1200", "url", "url"),
+            Selectable(
+                item = Photo(3L, date1.atTime(10, 12), "fileName 3", "1600x1200", "url", "url"),
                 isSelected = false
             ),
         ),
         date2 to listOf(
-            SelectablePhoto(
-                photo = Photo(4L, date2.atTime(10, 13), "fileName 4", "1600x1200", "url", "url"),
+            Selectable(
+                item = Photo(4L, date2.atTime(10, 13), "fileName 4", "1600x1200", "url", "url"),
                 isSelected = false
             ),
-            SelectablePhoto(
-                photo = Photo(5L, date2.atTime(10, 14), "fileName 5", "1600x1200", "url", "url"),
+            Selectable(
+                item = Photo(5L, date2.atTime(10, 14), "fileName 5", "1600x1200", "url", "url"),
                 isSelected = false
             ),
         )
@@ -393,8 +392,8 @@ private fun DevicePhotosStateSelectedItemsPreview() {
                 isOnline = true,
                 isSelectionMode = true,
                 selectableFilterDates = listOf(
-                    SelectableLocalDate(date2, false),
-                    SelectableLocalDate(date1, false),
+                    Selectable(date2, false),
+                    Selectable(date1, false),
                 ),
                 isRefreshed = true,
                 selectedCount = 2,

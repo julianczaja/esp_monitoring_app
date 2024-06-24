@@ -21,7 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.julianczaja.esp_monitoring_app.data.utils.toMonthDayString
-import com.julianczaja.esp_monitoring_app.domain.model.SelectableLocalDate
+import com.julianczaja.esp_monitoring_app.domain.model.Selectable
 import com.julianczaja.esp_monitoring_app.presentation.theme.shape
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 import java.time.LocalDate
@@ -30,9 +30,9 @@ import java.time.LocalDate
 @Composable
 fun PhotosDateFilterBar(
     modifier: Modifier = Modifier,
-    dates: List<SelectableLocalDate>,
+    dates: List<Selectable<LocalDate>>,
     highlightedDate: LocalDate? = null,
-    onDateClicked: (SelectableLocalDate) -> Unit
+    onDateClicked: (Selectable<LocalDate>) -> Unit
 ) {
     Column(
         modifier = modifier
@@ -47,7 +47,7 @@ fun PhotosDateFilterBar(
                 Card(
                     shape = RoundedCornerShape(MaterialTheme.shape.photoDateFilterCorners),
                     colors = CardDefaults.cardColors().copy(
-                        containerColor = when (selectableDate.date) {
+                        containerColor = when (selectableDate.item) {
                             highlightedDate -> MaterialTheme.colorScheme.primary.copy(alpha = .5f)
                             else -> MaterialTheme.colorScheme.surface
                         }
@@ -64,7 +64,7 @@ fun PhotosDateFilterBar(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = selectableDate.date.toMonthDayString(),
+                            text = selectableDate.item.toMonthDayString(),
                             style = MaterialTheme.typography.labelMedium
                         )
                     }
@@ -82,9 +82,9 @@ private fun PhotosDateFilterBarPreview() {
     AppBackground(Modifier.height(100.dp)) {
         PhotosDateFilterBar(
             dates = listOf(
-                SelectableLocalDate(LocalDate.of(2024, 4, 25), true),
-                SelectableLocalDate(LocalDate.of(2024, 4, 10), true),
-                SelectableLocalDate(LocalDate.of(2024, 1, 20), false),
+                Selectable(LocalDate.of(2024, 4, 25), true),
+                Selectable(LocalDate.of(2024, 4, 10), true),
+                Selectable(LocalDate.of(2024, 1, 20), false),
             ),
             highlightedDate = LocalDate.of(2024, 4, 25),
             onDateClicked = {}
@@ -98,13 +98,13 @@ private fun PhotosDateFilterBarOverflowPreview() {
     AppBackground {
         PhotosDateFilterBar(
             dates = listOf(
-                SelectableLocalDate(LocalDate.of(2024, 4, 25), true),
-                SelectableLocalDate(LocalDate.of(2024, 4, 14), true),
-                SelectableLocalDate(LocalDate.of(2024, 4, 13), false),
-                SelectableLocalDate(LocalDate.of(2024, 4, 12), false),
-                SelectableLocalDate(LocalDate.of(2024, 4, 11), false),
-                SelectableLocalDate(LocalDate.of(2024, 4, 10), false),
-                SelectableLocalDate(LocalDate.of(2024, 1, 20), false),
+                Selectable(LocalDate.of(2024, 4, 25), true),
+                Selectable(LocalDate.of(2024, 4, 14), true),
+                Selectable(LocalDate.of(2024, 4, 13), false),
+                Selectable(LocalDate.of(2024, 4, 12), false),
+                Selectable(LocalDate.of(2024, 4, 11), false),
+                Selectable(LocalDate.of(2024, 4, 10), false),
+                Selectable(LocalDate.of(2024, 1, 20), false),
             ),
             highlightedDate = LocalDate.of(2024, 4, 25),
             onDateClicked = {}

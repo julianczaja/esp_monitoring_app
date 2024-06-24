@@ -29,7 +29,7 @@ import androidx.compose.ui.unit.dp
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.components.AppBackground
 import com.julianczaja.esp_monitoring_app.data.utils.toMonthDayString
-import com.julianczaja.esp_monitoring_app.domain.model.SelectableLocalDate
+import com.julianczaja.esp_monitoring_app.domain.model.Selectable
 import com.julianczaja.esp_monitoring_app.presentation.theme.shape
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 import java.time.LocalDate
@@ -39,10 +39,10 @@ private const val FILTER_BAR_HEIGHT_DP = 50
 @Composable
 fun FilterBar(
     modifier: Modifier = Modifier,
-    dates: List<SelectableLocalDate>,
+    dates: List<Selectable<LocalDate>>,
     highlightedDate: LocalDate? = null,
     filterSavedOnly: Boolean,
-    onDateClicked: (SelectableLocalDate) -> Unit,
+    onDateClicked: (Selectable<LocalDate>) -> Unit,
     onFilterSavedOnlyClicked: (Boolean) -> Unit
 ) {
     Column {
@@ -61,7 +61,7 @@ fun FilterBar(
                     Card(
                         shape = RoundedCornerShape(MaterialTheme.shape.photoDateFilterCorners),
                         colors = CardDefaults.cardColors().copy(
-                            containerColor = when (selectableDate.date) {
+                            containerColor = when (selectableDate.item) {
                                 highlightedDate -> MaterialTheme.colorScheme.primary.copy(alpha = .5f)
                                 else -> MaterialTheme.colorScheme.surface
                             }
@@ -78,7 +78,7 @@ fun FilterBar(
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(
-                                text = selectableDate.date.toMonthDayString(),
+                                text = selectableDate.item.toMonthDayString(),
                                 style = MaterialTheme.typography.labelMedium
                             )
                         }
@@ -108,9 +108,9 @@ private fun FilterBarPreview() {
     AppBackground(Modifier.height((FILTER_BAR_HEIGHT_DP + 20).dp)) {
         FilterBar(
             dates = listOf(
-                SelectableLocalDate(LocalDate.of(2024, 4, 25), true),
-                SelectableLocalDate(LocalDate.of(2024, 4, 10), true),
-                SelectableLocalDate(LocalDate.of(2024, 1, 20), false),
+                Selectable(LocalDate.of(2024, 4, 25), true),
+                Selectable(LocalDate.of(2024, 4, 10), true),
+                Selectable(LocalDate.of(2024, 1, 20), false),
             ),
             highlightedDate = LocalDate.of(2024, 4, 25),
             filterSavedOnly = false,
@@ -126,13 +126,13 @@ private fun FilterBarOverflowPreview() {
     AppBackground(Modifier.height((FILTER_BAR_HEIGHT_DP + 20).dp)) {
         FilterBar(
             dates = listOf(
-                SelectableLocalDate(LocalDate.of(2024, 4, 25), true),
-                SelectableLocalDate(LocalDate.of(2024, 4, 14), true),
-                SelectableLocalDate(LocalDate.of(2024, 4, 13), false),
-                SelectableLocalDate(LocalDate.of(2024, 4, 12), false),
-                SelectableLocalDate(LocalDate.of(2024, 4, 11), false),
-                SelectableLocalDate(LocalDate.of(2024, 4, 10), false),
-                SelectableLocalDate(LocalDate.of(2024, 1, 20), false),
+                Selectable(LocalDate.of(2024, 4, 25), true),
+                Selectable(LocalDate.of(2024, 4, 14), true),
+                Selectable(LocalDate.of(2024, 4, 13), false),
+                Selectable(LocalDate.of(2024, 4, 12), false),
+                Selectable(LocalDate.of(2024, 4, 11), false),
+                Selectable(LocalDate.of(2024, 4, 10), false),
+                Selectable(LocalDate.of(2024, 1, 20), false),
             ),
             highlightedDate = LocalDate.of(2024, 4, 25),
             filterSavedOnly = true,

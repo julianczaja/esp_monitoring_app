@@ -1,6 +1,7 @@
 package com.julianczaja.esp_monitoring_app.domain.model
 
-data class SelectablePhoto(
-    val photo: Photo,
+
+data class Selectable<T>(
+    val item: T,
     val isSelected: Boolean
 )

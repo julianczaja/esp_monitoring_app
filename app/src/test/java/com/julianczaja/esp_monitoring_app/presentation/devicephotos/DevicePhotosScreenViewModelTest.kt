@@ -7,7 +7,7 @@ import com.julianczaja.esp_monitoring_app.MainDispatcherRule
 import com.julianczaja.esp_monitoring_app.data.NetworkManager
 import com.julianczaja.esp_monitoring_app.data.repository.FakePhotoRepositoryImpl
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
-import com.julianczaja.esp_monitoring_app.domain.model.SelectablePhoto
+import com.julianczaja.esp_monitoring_app.domain.model.Selectable
 import com.julianczaja.esp_monitoring_app.domain.usecase.SelectOrDeselectAllPhotosByDateUseCase
 import com.julianczaja.esp_monitoring_app.navigation.DeviceIdArgs
 import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DevicePhotosScreenViewModel.UiState
@@ -92,12 +92,12 @@ class DevicePhotosScreenViewModelTest {
         )
         val localPhotos = listOf(photo)
         val dateGroupedSelectablePhotos = mapOf(
-            photo.dateTime.toLocalDate() to listOf(SelectablePhoto(photo, false))
+            photo.dateTime.toLocalDate() to listOf(Selectable(photo, false))
         )
 
         viewModel.devicePhotosUiState.test {
             var uiState: UiState = awaitItem()
-            assertThat(uiState.dateGroupedSelectablePhotos).isEqualTo(emptyMap<LocalDate, List<SelectablePhoto>>())
+            assertThat(uiState.dateGroupedSelectablePhotos).isEqualTo(emptyMap<LocalDate, List<Selectable<Photo>>>())
             photoRepository.emitAllPhotosLocalData(localPhotos)
             uiState = awaitItem()
             assertThat(uiState.dateGroupedSelectablePhotos).isEqualTo(dateGroupedSelectablePhotos)
