@@ -1,6 +1,7 @@
 package com.julianczaja.esp_monitoring_app.presentation.devicephotos
 
 import androidx.compose.runtime.Immutable
+import androidx.compose.ui.util.fastAny
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -45,9 +46,11 @@ class DevicePhotosScreenViewModel @Inject constructor(
 
     private val _selectedPhotos = MutableStateFlow<List<Photo>>(emptyList())
 
+    private val _savedPhotos = MutableStateFlow<List<Photo>>(emptyList())
+
     private val _selectedFilterDates = MutableStateFlow<List<SelectableLocalDate>>(emptyList())
 
-    private var _isSelectionMode = false
+    private val _filterSavedOnly = MutableStateFlow(false)
 
     private val _isSaving = MutableStateFlow(false)
 
@@ -68,9 +71,11 @@ class DevicePhotosScreenViewModel @Inject constructor(
         UiState(
             dateGroupedSelectablePhotos = dateGroupedSelectablePhotos,
             selectableFilterDates = selectableFilterDates,
+            filterSavedOnly = _filterSavedOnly.value,
+            isSavedPhotosListEmpty = _savedPhotos.value.isEmpty(),
             isLoading = isLoading,
             isOnline = isOnline,
-            isSelectionMode = _isSelectionMode,
+            isSelectionMode = _selectedPhotos.value.isNotEmpty(),
             isRefreshed = isRefreshed,
             selectedCount = _selectedPhotos.value.size
         )
@@ -86,6 +91,8 @@ class DevicePhotosScreenViewModel @Inject constructor(
             initialValue = UiState(
                 dateGroupedSelectablePhotos = emptyMap(),
                 selectableFilterDates = emptyList(),
+                filterSavedOnly = false,
+                isSavedPhotosListEmpty = true,
                 isLoading = false,
                 isOnline = true,
                 isSelectionMode = false,
@@ -97,23 +104,31 @@ class DevicePhotosScreenViewModel @Inject constructor(
     private fun localFilteredGroupedSelectablePhotosFlow(): Flow<Pair<List<SelectableLocalDate>, Map<LocalDate, List<SelectablePhoto>>>> =
         combine(
             photoRepository.getAllPhotosLocal(deviceId).distinctUntilChanged(),
+            _savedPhotos,
             _selectedPhotos,
             _selectedFilterDates,
-        ) { localPhotos, selectedPhotos, selectedFilterDates ->
-            _isSelectionMode = selectedPhotos.isNotEmpty()
+            _filterSavedOnly,
+        ) { localPhotos, savedPhotos, selectedPhotos, selectedFilterDates, filterSavedOnly ->
+
+            val allPhotos = when (filterSavedOnly) {
+                true -> savedPhotos
+                false -> savedPhotos + localPhotos.filterNot { localPhoto ->
+                    savedPhotos.fastAny { it.fileName == localPhoto.fileName }
+                }
+            }
 
             // Map photos to SelectablePhoto
-            val groupedSelectablePhotos = localPhotos
+            val groupedSelectablePhotos = allPhotos
+                .sortedByDescending { it.dateTime }
                 .map { SelectablePhoto(photo = it, isSelected = selectedPhotos.contains(it)) }
                 .groupBy { it.photo.dateTime.toLocalDate() }
 
             // Calculate new filter dates
             val oldDates = selectedFilterDates
             val newDates = groupedSelectablePhotos.keys
-            val newSelectedFilterDates = newDates
-                .map { newDate ->
-                    oldDates.find { it.date == newDate } ?: SelectableLocalDate(newDate, false)
-                }
+            val newSelectedFilterDates = newDates.map { newDate ->
+                oldDates.find { it.date == newDate } ?: SelectableLocalDate(newDate, false)
+            }
             _selectedFilterDates.update { newSelectedFilterDates }
 
             // Filter selectable photos
@@ -138,12 +153,15 @@ class DevicePhotosScreenViewModel @Inject constructor(
                 Timber.e(it)
                 eventFlow.emit(Event.ShowError(it.getErrorMessageId()))
             }
+        updateSavedPhotos()
         _isRefreshing.update { false }
         _isRefreshed.update { true }
     }
 
     fun onPhotoClick(selectablePhoto: SelectablePhoto) {
-        when (_isSelectionMode) {
+        val isSelectionMode = _selectedPhotos.value.isNotEmpty()
+
+        when (isSelectionMode) {
             true -> onPhotoLongClick(selectablePhoto)
             false -> viewModelScope.launch { eventFlow.emit(Event.NavigateToPhotoPreview(selectablePhoto.photo)) }
         }
@@ -167,6 +185,10 @@ class DevicePhotosScreenViewModel @Inject constructor(
         }
     }
 
+    fun onFilterSavedOnlyClicked(filterSavedOnly: Boolean) {
+        _filterSavedOnly.update { filterSavedOnly }
+    }
+
     fun onSelectDeselectAllClicked(localDate: LocalDate) {
         val updatedSelectedPhotos = selectOrDeselectAllPhotosByDateUseCase.invoke(
             allSelectablePhotosWithDate = devicePhotosUiState.value.dateGroupedSelectablePhotos[localDate].orEmpty(),
@@ -187,7 +209,6 @@ class DevicePhotosScreenViewModel @Inject constructor(
         val totalCount = selectedPhotos.size
         var savedCount = 0
 
-
         viewModelScope.launch(ioDispatcher) {
             selectedPhotos.forEach { photo ->
                 photoRepository.downloadPhotoAndSaveToExternalStorage(photo)
@@ -200,6 +221,7 @@ class DevicePhotosScreenViewModel @Inject constructor(
                     }
             }
             resetSelectedPhotos()
+            updateSavedPhotos()
             eventFlow.emit(Event.ShowSavedInfo(totalCount, savedCount))
             _isSaving.update { false }
         }
@@ -223,6 +245,15 @@ class DevicePhotosScreenViewModel @Inject constructor(
         }
     }
 
+    private suspend fun updateSavedPhotos() {
+        photoRepository.readAllSavedPhotosFromExternalStorage(deviceId)
+            .onSuccess { _savedPhotos.emit(it) }
+            .onFailure {
+                Timber.e(it)
+                eventFlow.emit(Event.ShowError(it.getErrorMessageId()))
+            }
+    }
+
     sealed class Event {
         data class NavigateToPhotoPreview(val photo: Photo) : Event()
         data class NavigateToRemovePhotosDialog(val photos: List<String>) : Event()
@@ -236,6 +267,8 @@ class DevicePhotosScreenViewModel @Inject constructor(
     data class UiState(
         val dateGroupedSelectablePhotos: Map<LocalDate, List<SelectablePhoto>>,
         val selectableFilterDates: List<SelectableLocalDate>,
+        val filterSavedOnly: Boolean,
+        val isSavedPhotosListEmpty: Boolean,
         val isLoading: Boolean,
         val isOnline: Boolean,
         val isSelectionMode: Boolean,

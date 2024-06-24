@@ -250,6 +250,9 @@ private fun LazyGridItemScope.SelectableDevicePhoto(
             data = selectablePhoto.photo.thumbnailUrl,
             height = minSize,
         )
+        if (selectablePhoto.photo.isSaved) {
+            SavedIcon()
+        }
         if (isSelectionMode) {
             CircularCheckbox(
                 modifier = Modifier
@@ -264,6 +267,25 @@ private fun LazyGridItemScope.SelectableDevicePhoto(
     }
 }
 
+@Composable
+private fun BoxScope.SavedIcon() {
+    Box(
+        modifier = Modifier
+            .align(Alignment.TopStart)
+            .padding(MaterialTheme.spacing.medium)
+            .size(24.dp)
+            .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), CircleShape),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            modifier = Modifier.size(16.dp),
+            tint = MaterialTheme.colorScheme.surface,
+            painter = painterResource(id = R.drawable.ic_save_24),
+            contentDescription = null
+        )
+    }
+}
+
 //region Previews
 @PreviewLightDark
 @Preview(device = "spec: width = 411dp, height = 891dp, orientation = landscape, dpi = 420", showSystemUi = true)
@@ -272,7 +294,15 @@ fun SelectableDevicePhotoPreview() {
     val dateGroupedSelectablePhotos = mapOf(
         LocalDate.of(2023, 1, 1) to listOf(
             SelectablePhoto(
-                photo = Photo(123L, LocalDateTime.of(2023, 1, 1, 10, 10), "fileName 1", "1600x1200", "url", "url"),
+                photo = Photo(
+                    123L,
+                    LocalDateTime.of(2023, 1, 1, 10, 10),
+                    "fileName 1",
+                    "1600x1200",
+                    "url",
+                    "url",
+                    true
+                ),
                 isSelected = true
             ),
             SelectablePhoto(

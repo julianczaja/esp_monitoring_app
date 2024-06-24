@@ -18,6 +18,7 @@ data class Photo(
     val size: String,
     val url: String,
     val thumbnailUrl: String,
+    val isSaved: Boolean = false,
 ) : Parcelable
 
 fun Photo.toPhotoEntity() = PhotoEntity(

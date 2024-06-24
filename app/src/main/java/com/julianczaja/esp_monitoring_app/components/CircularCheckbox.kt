@@ -9,7 +9,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.julianczaja.esp_monitoring_app.R
@@ -20,23 +19,28 @@ fun CircularCheckbox(
     modifier: Modifier = Modifier,
     checked: Boolean,
 ) {
-    val color = if (checked) {
+    val backgroundColor = if (checked) {
         MaterialTheme.colorScheme.primary
     } else {
         MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
     }
+    val iconColor = if (checked) {
+        MaterialTheme.colorScheme.onPrimary
+    } else {
+        MaterialTheme.colorScheme.surface
+    }
 
     Box(
         modifier = modifier
-            .size(20.dp)
-            .background(color, CircleShape),
+            .size(24.dp)
+            .background(backgroundColor, CircleShape),
         contentAlignment = Alignment.Center
     ) {
         if (checked) {
             Icon(
                 painter = painterResource(id = R.drawable.ic_check),
                 contentDescription = null,
-                tint = Color.White,
+                tint = iconColor,
                 modifier = Modifier.size(16.dp)
             )
         }

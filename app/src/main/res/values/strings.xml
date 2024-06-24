@@ -66,6 +66,7 @@
     <string name="edit_device_screen_title">Edit device</string>
     <string name="edit_label">Edit</string>
     <string name="enable_label">Enable</string>
+    <string name="filter_saved_only_label">Saved only</string>
     <string name="frame_rate_label">Frame rate</string>
     <string name="generic_internet_error_message">Internet error</string>
     <string name="generic_server_error_message">Server error</string>

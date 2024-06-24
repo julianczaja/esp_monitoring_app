@@ -8,6 +8,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
@@ -42,7 +43,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.components.AppBackground
 import com.julianczaja.esp_monitoring_app.components.PermissionRationaleDialog
-import com.julianczaja.esp_monitoring_app.components.PhotosDateFilterBar
 import com.julianczaja.esp_monitoring_app.components.SelectablePhotosLazyGrid
 import com.julianczaja.esp_monitoring_app.components.SelectedEditBar
 import com.julianczaja.esp_monitoring_app.components.StateBar
@@ -57,6 +57,7 @@ import com.julianczaja.esp_monitoring_app.domain.model.SelectableLocalDate
 import com.julianczaja.esp_monitoring_app.domain.model.SelectablePhoto
 import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DevicePhotosScreenViewModel.Event
 import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DevicePhotosScreenViewModel.UiState
+import com.julianczaja.esp_monitoring_app.presentation.devicephotos.components.FilterBar
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -162,7 +163,8 @@ fun DevicePhotosScreen(
         onPhotoClick = viewModel::onPhotoClick,
         onPhotoLongClick = viewModel::onPhotoLongClick,
         onFilterDateClicked = viewModel::onFilterDateClicked,
-        onSelectDeselectAllClick = viewModel::onSelectDeselectAllClicked
+        onSelectDeselectAllClick = viewModel::onSelectDeselectAllClicked,
+        onFilterSavedOnlyClicked = viewModel::onFilterSavedOnlyClicked
     )
 }
 
@@ -179,6 +181,7 @@ private fun DevicePhotosScreenContent(
     onPhotoLongClick: (SelectablePhoto) -> Unit,
     onFilterDateClicked: (SelectableLocalDate) -> Unit,
     onSelectDeselectAllClick: (LocalDate) -> Unit,
+    onFilterSavedOnlyClicked: (Boolean) -> Unit,
 ) {
     Column(
         modifier = Modifier.fillMaxSize()
@@ -205,7 +208,8 @@ private fun DevicePhotosScreenContent(
                     onPhotoClick = onPhotoClick,
                     onPhotoLongClick = onPhotoLongClick,
                     onFilterDateClicked = onFilterDateClicked,
-                    onSelectDeselectAllClick = onSelectDeselectAllClick
+                    onSelectDeselectAllClick = onSelectDeselectAllClick,
+                    onFilterSavedOnlyClicked = onFilterSavedOnlyClicked
                 )
             }
         }
@@ -219,6 +223,7 @@ private fun DevicePhotosNotEmptyScreen(
     onPhotoClick: (SelectablePhoto) -> Unit,
     onPhotoLongClick: (SelectablePhoto) -> Unit,
     onFilterDateClicked: (SelectableLocalDate) -> Unit,
+    onFilterSavedOnlyClicked: (Boolean) -> Unit,
     onSelectDeselectAllClick: (LocalDate) -> Unit,
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -240,22 +245,21 @@ private fun DevicePhotosNotEmptyScreen(
         }
     }
 
-    Column(
-        modifier = modifier
-    ) {
-        AnimatedVisibility(visible = uiState.selectableFilterDates.size > 1) {
-            PhotosDateFilterBar(
-                dates = uiState.selectableFilterDates,
-                highlightedDate = visibleItemKey,
-                onDateClicked = {
-                    onFilterDateClicked(it)
-                    coroutineScope.launch {
-                        delay(100) // fixme: wait until filtering is finished
-                        lazyGridState.scrollToItem(0)
-                    }
+    Column(modifier) {
+        FilterBar(
+            modifier = Modifier.fillMaxWidth(),
+            dates = uiState.selectableFilterDates,
+            highlightedDate = visibleItemKey,
+            filterSavedOnly = uiState.filterSavedOnly,
+            onFilterSavedOnlyClicked = onFilterSavedOnlyClicked,
+            onDateClicked = {
+                onFilterDateClicked(it)
+                coroutineScope.launch {
+                    delay(100) // fixme: wait until filtering is finished
+                    lazyGridState.scrollToItem(0)
                 }
-            )
-        }
+            }
+        )
         SelectablePhotosLazyGrid(
             modifier = Modifier.fillMaxSize(),
             dateGroupedSelectablePhotos = uiState.dateGroupedSelectablePhotos,
@@ -295,7 +299,6 @@ private fun DevicePhotosEmptyScreen(isRefreshed: Boolean) {
         }
     }
 }
-
 
 //region Preview
 @PreviewLightDark
@@ -341,9 +344,11 @@ private fun DevicePhotosStateItemsPreview() {
                     SelectableLocalDate(date1, false),
                 ),
                 isRefreshed = true,
-                selectedCount = 0
+                selectedCount = 0,
+                filterSavedOnly = false,
+                isSavedPhotosListEmpty = false
             ),
-            {}, {}, {}, {}, {}, {}, {}, {}, {}
+            {}, {}, {}, {}, {}, {}, {}, {}, {}, {}
         )
     }
 
@@ -392,9 +397,11 @@ private fun DevicePhotosStateSelectedItemsPreview() {
                     SelectableLocalDate(date1, false),
                 ),
                 isRefreshed = true,
-                selectedCount = 2
+                selectedCount = 2,
+                filterSavedOnly = false,
+                isSavedPhotosListEmpty = false
             ),
-            {}, {}, {}, {}, {}, {}, {}, {}, {}
+            {}, {}, {}, {}, {}, {}, {}, {}, {}, {}
         )
     }
 }
@@ -411,9 +418,11 @@ private fun DevicePhotosStateSuccessNoItemsPreview() {
                 isSelectionMode = false,
                 selectableFilterDates = emptyList(),
                 isRefreshed = true,
-                selectedCount = 0
+                selectedCount = 0,
+                filterSavedOnly = false,
+                isSavedPhotosListEmpty = false
             ),
-            {}, {}, {}, {}, {}, {}, {}, {}, {}
+            {}, {}, {}, {}, {}, {}, {}, {}, {}, {}
         )
     }
 }

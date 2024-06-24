@@ -147,7 +147,8 @@ class PhotoRepositoryImpl @Inject constructor(
                             fileName = fileName,
                             size = "${width}x${height}",
                             url = contentUri.toString(),
-                            thumbnailUrl = contentUri.toString()
+                            thumbnailUrl = contentUri.toString(),
+                            isSaved = true
                         )
                         photos.add(photo)
                     } catch (e: Exception) {
