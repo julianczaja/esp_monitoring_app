@@ -22,7 +22,6 @@ import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.presentation.deviceinfo.DeviceInfoScreen
 import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DevicePhotosScreen
-import com.julianczaja.esp_monitoring_app.presentation.devicesavedphotos.DeviceSavedPhotosScreen
 import com.julianczaja.esp_monitoring_app.presentation.devicetimelapses.DeviceTimelapsesScreen
 import kotlinx.coroutines.launch
 
@@ -36,7 +35,7 @@ fun DeviceScreen(
     navigateToTimelapseCreatorScreen: (List<Photo>) -> Unit,
 ) {
     val coroutineScope = rememberCoroutineScope()
-    val pages = listOf(DevicePage.Photos, DevicePage.Saved, DevicePage.Timelapse, DevicePage.Info)
+    val pages = listOf(DevicePage.Photos, DevicePage.Timelapse, DevicePage.Info)
     val pagerState = rememberPagerState(pageCount = { pages.size })
 
     LaunchedEffect(key1 = true) {
@@ -83,11 +82,6 @@ fun DeviceScreen(
                     navigateToPhotoPreview = navigateToPhotoPreview,
                     navigateToRemovePhotosDialog = navigateToRemovePhotosDialog,
                     navigateToTimelapseCreatorScreen = navigateToTimelapseCreatorScreen
-                )
-
-                DevicePage.Saved.index -> DeviceSavedPhotosScreen(
-                    snackbarHostState = snackbarHostState,
-                    navigateToPhotoPreview = navigateToPhotoPreview
                 )
 
                 DevicePage.Timelapse.index -> DeviceTimelapsesScreen(
