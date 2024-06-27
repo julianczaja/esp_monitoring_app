@@ -18,9 +18,14 @@ fun checkPermissionAndDoAction(
     }
 }
 
-fun getReadExternalStoragePermissionName() = when {
+fun getReadExternalStorageImagesPermissionName() = when {
     Build.VERSION.SDK_INT < 33 -> Manifest.permission.READ_EXTERNAL_STORAGE
     else -> Manifest.permission.READ_MEDIA_IMAGES
+}
+
+fun getReadExternalStorageVideosPermissionName() = when {
+    Build.VERSION.SDK_INT < 33 -> Manifest.permission.READ_EXTERNAL_STORAGE
+    else -> Manifest.permission.READ_MEDIA_VIDEO
 }
 
 fun getLocationPermissionNameOrEmpty() = when {

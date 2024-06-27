@@ -50,7 +50,7 @@ import com.julianczaja.esp_monitoring_app.components.SelectedEditBar
 import com.julianczaja.esp_monitoring_app.components.StateBar
 import com.julianczaja.esp_monitoring_app.data.utils.getActivity
 import com.julianczaja.esp_monitoring_app.data.utils.getPermissionState
-import com.julianczaja.esp_monitoring_app.data.utils.getReadExternalStoragePermissionName
+import com.julianczaja.esp_monitoring_app.data.utils.getReadExternalStorageImagesPermissionName
 import com.julianczaja.esp_monitoring_app.data.utils.openAppSettings
 import com.julianczaja.esp_monitoring_app.domain.model.PermissionState
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
@@ -79,7 +79,7 @@ fun DevicePhotosScreen(
     val context = LocalContext.current
     var updatePhotosCalled by rememberSaveable { mutableStateOf(false) }
 
-    val storagePermissionName = getReadExternalStoragePermissionName()
+    val storagePermissionName = getReadExternalStorageImagesPermissionName()
     var storagePermissionState by rememberSaveable {
         mutableStateOf(context.getActivity().getPermissionState(storagePermissionName))
     }
@@ -96,6 +96,7 @@ fun DevicePhotosScreen(
                     storagePermissionState = PermissionState.GRANTED
                     shouldShowPermissionRationaleDialog = false
                     shouldShowPermissionMissingNotice = false
+                    viewModel.updatePhotos()
                 }
 
                 false -> {

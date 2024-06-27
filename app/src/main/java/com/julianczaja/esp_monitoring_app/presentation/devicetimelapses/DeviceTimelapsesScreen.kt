@@ -59,7 +59,7 @@ import com.julianczaja.esp_monitoring_app.components.PhotoInfoRow
 import com.julianczaja.esp_monitoring_app.data.utils.formatBytes
 import com.julianczaja.esp_monitoring_app.data.utils.getActivity
 import com.julianczaja.esp_monitoring_app.data.utils.getPermissionState
-import com.julianczaja.esp_monitoring_app.data.utils.getReadExternalStoragePermissionName
+import com.julianczaja.esp_monitoring_app.data.utils.getReadExternalStorageVideosPermissionName
 import com.julianczaja.esp_monitoring_app.data.utils.openAppSettings
 import com.julianczaja.esp_monitoring_app.data.utils.toDayMonthYearString
 import com.julianczaja.esp_monitoring_app.domain.model.PermissionState
@@ -80,7 +80,7 @@ fun DeviceTimelapsesScreen(
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    val storagePermissionName = getReadExternalStoragePermissionName()
+    val storagePermissionName = getReadExternalStorageVideosPermissionName()
     var storagePermissionState by rememberSaveable {
         mutableStateOf(context.getActivity().getPermissionState(storagePermissionName))
     }
@@ -97,6 +97,7 @@ fun DeviceTimelapsesScreen(
                     storagePermissionState = PermissionState.GRANTED
                     shouldShowPermissionRationaleDialog = false
                     shouldShowPermissionMissingNotice = false
+                    viewModel.updateTimelapses()
                 }
 
                 false -> {
