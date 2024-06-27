@@ -35,6 +35,7 @@ class TimelapseRepositoryImpl @Inject constructor(
         )
         val selection = "${MediaStore.Video.Media.DATA} LIKE ?"
         val selectionArgs = arrayOf("%${directory}%")
+        val sortOrder = MediaStore.Video.Media.DATE_ADDED + " DESC"
 
         return try {
             contentResolver.query(
@@ -42,7 +43,7 @@ class TimelapseRepositoryImpl @Inject constructor(
                 projection,
                 selection,
                 selectionArgs,
-                null
+                sortOrder
             )?.use { cursor ->
                 val nameColumnIndex = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DISPLAY_NAME)
                 val dateColumnIndex = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATE_ADDED)
