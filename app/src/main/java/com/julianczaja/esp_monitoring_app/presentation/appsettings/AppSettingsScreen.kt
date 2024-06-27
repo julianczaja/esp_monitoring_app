@@ -36,7 +36,7 @@ import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.components.AppBackground
 import com.julianczaja.esp_monitoring_app.components.DefaultProgressIndicator
 import com.julianczaja.esp_monitoring_app.components.SwitchWithLabel
-import com.julianczaja.esp_monitoring_app.domain.model.AppSettings
+import com.julianczaja.esp_monitoring_app.domain.model.FieldState
 import com.julianczaja.esp_monitoring_app.presentation.appsettings.AppSettingsScreenViewModel.UiState
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 
@@ -121,13 +121,13 @@ private fun SuccessScreen(
     ) {
         OutlinedTextField(
             modifier = Modifier.fillMaxWidth(),
-            value = uiState.baseUrlFieldValue,
+            value = uiState.baseUrlFieldState.data,
             onValueChange = onBaseUrlUpdate,
             label = { Text(stringResource(R.string.base_url_label)) },
-            isError = uiState.baseUrlFieldError != null,
+            isError = uiState.baseUrlFieldState.error != null,
             singleLine = true,
             supportingText = {
-                uiState.baseUrlFieldError?.let { errorId ->
+                uiState.baseUrlFieldState.error?.let { errorId ->
                     Text(
                         text = stringResource(id = errorId),
                         color = MaterialTheme.colorScheme.error,
@@ -150,7 +150,7 @@ private fun SuccessScreen(
                     onBaseUrlApply()
                     focusManager.clearFocus()
                 },
-                enabled = uiState.baseUrlFieldError == null
+                enabled = uiState.baseUrlFieldState.error == null
             ) {
                 Text(text = stringResource(id = R.string.update_label))
             }
@@ -162,7 +162,7 @@ private fun SuccessScreen(
             SwitchWithLabel(
                 modifier = Modifier.fillMaxWidth(),
                 label = stringResource(R.string.dynamic_color_label),
-                isChecked = uiState.appSettings.isDynamicColor,
+                isChecked = uiState.isDynamicColor,
                 onCheckedChange = onDynamicColorChanged,
                 enabled = true
             )
@@ -198,9 +198,8 @@ private fun SuccessScreenNoBaseUrlErrorPreview() {
     AppBackground {
         SuccessScreen(
             uiState = UiState.Success(
-                AppSettings("goodBaseUrl", false, false),
-                baseUrlFieldValue = "goodBaseUrl",
-                baseUrlFieldError = null
+                baseUrlFieldState = FieldState("goodBaseUrl", null),
+                isDynamicColor = false
             ),
             onBaseUrlUpdate = {},
             onBaseUrlApply = {},
@@ -216,9 +215,8 @@ private fun SuccessScreenBaseUrlErrorPreview() {
     AppBackground {
         SuccessScreen(
             uiState = UiState.Success(
-                AppSettings("badBaseUrl", false, true),
-                baseUrlFieldValue = "badBaseUrl",
-                baseUrlFieldError = R.string.base_url_invalid
+                baseUrlFieldState = FieldState("goodBaseUrl", R.string.base_url_invalid),
+                isDynamicColor = true
             ),
             onBaseUrlUpdate = {},
             onBaseUrlApply = {},

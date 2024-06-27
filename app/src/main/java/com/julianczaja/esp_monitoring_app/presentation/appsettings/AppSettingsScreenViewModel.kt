@@ -1,12 +1,10 @@
 package com.julianczaja.esp_monitoring_app.presentation.appsettings
 
-import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.common.Constants
 import com.julianczaja.esp_monitoring_app.di.IoDispatcher
-import com.julianczaja.esp_monitoring_app.domain.model.AppSettings
 import com.julianczaja.esp_monitoring_app.domain.model.FieldState
 import com.julianczaja.esp_monitoring_app.domain.repository.AppSettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -28,33 +26,27 @@ class AppSettingsScreenViewModel @Inject constructor(
 ) : ViewModel() {
 
     companion object {
-        private val BASE_URL_REGEX = Regex("""^\s*(https?://[a-z0-9_.]+:\d{4}/?)""")
+        private val BASE_URL_REGEX = Regex("""^\s*(https?://[a-zA-Z0-9_.-]+:\d{4,5}/?)""")
     }
 
     private val _baseUrlFieldState = MutableStateFlow(FieldState(""))
     private var _isBaseUrlFieldInitiated = false
-    private var _lastSavedBaseUrl = ""
 
     val eventFlow = MutableSharedFlow<Event>()
 
     val uiState = combine(
-        appSettingsRepository.getAppSettings(),
+        appSettingsRepository.getBaseUrl(),
+        appSettingsRepository.getDynamicColor(),
         _baseUrlFieldState
-    ) { appSettings, baseUrlFieldState ->
-        _lastSavedBaseUrl = appSettings.baseUrl
-        return@combine if (!_isBaseUrlFieldInitiated) {
-            UiState.Success(
-                appSettings = appSettings,
-                baseUrlFieldValue = appSettings.baseUrl, // on start set data from datastore
-                baseUrlFieldError = null
-            ).also { _isBaseUrlFieldInitiated = true }
-        } else {
-            UiState.Success(
-                appSettings = appSettings,
-                baseUrlFieldValue = baseUrlFieldState.data,
-                baseUrlFieldError = baseUrlFieldState.error
-            )
+    ) { baseUrl, dynamicColor, baseUrlFieldState ->
+        if (!_isBaseUrlFieldInitiated) {
+            _baseUrlFieldState.update { FieldState(baseUrl) }
+            _isBaseUrlFieldInitiated = true
         }
+        return@combine UiState.Success(
+            baseUrlFieldState = baseUrlFieldState,
+            isDynamicColor = dynamicColor
+        )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
@@ -71,7 +63,7 @@ class AppSettingsScreenViewModel @Inject constructor(
 
     fun applyBaseUrl() = viewModelScope.launch(ioDispatcher) {
         val baseUrlFieldState = _baseUrlFieldState.value
-        if (baseUrlFieldState.data != _lastSavedBaseUrl && baseUrlFieldState.error == null) {
+        if (baseUrlFieldState.error == null) {
             appSettingsRepository.setBaseUrl(baseUrlFieldState.data)
             eventFlow.emit(Event.BaseUrlSaved)
         }
@@ -92,9 +84,8 @@ class AppSettingsScreenViewModel @Inject constructor(
     sealed class UiState {
         data object Loading : UiState()
         data class Success(
-            val appSettings: AppSettings,
-            val baseUrlFieldValue: String,
-            @StringRes val baseUrlFieldError: Int?,
+            val baseUrlFieldState: FieldState<String>,
+            val isDynamicColor: Boolean,
         ) : UiState()
     }
 }

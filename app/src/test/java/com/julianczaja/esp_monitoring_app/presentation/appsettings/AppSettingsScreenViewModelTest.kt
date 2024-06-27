@@ -48,7 +48,7 @@ class AppSettingsScreenViewModelTest {
 
         viewModel.uiState.test {
             assertThat(awaitItem()).isInstanceOf(UiState.Loading::class.java)
-            assertThat((awaitItem() as UiState.Success).appSettings.baseUrl).isEqualTo(initialBaseUrl)
+            assertThat((awaitItem() as UiState.Success).baseUrlFieldState.data).isEqualTo(initialBaseUrl)
         }
     }
 
@@ -69,8 +69,8 @@ class AppSettingsScreenViewModelTest {
 
             viewModel.setBaseUrl(updatedBaseUrl)
             with(awaitItem() as UiState.Success) {
-                assertThat(baseUrlFieldError).isNotNull()
-                assertThat(baseUrlFieldValue).isEqualTo(updatedBaseUrl)
+                assertThat(baseUrlFieldState.error).isNotNull()
+                assertThat(baseUrlFieldState.data).isEqualTo(updatedBaseUrl)
             }
         }
     }
@@ -92,8 +92,8 @@ class AppSettingsScreenViewModelTest {
 
             viewModel.setBaseUrl(updatedBaseUrl)
             with(awaitItem() as UiState.Success) {
-                assertThat(baseUrlFieldError).isNull()
-                assertThat(baseUrlFieldValue).isEqualTo(updatedBaseUrl)
+                assertThat(baseUrlFieldState.error).isNull()
+                assertThat(baseUrlFieldState.data).isEqualTo(updatedBaseUrl)
             }
         }
     }
