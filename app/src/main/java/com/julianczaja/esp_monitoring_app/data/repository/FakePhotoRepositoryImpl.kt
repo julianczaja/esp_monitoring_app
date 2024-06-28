@@ -14,9 +14,12 @@ class FakePhotoRepositoryImpl : PhotoRepository {
 
     var getLastPhotoLocalThrowsError = false
     var updateAllPhotosReturnsException = false
+    var readAllSavedPhotosReturnsException = false
     var removePhotoByFileNameLocalReturnsException = false
     var removePhotoByFileNameRemoteReturnsException = false
+
     var remotePhotos = emptyList<Photo>()
+    var savedPhotos = emptyList<Photo>()
 
     suspend fun emitAllPhotosLocalData(data: List<Photo>) = _allPhotosLocalFlow.emit(data)
 
@@ -40,16 +43,13 @@ class FakePhotoRepositoryImpl : PhotoRepository {
         }
     }
 
-    override suspend fun downloadPhotoAndSaveToExternalStorage(photo: Photo): Result<Unit> {
-        TODO("Not yet implemented")
-    }
-
     override suspend fun readAllSavedPhotosFromExternalStorage(deviceId: Long): Result<List<Photo>> {
-        TODO("Not yet implemented")
-    }
-
-    override suspend fun removeSavedPhotoFromExternalStorage(photo: Photo): Result<Unit> {
-        TODO("Not yet implemented")
+        delay(1000)
+        return if (readAllSavedPhotosReturnsException) {
+            Result.failure(Exception("error"))
+        } else {
+            Result.success(savedPhotos)
+        }
     }
 
     override suspend fun removePhotoByFileNameLocal(fileName: String): Result<Unit> =
@@ -63,4 +63,12 @@ class FakePhotoRepositoryImpl : PhotoRepository {
             true -> Result.failure(Exception())
             false -> Result.success(Unit)
         }
+
+    override suspend fun downloadPhotoAndSaveToExternalStorage(photo: Photo): Result<Unit> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun removeSavedPhotoFromExternalStorage(photo: Photo): Result<Unit> {
+        TODO("Not yet implemented")
+    }
 }

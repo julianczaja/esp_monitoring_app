@@ -136,4 +136,5 @@ dependencies {
     testImplementation(libs.truth)
     testImplementation(libs.mockk)
     testImplementation(libs.turbine)
+    testImplementation(libs.androidx.navigation.testing)
 }

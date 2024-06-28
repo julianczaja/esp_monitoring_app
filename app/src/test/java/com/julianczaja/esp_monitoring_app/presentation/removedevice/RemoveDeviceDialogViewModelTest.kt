@@ -1,18 +1,30 @@
 package com.julianczaja.esp_monitoring_app.presentation.removedevice
 
 import androidx.lifecycle.SavedStateHandle
+import androidx.navigation.testing.invoke
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
+import com.julianczaja.esp_monitoring_app.MainDispatcherRule
 import com.julianczaja.esp_monitoring_app.data.repository.FakeDeviceRepositoryImpl
 import com.julianczaja.esp_monitoring_app.domain.model.Device
 import com.julianczaja.esp_monitoring_app.domain.repository.DeviceRepository
-import com.julianczaja.esp_monitoring_app.MainDispatcherRule
+import com.julianczaja.esp_monitoring_app.navigation.RemoveDeviceDialog
 import io.mockk.coVerify
 import io.mockk.spyk
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
+/**
+ * These tests use Robolectric because the subject under test (the ViewModel) uses
+ * `SavedStateHandle.toRoute` which has a dependency on `android.os.Bundle`.
+ *
+ * TODO: Remove Robolectric if/when AndroidX Navigation API is updated to remove Android dependency.
+ *  See b/340966212.
+ */
+@RunWith(RobolectricTestRunner::class)
 class RemoveDeviceDialogViewModelTest {
 
     @get:Rule
@@ -22,7 +34,7 @@ class RemoveDeviceDialogViewModelTest {
         deviceId: Long,
         deviceRepository: DeviceRepository? = null
     ) = RemoveDeviceDialogViewModel(
-        savedStateHandle = SavedStateHandle(mapOf("deviceId" to deviceId)),
+        savedStateHandle = SavedStateHandle(route = RemoveDeviceDialog(deviceId)),
         deviceRepository = deviceRepository ?: FakeDeviceRepositoryImpl(),
         ioDispatcher = dispatcherRule.testDispatcher
     )

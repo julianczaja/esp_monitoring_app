@@ -1,6 +1,7 @@
 package com.julianczaja.esp_monitoring_app.presentation.devicephotos
 
 import androidx.lifecycle.SavedStateHandle
+import androidx.navigation.testing.invoke
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
 import com.julianczaja.esp_monitoring_app.MainDispatcherRule
@@ -9,8 +10,7 @@ import com.julianczaja.esp_monitoring_app.data.repository.FakePhotoRepositoryImp
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.domain.model.Selectable
 import com.julianczaja.esp_monitoring_app.domain.usecase.SelectOrDeselectAllPhotosByDateUseCase
-import com.julianczaja.esp_monitoring_app.navigation.DeviceIdArgs
-import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DevicePhotosScreenViewModel.UiState
+import com.julianczaja.esp_monitoring_app.navigation.DeviceScreen
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
@@ -22,10 +22,19 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 import java.time.LocalDate
 import java.time.LocalDateTime
 
-
+/**
+ * These tests use Robolectric because the subject under test (the ViewModel) uses
+ * `SavedStateHandle.toRoute` which has a dependency on `android.os.Bundle`.
+ *
+ * TODO: Remove Robolectric if/when AndroidX Navigation API is updated to remove Android dependency.
+ *  See b/340966212.
+ */
+@RunWith(RobolectricTestRunner::class)
 class DevicePhotosScreenViewModelTest {
 
     @get:Rule
@@ -40,7 +49,7 @@ class DevicePhotosScreenViewModelTest {
 
     @Before
     fun setup() {
-        savedStateHandle = SavedStateHandle().apply { set(DeviceIdArgs.KEY, deviceId) }
+        savedStateHandle = SavedStateHandle(route = DeviceScreen(deviceId))
         photoRepository = spyk(FakePhotoRepositoryImpl())
         networkManager = mockk()
         every { networkManager.isOnline } returns flow { delay(1000); emit(true) }
@@ -56,8 +65,7 @@ class DevicePhotosScreenViewModelTest {
     @Test
     fun `isRefreshing should be false on start`() = runTest {
         viewModel.devicePhotosUiState.test {
-            val uiState = awaitItem()
-            assertThat(uiState.isLoading).isEqualTo(false)
+            assertThat(awaitItem().isLoading).isEqualTo(false)
         }
         coVerify(exactly = 0) { photoRepository.updateAllPhotosRemote(deviceId) }
     }
@@ -68,13 +76,10 @@ class DevicePhotosScreenViewModelTest {
         photoRepository.remotePhotos = remotePhotos
 
         viewModel.devicePhotosUiState.test {
-            var uiState = awaitItem()
-            assertThat(uiState.isLoading).isEqualTo(false)
+            assertThat(awaitItem().isLoading).isEqualTo(false)
             viewModel.updatePhotos()
-            uiState = awaitItem()
-            assertThat(uiState.isLoading).isEqualTo(true)
-            uiState = awaitItem()
-            assertThat(uiState.isLoading).isEqualTo(false)
+            assertThat(awaitItem().isLoading).isEqualTo(true)
+            assertThat(awaitItem().isLoading).isEqualTo(false)
             cancelAndIgnoreRemainingEvents()
         }
         coVerify(exactly = 1) { photoRepository.updateAllPhotosRemote(deviceId) }
@@ -91,23 +96,32 @@ class DevicePhotosScreenViewModelTest {
             thumbnailUrl = "thumbnailUrl"
         )
         val localPhotos = listOf(photo)
-        val dateGroupedSelectablePhotos = mapOf(
+        val expectedDateGroupedSelectablePhotos = mapOf(
             photo.dateTime.toLocalDate() to listOf(Selectable(photo, false))
         )
 
         viewModel.devicePhotosUiState.test {
-            var uiState: UiState = awaitItem()
-            assertThat(uiState.dateGroupedSelectablePhotos).isEqualTo(emptyMap<LocalDate, List<Selectable<Photo>>>())
+            with(awaitItem()) { assertThat(dateGroupedSelectablePhotos).isEmpty() }
             photoRepository.emitAllPhotosLocalData(localPhotos)
-            uiState = awaitItem()
-            assertThat(uiState.dateGroupedSelectablePhotos).isEqualTo(dateGroupedSelectablePhotos)
+            with(awaitItem()) { assertThat(dateGroupedSelectablePhotos).isEqualTo(expectedDateGroupedSelectablePhotos) }
         }
         verify(exactly = 1) { photoRepository.getAllPhotosLocal(deviceId) }
     }
 
     @Test
-    fun `event flow emits ShowError when repository thrown exception`() = runTest {
+    fun `event flow emits ShowError when updateAllPhotos thrown exception`() = runTest {
         photoRepository.updateAllPhotosReturnsException = true
+
+        viewModel.eventFlow.test {
+            viewModel.updatePhotos()
+            assertThat(awaitItem()).isInstanceOf(DevicePhotosScreenViewModel.Event.ShowError::class.java)
+        }
+        coVerify(exactly = 1) { photoRepository.updateAllPhotosRemote(deviceId) }
+    }
+
+    @Test
+    fun `event flow emits ShowError when readAllSavedPhotos thrown exception`() = runTest {
+        photoRepository.readAllSavedPhotosReturnsException = true
 
         viewModel.eventFlow.test {
             viewModel.updatePhotos()
@@ -125,18 +139,17 @@ class DevicePhotosScreenViewModelTest {
             Photo(3L, localDate.atTime(12, 0), "", "", "", ""),
         )
         photoRepository.remotePhotos = remotePhotos
+        viewModel.updatePhotos()
 
         viewModel.devicePhotosUiState.test {
-            assertThat(awaitItem().dateGroupedSelectablePhotos).isEmpty()
-            viewModel.updatePhotos()
+            delay(5000L)
 
-            var uiState = awaitItem()
-            val selectablePhotos = uiState.dateGroupedSelectablePhotos[localDate].orEmpty()
-            assertThat(selectablePhotos).hasSize(3)
-            viewModel.onPhotoLongClick(selectablePhotos.first())
+            val photos = expectMostRecentItem().dateGroupedSelectablePhotos[localDate].orEmpty()
+            assertThat(photos).hasSize(3)
+
+            viewModel.onPhotoLongClick(photos.first())
             viewModel.onSelectDeselectAllClicked(localDate)
-            uiState = expectMostRecentItem()
-            assertThat(uiState.dateGroupedSelectablePhotos[localDate]?.all { it.isSelected }).isTrue()
+            assertThat(expectMostRecentItem().dateGroupedSelectablePhotos[localDate]?.all { it.isSelected }).isTrue()
         }
     }
 
@@ -149,17 +162,14 @@ class DevicePhotosScreenViewModelTest {
             Photo(3L, localDate.atTime(12, 0), "", "", "", ""),
         )
         photoRepository.remotePhotos = remotePhotos
+        viewModel.updatePhotos()
 
         viewModel.devicePhotosUiState.test {
-            assertThat(awaitItem().dateGroupedSelectablePhotos).isEmpty()
-            viewModel.updatePhotos()
+            delay(5000L)
+            assertThat(expectMostRecentItem().dateGroupedSelectablePhotos[localDate]).hasSize(3)
 
-            var uiState = awaitItem()
-            val selectablePhotos = uiState.dateGroupedSelectablePhotos[localDate].orEmpty()
-            assertThat(selectablePhotos).hasSize(3)
             viewModel.onSelectDeselectAllClicked(localDate)
-            uiState = expectMostRecentItem()
-            assertThat(uiState.dateGroupedSelectablePhotos[localDate]?.all { it.isSelected }).isTrue()
+            assertThat(expectMostRecentItem().dateGroupedSelectablePhotos[localDate]?.all { it.isSelected }).isTrue()
         }
     }
 
@@ -172,22 +182,96 @@ class DevicePhotosScreenViewModelTest {
             Photo(3L, localDate.atTime(12, 0), "", "", "", ""),
         )
         photoRepository.remotePhotos = remotePhotos
+        viewModel.updatePhotos()
 
         viewModel.devicePhotosUiState.test {
-            assertThat(awaitItem().dateGroupedSelectablePhotos).isEmpty()
-            viewModel.updatePhotos()
+            delay(5000L)
 
-            var uiState = awaitItem()
-            val selectablePhotos = uiState.dateGroupedSelectablePhotos[localDate].orEmpty()
+            val selectablePhotos = expectMostRecentItem().dateGroupedSelectablePhotos[localDate].orEmpty()
             assertThat(selectablePhotos).hasSize(3)
+
             with(viewModel) {
                 onPhotoLongClick(selectablePhotos[0])
-                onPhotoLongClick(selectablePhotos[1])
-                onPhotoLongClick(selectablePhotos[2])
+                onPhotoClick(selectablePhotos[1])
+                onPhotoClick(selectablePhotos[2])
                 onSelectDeselectAllClicked(localDate)
             }
-            uiState = expectMostRecentItem()
-            assertThat(uiState.dateGroupedSelectablePhotos[localDate]?.all { !it.isSelected }).isTrue()
+            assertThat(expectMostRecentItem().dateGroupedSelectablePhotos[localDate]?.all { !it.isSelected }).isTrue()
+        }
+    }
+
+    @Test
+    fun `all photos should contain sorted local and saved photos`() = runTest {
+        val localDate = LocalDate.of(2024, 6, 6)
+        photoRepository.remotePhotos = listOf(
+            Photo(1L, localDate.atTime(10, 0), "10", "", "", ""),
+            Photo(1L, localDate.atTime(11, 0), "11", "", "", "")
+        )
+        photoRepository.savedPhotos = listOf(
+            Photo(1L, localDate.atTime(20, 0), "20", "", "", ""),
+            Photo(1L, localDate.atTime(21, 0), "21", "", "", "")
+        )
+        val expectedPhotos = listOf(
+            Selectable(photoRepository.savedPhotos[1], false),
+            Selectable(photoRepository.savedPhotos[0], false),
+            Selectable(photoRepository.remotePhotos[1], false),
+            Selectable(photoRepository.remotePhotos[0], false)
+        )
+        viewModel.updatePhotos()
+
+        viewModel.devicePhotosUiState.test {
+            delay(5000L)
+            assertThat(expectMostRecentItem().dateGroupedSelectablePhotos[localDate]).isEqualTo(expectedPhotos)
+        }
+    }
+
+    @Test
+    fun `all photos should contain sorted local and saved photos without duplicates based on file names`() = runTest {
+        val localDate = LocalDate.of(2024, 6, 6)
+        photoRepository.remotePhotos = listOf(
+            Photo(1L, localDate.atTime(10, 0), "10", "", "", ""),
+            Photo(1L, localDate.atTime(11, 0), "11", "", "", "")
+        )
+        photoRepository.savedPhotos = listOf(
+            Photo(1L, localDate.atTime(10, 0), "10", "", "", ""),
+            Photo(1L, localDate.atTime(21, 0), "21", "", "", "")
+        )
+        val expectedPhotos = listOf(
+            Selectable(photoRepository.savedPhotos[1], false),
+            Selectable(photoRepository.remotePhotos[1], false),
+            Selectable(photoRepository.remotePhotos[0], false)
+        )
+
+        viewModel.updatePhotos()
+
+        viewModel.devicePhotosUiState.test {
+            delay(5000L)
+            assertThat(expectMostRecentItem().dateGroupedSelectablePhotos[localDate]).isEqualTo(expectedPhotos)
+        }
+    }
+
+    @Test
+    fun `all photos should contain only sorted saved photos when saved only filter is enabled`() = runTest {
+        val localDate = LocalDate.of(2024, 6, 6)
+        photoRepository.remotePhotos = listOf(
+            Photo(1L, localDate.atTime(10, 0), "10", "", "", ""),
+            Photo(1L, localDate.atTime(11, 0), "11", "", "", "")
+        )
+        photoRepository.savedPhotos = listOf(
+            Photo(1L, localDate.atTime(10, 0), "20", "", "", ""),
+            Photo(1L, localDate.atTime(21, 0), "21", "", "", "")
+        )
+        val expectedPhotos = listOf(
+            Selectable(photoRepository.savedPhotos[1], false),
+            Selectable(photoRepository.savedPhotos[0], false)
+        )
+
+        viewModel.updatePhotos()
+        viewModel.onFilterSavedOnlyClicked(true)
+
+        viewModel.devicePhotosUiState.test {
+            delay(5000L)
+            assertThat(expectMostRecentItem().dateGroupedSelectablePhotos[localDate]).isEqualTo(expectedPhotos)
         }
     }
 }

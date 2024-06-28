@@ -1,17 +1,29 @@
 package com.julianczaja.esp_monitoring_app.presentation.removephotos
 
 import androidx.lifecycle.SavedStateHandle
+import androidx.navigation.testing.invoke
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
 import com.julianczaja.esp_monitoring_app.MainDispatcherRule
 import com.julianczaja.esp_monitoring_app.data.repository.FakePhotoRepositoryImpl
 import com.julianczaja.esp_monitoring_app.domain.repository.PhotoRepository
+import com.julianczaja.esp_monitoring_app.navigation.RemovePhotosDialog
 import io.mockk.coVerify
 import io.mockk.spyk
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
+/**
+ * These tests use Robolectric because the subject under test (the ViewModel) uses
+ * `SavedStateHandle.toRoute` which has a dependency on `android.os.Bundle`.
+ *
+ * TODO: Remove Robolectric if/when AndroidX Navigation API is updated to remove Android dependency.
+ *  See b/340966212.
+ */
+@RunWith(RobolectricTestRunner::class)
 class RemovePhotosDialogViewModelTest {
 
     @get:Rule
@@ -21,7 +33,7 @@ class RemovePhotosDialogViewModelTest {
         photosFileNames: List<String>,
         photoRepository: PhotoRepository? = null
     ) = RemovePhotosDialogViewModel(
-        savedStateHandle = SavedStateHandle(mapOf("photosFileNames" to photosFileNames)),
+        savedStateHandle = SavedStateHandle(route = RemovePhotosDialog(photosFileNames)),
         photoRepository = photoRepository ?: FakePhotoRepositoryImpl(),
         ioDispatcher = dispatcherRule.testDispatcher
     )

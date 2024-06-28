@@ -1,12 +1,14 @@
 package com.julianczaja.esp_monitoring_app.presentation.addeditdevice
 
 import androidx.lifecycle.SavedStateHandle
+import androidx.navigation.testing.invoke
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
 import com.julianczaja.esp_monitoring_app.MainDispatcherRule
 import com.julianczaja.esp_monitoring_app.data.repository.FakeDeviceRepositoryImpl
 import com.julianczaja.esp_monitoring_app.domain.model.Device
 import com.julianczaja.esp_monitoring_app.domain.repository.DeviceRepository
+import com.julianczaja.esp_monitoring_app.navigation.AddEditDeviceScreen
 import com.julianczaja.esp_monitoring_app.navigation.DeviceIdArgs
 import com.julianczaja.esp_monitoring_app.presentation.addeditdevice.AddEditDeviceScreenViewModel.Event
 import io.mockk.coVerify
@@ -14,18 +16,27 @@ import io.mockk.spyk
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
-
+/**
+ * These tests use Robolectric because the subject under test (the ViewModel) uses
+ * `SavedStateHandle.toRoute` which has a dependency on `android.os.Bundle`.
+ *
+ * TODO: Remove Robolectric if/when AndroidX Navigation API is updated to remove Android dependency.
+ *  See b/340966212.
+ */
+@RunWith(RobolectricTestRunner::class)
 class AddEditDeviceScreenViewModelTest {
 
     @get:Rule
     val dispatcherRule = MainDispatcherRule()
 
     private fun getViewModel(
-        savedStateHandle: SavedStateHandle = SavedStateHandle().apply { set(DeviceIdArgs.KEY, DeviceIdArgs.NO_VALUE) },
+        deviceId: Long? = null,
         deviceRepository: DeviceRepository = spyk(FakeDeviceRepositoryImpl())
     ) = AddEditDeviceScreenViewModel(
-        savedStateHandle = savedStateHandle,
+        savedStateHandle = SavedStateHandle(route = AddEditDeviceScreen(deviceId ?: DeviceIdArgs.NO_VALUE)),
         deviceRepository = deviceRepository,
         ioDispatcher = dispatcherRule.testDispatcher
     ).apply { init() }
@@ -82,10 +93,7 @@ class AddEditDeviceScreenViewModelTest {
         val deviceRepository = spyk(FakeDeviceRepositoryImpl()).apply {
             addNew(deviceInDatabase)
         }
-        val viewModel = getViewModel(
-            savedStateHandle = SavedStateHandle(mapOf(DeviceIdArgs.KEY to deviceInDatabase.id)),
-            deviceRepository = deviceRepository
-        )
+        val viewModel = getViewModel(deviceInDatabase.id, deviceRepository)
 
         viewModel.nameError.test {
             viewModel.updateName("different name")
@@ -105,10 +113,7 @@ class AddEditDeviceScreenViewModelTest {
             addNew(deviceInDatabase1)
             addNew(deviceInDatabase2)
         }
-        val viewModel = getViewModel(
-            savedStateHandle = SavedStateHandle(mapOf(DeviceIdArgs.KEY to deviceInDatabase1.id)),
-            deviceRepository = deviceRepository
-        )
+        val viewModel = getViewModel(deviceInDatabase1.id, deviceRepository)
 
         viewModel.nameError.test {
             assertThat(awaitItem()).isNull()
@@ -124,10 +129,7 @@ class AddEditDeviceScreenViewModelTest {
         val deviceRepository = spyk(FakeDeviceRepositoryImpl()).apply {
             addNew(deviceInDatabase)
         }
-        val viewModel = getViewModel(
-            savedStateHandle = SavedStateHandle(mapOf(DeviceIdArgs.KEY to deviceInDatabase.id)),
-            deviceRepository = deviceRepository
-        )
+        val viewModel = getViewModel(deviceInDatabase.id, deviceRepository)
 
         viewModel.nameError.test {
             assertThat(awaitItem()).isNull()
@@ -142,10 +144,7 @@ class AddEditDeviceScreenViewModelTest {
     fun `id error is null in update mode`() = runTest {
         val deviceInDatabase = Device(1L, "name")
         val deviceRepository = spyk(FakeDeviceRepositoryImpl()).apply { addNew(deviceInDatabase) }
-        val viewModel = getViewModel(
-            savedStateHandle = SavedStateHandle(mapOf(DeviceIdArgs.KEY to deviceInDatabase.id)),
-            deviceRepository = deviceRepository
-        )
+        val viewModel = getViewModel(deviceInDatabase.id, deviceRepository)
 
         viewModel.idError.test {
             assertThat(awaitItem()).isNull()
@@ -170,9 +169,8 @@ class AddEditDeviceScreenViewModelTest {
     @Test
     fun `DeviceUpdated event is emitted when device is updated`() = runTest {
         val deviceInDatabase = Device(1L, "name")
-        val savedStateHandle = SavedStateHandle().apply { set(DeviceIdArgs.KEY, deviceInDatabase.id) }
         val deviceRepository = FakeDeviceRepositoryImpl().apply { addNew(deviceInDatabase) }
-        val viewModel = getViewModel(savedStateHandle, deviceRepository)
+        val viewModel = getViewModel(deviceInDatabase.id, deviceRepository)
 
         viewModel.eventFlow.test {
             viewModel.updateName("updated name")
@@ -199,12 +197,11 @@ class AddEditDeviceScreenViewModelTest {
     @Test
     fun `ShowError event is emitted when exception thrown during updating device`() = runTest {
         val deviceInDatabase = Device(1L, "name")
-        val savedStateHandle = SavedStateHandle().apply { set(DeviceIdArgs.KEY, deviceInDatabase.id) }
         val deviceRepository = FakeDeviceRepositoryImpl().apply {
             addNew(deviceInDatabase)
             updateDeviceThrowsError = true
         }
-        val viewModel = getViewModel(savedStateHandle, deviceRepository)
+        val viewModel = getViewModel(deviceInDatabase.id, deviceRepository)
 
         viewModel.eventFlow.test {
             viewModel.updateName("updated name")
