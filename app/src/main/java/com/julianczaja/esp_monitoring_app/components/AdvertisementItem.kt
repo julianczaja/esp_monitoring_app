@@ -24,8 +24,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.domain.model.BleAdvertisement
-import com.julianczaja.esp_monitoring_app.presentation.theme.color_green_connectable
-import com.julianczaja.esp_monitoring_app.presentation.theme.color_red_not_connectable
+import com.julianczaja.esp_monitoring_app.presentation.theme.color_green
+import com.julianczaja.esp_monitoring_app.presentation.theme.color_red
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 
 
@@ -113,8 +113,8 @@ private fun getConnectableDrawableId(isConnectable: Boolean) = when (isConnectab
 }
 
 private fun getConnectableTextColor(isConnectable: Boolean, isEnabled: Boolean) = when (isConnectable) {
-    true -> if (isEnabled) color_green_connectable else color_green_connectable.copy(alpha = 0.5f)
-    false -> if (isEnabled) color_red_not_connectable else color_red_not_connectable.copy(alpha = 0.5f)
+    true -> if (isEnabled) color_green else color_green.copy(alpha = 0.5f)
+    false -> if (isEnabled) color_red else color_red.copy(alpha = 0.5f)
 }
 
 private fun getConnectableStringId(isConnectable: Boolean) = when (isConnectable) {

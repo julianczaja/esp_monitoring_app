@@ -74,5 +74,5 @@ val surfaceContainerDark = Color(0xFF231F17)
 val surfaceContainerHighDark = Color(0xFF2E2A21)
 val surfaceContainerHighestDark = Color(0xFF39342B)
 
-val color_green_connectable = Color(30, 200, 30)
-val color_red_not_connectable = Color(200, 30, 30)
+val color_green = Color(30, 200, 30)
+val color_red = Color(200, 30, 30)

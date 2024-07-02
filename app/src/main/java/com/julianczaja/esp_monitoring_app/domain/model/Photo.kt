@@ -19,7 +19,28 @@ data class Photo(
     val url: String,
     val thumbnailUrl: String,
     val isSaved: Boolean = false,
-) : Parcelable
+) : Parcelable {
+
+    companion object {
+        fun mock(
+            deviceId: Long = 1L,
+            dateTime: LocalDateTime = LocalDateTime.of(2024, 6, 15, 10, 25, 1),
+            fileName: String = "fileName.jpeg",
+            size: String = "1600x1200",
+            url: String = "url",
+            thumbnailUrl: String = "thumbnailUrl",
+            isSaved: Boolean = false
+        ) = Photo(
+            deviceId = deviceId,
+            dateTime = dateTime,
+            fileName = fileName,
+            size = size,
+            url = url,
+            thumbnailUrl = thumbnailUrl,
+            isSaved = isSaved,
+        )
+    }
+}
 
 fun Photo.toPhotoEntity() = PhotoEntity(
     deviceId = deviceId,

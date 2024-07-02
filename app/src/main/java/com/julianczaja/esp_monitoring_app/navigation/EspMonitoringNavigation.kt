@@ -58,13 +58,13 @@ fun NavController.navigateToRemoveDeviceDialog(deviceId: Long) {
     }
 }
 
-// Remove photo
+// Remove photos
 @Serializable
-data class RemovePhotosDialog(val photosFileNames: List<String>)
+data class RemovePhotosDialog(val photos: List<Photo>)
 
 
-fun NavController.navigateToRemovePhotosDialog(photoFileNames: List<String>) {
-    navigate(RemovePhotosDialog(photoFileNames)) {
+fun NavController.navigateToRemovePhotosDialog(photos: List<Photo>) {
+    navigate(RemovePhotosDialog(photos)) {
         launchSingleTop = true
     }
 }
@@ -101,7 +101,6 @@ fun NavController.navigateToTimelapseCreatorScreen(photos: List<Photo>) {
 
 // Args
 object DeviceIdArgs {
-    const val KEY = "deviceId"
     const val NO_VALUE = -1L
 }
 

@@ -72,7 +72,7 @@ fun DevicePhotosScreen(
     snackbarHostState: SnackbarHostState,
     navigateToPhotoPreview: (Long, String) -> Unit,
     navigateToTimelapseCreatorScreen: (List<Photo>) -> Unit,
-    navigateToRemovePhotosDialog: (List<String>) -> Unit,
+    navigateToRemovePhotosDialog: (List<Photo>) -> Unit,
     viewModel: DevicePhotosScreenViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.devicePhotosUiState.collectAsStateWithLifecycle()

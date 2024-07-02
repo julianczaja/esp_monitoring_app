@@ -69,6 +69,6 @@ class FakePhotoRepositoryImpl : PhotoRepository {
     }
 
     override suspend fun removeSavedPhotoFromExternalStorage(photo: Photo): Result<Unit> {
-        TODO("Not yet implemented")
+        return Result.success(Unit)
     }
 }

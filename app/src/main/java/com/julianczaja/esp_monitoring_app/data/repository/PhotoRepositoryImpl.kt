@@ -177,7 +177,7 @@ class PhotoRepositoryImpl @Inject constructor(
             return Result.success(Unit)
         } catch (e: Exception) {
             // TODO: Handle RecoverableSecurityException
-            return Result.failure(Exception("Can't remove ${photo.url}: $e"))
+            return Result.failure(e)
         }
     }
 

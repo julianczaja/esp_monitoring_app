@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -226,11 +227,13 @@ class DevicePhotosScreenViewModel @Inject constructor(
         }
     }
 
-    fun removeSelectedPhotos() {
-        viewModelScope.launch {
-            eventFlow.emit(Event.NavigateToRemovePhotosDialog(_selectedPhotos.value.map { it.fileName }))
-            resetSelectedPhotos()
-        }
+    fun removeSelectedPhotos() = viewModelScope.launch(ioDispatcher) {
+        val selectedPhotosFileNames = _selectedPhotos.value.map { it.fileName }
+        val photosToRemove = (photoRepository.getAllPhotosLocal(deviceId).first() + _savedPhotos.value)
+            .filter { selectedPhotosFileNames.contains(it.fileName) }
+
+        eventFlow.emit(Event.NavigateToRemovePhotosDialog(photosToRemove))
+        resetSelectedPhotos()
     }
 
     fun createTimelapseFromSelectedPhotos() {
@@ -255,7 +258,7 @@ class DevicePhotosScreenViewModel @Inject constructor(
 
     sealed class Event {
         data class NavigateToPhotoPreview(val photo: Photo) : Event()
-        data class NavigateToRemovePhotosDialog(val photos: List<String>) : Event()
+        data class NavigateToRemovePhotosDialog(val photos: List<Photo>) : Event()
         data class NavigateToTimelapseCreatorScreen(val photos: List<Photo>) : Event()
         data class ShowSavedInfo(val totalCount: Int, val savedCount: Int) : Event()
         data class ShowError(val messageId: Int) : Event()

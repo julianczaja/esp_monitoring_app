@@ -31,7 +31,7 @@ fun DeviceScreen(
     onSetAppBarTitle: (Int) -> Unit,
     snackbarHostState: SnackbarHostState,
     navigateToPhotoPreview: (Long, String) -> Unit,
-    navigateToRemovePhotosDialog: (List<String>) -> Unit,
+    navigateToRemovePhotosDialog: (List<Photo>) -> Unit,
     navigateToTimelapseCreatorScreen: (List<Photo>) -> Unit,
 ) {
     val coroutineScope = rememberCoroutineScope()
