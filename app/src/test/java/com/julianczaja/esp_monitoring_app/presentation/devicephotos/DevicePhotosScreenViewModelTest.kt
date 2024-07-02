@@ -8,6 +8,7 @@ import com.julianczaja.esp_monitoring_app.MainDispatcherRule
 import com.julianczaja.esp_monitoring_app.data.NetworkManager
 import com.julianczaja.esp_monitoring_app.data.repository.FakePhotoRepositoryImpl
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
+import com.julianczaja.esp_monitoring_app.domain.model.PhotosFilterMode
 import com.julianczaja.esp_monitoring_app.domain.model.Selectable
 import com.julianczaja.esp_monitoring_app.domain.usecase.SelectOrDeselectAllPhotosByDateUseCase
 import com.julianczaja.esp_monitoring_app.navigation.DeviceScreen
@@ -87,14 +88,7 @@ class DevicePhotosScreenViewModelTest {
 
     @Test
     fun `local photos should be mapped to dateGroupedSelectablePhotos`() = runTest {
-        val photo = Photo(
-            deviceId = deviceId,
-            dateTime = LocalDateTime.of(2022, 1, 1, 1, 1, 1),
-            fileName = "fileName",
-            size = "100x500",
-            url = "url",
-            thumbnailUrl = "thumbnailUrl"
-        )
+        val photo = Photo.mock(deviceId = deviceId)
         val localPhotos = listOf(photo)
         val expectedDateGroupedSelectablePhotos = mapOf(
             photo.dateTime.toLocalDate() to listOf(Selectable(photo, false))
@@ -134,9 +128,9 @@ class DevicePhotosScreenViewModelTest {
     fun `should select all photos if only one photos with given date is selected`() = runTest {
         val localDate = LocalDate.of(2024, 6, 6)
         val remotePhotos = listOf(
-            Photo(1L, localDate.atTime(10, 0), "", "", "", ""),
-            Photo(2L, localDate.atTime(11, 0), "", "", "", ""),
-            Photo(3L, localDate.atTime(12, 0), "", "", "", ""),
+            Photo.mock(dateTime = localDate.atTime(10, 0)),
+            Photo.mock(dateTime = localDate.atTime(11, 0)),
+            Photo.mock(dateTime = localDate.atTime(12, 0)),
         )
         photoRepository.remotePhotos = remotePhotos
         viewModel.updatePhotos()
@@ -157,9 +151,9 @@ class DevicePhotosScreenViewModelTest {
     fun `should select all photos if no photo with given date is selected`() = runTest {
         val localDate = LocalDate.of(2024, 6, 6)
         val remotePhotos = listOf(
-            Photo(1L, localDate.atTime(10, 0), "", "", "", ""),
-            Photo(2L, localDate.atTime(11, 0), "", "", "", ""),
-            Photo(3L, localDate.atTime(12, 0), "", "", "", ""),
+            Photo.mock(dateTime = localDate.atTime(10, 0)),
+            Photo.mock(dateTime = localDate.atTime(11, 0)),
+            Photo.mock(dateTime = localDate.atTime(12, 0)),
         )
         photoRepository.remotePhotos = remotePhotos
         viewModel.updatePhotos()
@@ -177,9 +171,9 @@ class DevicePhotosScreenViewModelTest {
     fun `should deselect all photos if all photos with given date are selected`() = runTest {
         val localDate = LocalDate.of(2024, 6, 6)
         val remotePhotos = listOf(
-            Photo(1L, localDate.atTime(10, 0), "", "", "", ""),
-            Photo(2L, localDate.atTime(11, 0), "", "", "", ""),
-            Photo(3L, localDate.atTime(12, 0), "", "", "", ""),
+            Photo.mock(dateTime = localDate.atTime(10, 0)),
+            Photo.mock(dateTime = localDate.atTime(11, 0)),
+            Photo.mock(dateTime = localDate.atTime(12, 0)),
         )
         photoRepository.remotePhotos = remotePhotos
         viewModel.updatePhotos()
@@ -204,12 +198,12 @@ class DevicePhotosScreenViewModelTest {
     fun `all photos should contain sorted local and saved photos`() = runTest {
         val localDate = LocalDate.of(2024, 6, 6)
         photoRepository.remotePhotos = listOf(
-            Photo(1L, localDate.atTime(10, 0), "10", "", "", ""),
-            Photo(1L, localDate.atTime(11, 0), "11", "", "", "")
+            Photo.mock(dateTime = localDate.atTime(10, 0), fileName = "fileName1"),
+            Photo.mock(dateTime = localDate.atTime(11, 0), fileName = "fileName2")
         )
         photoRepository.savedPhotos = listOf(
-            Photo(1L, localDate.atTime(20, 0), "20", "", "", ""),
-            Photo(1L, localDate.atTime(21, 0), "21", "", "", "")
+            Photo.mock(dateTime = localDate.atTime(20, 0), fileName = "fileName3"),
+            Photo.mock(dateTime = localDate.atTime(21, 0), fileName = "fileName4")
         )
         val expectedPhotos = listOf(
             Selectable(photoRepository.savedPhotos[1], false),
@@ -226,18 +220,19 @@ class DevicePhotosScreenViewModelTest {
     }
 
     @Test
-    fun `all photos should contain sorted local and saved photos without duplicates based on file names`() = runTest {
+    fun `all photos should contain sorted server and saved photos when filter mode is set to all`() = runTest {
         val localDate = LocalDate.of(2024, 6, 6)
         photoRepository.remotePhotos = listOf(
-            Photo(1L, localDate.atTime(10, 0), "10", "", "", ""),
-            Photo(1L, localDate.atTime(11, 0), "11", "", "", "")
+            Photo.mock(dateTime = localDate.atTime(10, 0), fileName = "fileName1"),
+            Photo.mock(dateTime = localDate.atTime(11, 0), fileName = "fileName2")
         )
         photoRepository.savedPhotos = listOf(
-            Photo(1L, localDate.atTime(10, 0), "10", "", "", ""),
-            Photo(1L, localDate.atTime(21, 0), "21", "", "", "")
+            Photo.mock(dateTime = localDate.atTime(20, 0), fileName = "fileName3"),
+            Photo.mock(dateTime = localDate.atTime(21, 0), fileName = "fileName4")
         )
         val expectedPhotos = listOf(
             Selectable(photoRepository.savedPhotos[1], false),
+            Selectable(photoRepository.savedPhotos[0], false),
             Selectable(photoRepository.remotePhotos[1], false),
             Selectable(photoRepository.remotePhotos[0], false)
         )
@@ -246,20 +241,23 @@ class DevicePhotosScreenViewModelTest {
 
         viewModel.devicePhotosUiState.test {
             delay(5000L)
-            assertThat(expectMostRecentItem().dateGroupedSelectablePhotos[localDate]).isEqualTo(expectedPhotos)
+            with(expectMostRecentItem()) {
+                assertThat(filterMode).isEqualTo(PhotosFilterMode.ALL)
+                assertThat(dateGroupedSelectablePhotos[localDate]).isEqualTo(expectedPhotos)
+            }
         }
     }
 
     @Test
-    fun `all photos should contain only sorted saved photos when saved only filter is enabled`() = runTest {
+    fun `all photos should contain only sorted saved photos when filter mode is set to saved only`() = runTest {
         val localDate = LocalDate.of(2024, 6, 6)
         photoRepository.remotePhotos = listOf(
-            Photo(1L, localDate.atTime(10, 0), "10", "", "", ""),
-            Photo(1L, localDate.atTime(11, 0), "11", "", "", "")
+            Photo.mock(dateTime = localDate.atTime(10, 0), fileName = "fileName1"),
+            Photo.mock(dateTime = localDate.atTime(11, 0), fileName = "fileName2")
         )
         photoRepository.savedPhotos = listOf(
-            Photo(1L, localDate.atTime(10, 0), "20", "", "", ""),
-            Photo(1L, localDate.atTime(21, 0), "21", "", "", "")
+            Photo.mock(dateTime = localDate.atTime(20, 0), fileName = "fileName3"),
+            Photo.mock(dateTime = localDate.atTime(21, 0), fileName = "fileName4")
         )
         val expectedPhotos = listOf(
             Selectable(photoRepository.savedPhotos[1], false),
@@ -267,11 +265,43 @@ class DevicePhotosScreenViewModelTest {
         )
 
         viewModel.updatePhotos()
-        viewModel.onFilterSavedOnlyClicked(true)
+        viewModel.onFilterModeClicked()
 
         viewModel.devicePhotosUiState.test {
             delay(5000L)
-            assertThat(expectMostRecentItem().dateGroupedSelectablePhotos[localDate]).isEqualTo(expectedPhotos)
+            with(expectMostRecentItem()) {
+                assertThat(filterMode).isEqualTo(PhotosFilterMode.SAVED_ONLY)
+                assertThat(dateGroupedSelectablePhotos[localDate]).isEqualTo(expectedPhotos)
+            }
+        }
+    }
+
+    @Test
+    fun `all photos should contain only sorted server photos when filter mode is set to server only`() = runTest {
+        val localDate = LocalDate.of(2024, 6, 6)
+        photoRepository.remotePhotos = listOf(
+            Photo.mock(dateTime = localDate.atTime(10, 0), fileName = "fileName1"),
+            Photo.mock(dateTime = localDate.atTime(11, 0), fileName = "fileName2")
+        )
+        photoRepository.savedPhotos = listOf(
+            Photo.mock(dateTime = localDate.atTime(20, 0), fileName = "fileName3"),
+            Photo.mock(dateTime = localDate.atTime(21, 0), fileName = "fileName4")
+        )
+        val expectedPhotos = listOf(
+            Selectable(photoRepository.remotePhotos[1], false),
+            Selectable(photoRepository.remotePhotos[0], false)
+        )
+
+        viewModel.updatePhotos()
+        viewModel.onFilterModeClicked()
+        viewModel.onFilterModeClicked()
+
+        viewModel.devicePhotosUiState.test {
+            delay(5000L)
+            with(expectMostRecentItem()) {
+                assertThat(filterMode).isEqualTo(PhotosFilterMode.SERVER_ONLY)
+                assertThat(dateGroupedSelectablePhotos[localDate]).isEqualTo(expectedPhotos)
+            }
         }
     }
 }

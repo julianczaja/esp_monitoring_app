@@ -54,6 +54,7 @@ import com.julianczaja.esp_monitoring_app.data.utils.getReadExternalStorageImage
 import com.julianczaja.esp_monitoring_app.data.utils.openAppSettings
 import com.julianczaja.esp_monitoring_app.domain.model.PermissionState
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
+import com.julianczaja.esp_monitoring_app.domain.model.PhotosFilterMode
 import com.julianczaja.esp_monitoring_app.domain.model.Selectable
 import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DevicePhotosScreenViewModel.Event
 import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DevicePhotosScreenViewModel.UiState
@@ -171,7 +172,7 @@ fun DevicePhotosScreen(
         onPhotoLongClick = viewModel::onPhotoLongClick,
         onFilterDateClicked = viewModel::onFilterDateClicked,
         onSelectDeselectAllClick = viewModel::onSelectDeselectAllClicked,
-        onFilterSavedOnlyClicked = viewModel::onFilterSavedOnlyClicked,
+        onFilterModeClicked = viewModel::onFilterModeClicked,
         onPermissionNoticeActionClicked = { readExternalStoragePermissionLauncher.launch(storagePermissionName) },
         onPermissionNoticeIgnoreClicked = { shouldShowPermissionMissingNotice = false }
     )
@@ -191,7 +192,7 @@ private fun DevicePhotosScreenContent(
     onPhotoLongClick: (Selectable<Photo>) -> Unit,
     onFilterDateClicked: (Selectable<LocalDate>) -> Unit,
     onSelectDeselectAllClick: (LocalDate) -> Unit,
-    onFilterSavedOnlyClicked: (Boolean) -> Unit,
+    onFilterModeClicked: () -> Unit,
     onPermissionNoticeActionClicked: () -> Unit,
     onPermissionNoticeIgnoreClicked: () -> Unit,
 ) {
@@ -228,7 +229,7 @@ private fun DevicePhotosScreenContent(
                     onPhotoLongClick = onPhotoLongClick,
                     onFilterDateClicked = onFilterDateClicked,
                     onSelectDeselectAllClick = onSelectDeselectAllClick,
-                    onFilterSavedOnlyClicked = onFilterSavedOnlyClicked,
+                    onFilterModeClicked = onFilterModeClicked,
                     onPermissionNoticeActionClicked = onPermissionNoticeActionClicked,
                     onPermissionNoticeIgnoreClicked = onPermissionNoticeIgnoreClicked
                 )
@@ -245,7 +246,7 @@ private fun DevicePhotosNotEmptyScreen(
     onPhotoClick: (Selectable<Photo>) -> Unit,
     onPhotoLongClick: (Selectable<Photo>) -> Unit,
     onFilterDateClicked: (Selectable<LocalDate>) -> Unit,
-    onFilterSavedOnlyClicked: (Boolean) -> Unit,
+    onFilterModeClicked: () -> Unit,
     onSelectDeselectAllClick: (LocalDate) -> Unit,
     onPermissionNoticeActionClicked: () -> Unit,
     onPermissionNoticeIgnoreClicked: () -> Unit,
@@ -274,8 +275,8 @@ private fun DevicePhotosNotEmptyScreen(
             modifier = Modifier.fillMaxWidth(),
             dates = uiState.selectableFilterDates,
             highlightedDate = visibleItemKey,
-            filterSavedOnly = uiState.filterSavedOnly,
-            onFilterSavedOnlyClicked = onFilterSavedOnlyClicked,
+            filterMode = uiState.filterMode,
+            onFilterModeClicked = onFilterModeClicked,
             onDateClicked = {
                 onFilterDateClicked(it)
                 coroutineScope.launch {
@@ -398,7 +399,7 @@ private fun DevicePhotosStateItemsPreview() {
                 ),
                 isRefreshed = true,
                 selectedCount = 0,
-                filterSavedOnly = false,
+                filterMode = PhotosFilterMode.ALL,
                 isSavedPhotosListEmpty = false
             ),
             shouldShowPermissionMissingNotice = true,
@@ -452,7 +453,7 @@ private fun DevicePhotosStateSelectedItemsPreview() {
                 ),
                 isRefreshed = true,
                 selectedCount = 2,
-                filterSavedOnly = false,
+                filterMode = PhotosFilterMode.ALL,
                 isSavedPhotosListEmpty = false
             ),
             shouldShowPermissionMissingNotice = false,
@@ -474,7 +475,7 @@ private fun DevicePhotosStateSuccessNoItemsPreview() {
                 selectableFilterDates = emptyList(),
                 isRefreshed = true,
                 selectedCount = 0,
-                filterSavedOnly = false,
+                filterMode = PhotosFilterMode.ALL,
                 isSavedPhotosListEmpty = false
             ),
             shouldShowPermissionMissingNotice = false,
@@ -496,7 +497,7 @@ private fun DevicePhotosStateSuccessNoItemsWithNoticePreview() {
                 selectableFilterDates = emptyList(),
                 isRefreshed = true,
                 selectedCount = 0,
-                filterSavedOnly = false,
+                filterMode = PhotosFilterMode.ALL,
                 isSavedPhotosListEmpty = false
             ),
             shouldShowPermissionMissingNotice = true,
