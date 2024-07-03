@@ -41,6 +41,10 @@ class AppSettingsScreenViewModelTest {
             delay(100)
             emit(VALID_BASE_URL)
         }
+        every { appSettingsRepository.getBaseUrlHistory() } returns flow {
+            delay(100)
+            emit(setOf(VALID_BASE_URL, VALID_BASE_URL_2))
+        }
     }
 
     private fun getViewModel() = AppSettingsScreenViewModel(
@@ -117,7 +121,6 @@ class AppSettingsScreenViewModelTest {
     fun `when valid base url is set, error is null`() = runTest {
         val initialBaseUrl = VALID_BASE_URL
         val updatedBaseUrl = VALID_BASE_URL_2
-        val appSettingsRepository: AppSettingsRepository = mockk(relaxed = true)
         every { appSettingsRepository.getBaseUrl() } returns flow {
             delay(1000)
             emit(initialBaseUrl)

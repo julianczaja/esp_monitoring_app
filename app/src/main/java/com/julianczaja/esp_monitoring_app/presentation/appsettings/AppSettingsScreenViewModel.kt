@@ -36,15 +36,17 @@ class AppSettingsScreenViewModel @Inject constructor(
 
     val uiState = combine(
         appSettingsRepository.getBaseUrl(),
+        appSettingsRepository.getBaseUrlHistory(),
         appSettingsRepository.getDynamicColor(),
         _baseUrlFieldState
-    ) { baseUrl, dynamicColor, baseUrlFieldState ->
+    ) { baseUrl, baseUrlHistory, dynamicColor, baseUrlFieldState ->
         if (!_isBaseUrlFieldInitiated) {
             _baseUrlFieldState.update { FieldState(baseUrl) }
             _isBaseUrlFieldInitiated = true
         }
         return@combine UiState.Success(
             baseUrlFieldState = baseUrlFieldState,
+            baseUrlHistory = baseUrlHistory,
             isDynamicColor = dynamicColor
         )
     }.stateIn(
@@ -85,6 +87,7 @@ class AppSettingsScreenViewModel @Inject constructor(
         data object Loading : UiState()
         data class Success(
             val baseUrlFieldState: FieldState<String>,
+            val baseUrlHistory: Set<String>,
             val isDynamicColor: Boolean,
         ) : UiState()
     }

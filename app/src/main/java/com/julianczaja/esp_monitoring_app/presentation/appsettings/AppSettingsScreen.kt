@@ -13,7 +13,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -38,6 +37,7 @@ import com.julianczaja.esp_monitoring_app.components.DefaultProgressIndicator
 import com.julianczaja.esp_monitoring_app.components.SwitchWithLabel
 import com.julianczaja.esp_monitoring_app.domain.model.FieldState
 import com.julianczaja.esp_monitoring_app.presentation.appsettings.AppSettingsScreenViewModel.UiState
+import com.julianczaja.esp_monitoring_app.presentation.appsettings.components.BaseUrlTextField
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 
 @Composable
@@ -119,22 +119,11 @@ private fun SuccessScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top
     ) {
-        OutlinedTextField(
+        BaseUrlTextField(
             modifier = Modifier.fillMaxWidth(),
-            value = uiState.baseUrlFieldState.data,
-            onValueChange = onBaseUrlUpdate,
-            label = { Text(stringResource(R.string.base_url_label)) },
-            isError = uiState.baseUrlFieldState.error != null,
-            singleLine = true,
-            supportingText = {
-                uiState.baseUrlFieldState.error?.let { errorId ->
-                    Text(
-                        text = stringResource(id = errorId),
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-            }
+            fieldState = uiState.baseUrlFieldState,
+            history = uiState.baseUrlHistory,
+            onBaseUrlUpdate = onBaseUrlUpdate
         )
         Row(
             modifier = Modifier
@@ -199,6 +188,7 @@ private fun SuccessScreenNoBaseUrlErrorPreview() {
         SuccessScreen(
             uiState = UiState.Success(
                 baseUrlFieldState = FieldState("goodBaseUrl", null),
+                baseUrlHistory = setOf("goodBaseUrl1", "goodBaseUrl2", "goodBaseUrl3"),
                 isDynamicColor = false
             ),
             onBaseUrlUpdate = {},
@@ -216,6 +206,7 @@ private fun SuccessScreenBaseUrlErrorPreview() {
         SuccessScreen(
             uiState = UiState.Success(
                 baseUrlFieldState = FieldState("goodBaseUrl", R.string.base_url_invalid),
+                baseUrlHistory = setOf("goodBaseUrl1", "goodBaseUrl2", "goodBaseUrl3"),
                 isDynamicColor = true
             ),
             onBaseUrlUpdate = {},

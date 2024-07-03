@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.Dp
 @Composable
 fun DefaultDropdownMenu(
     isExpanded: Boolean,
-    items: List<String>,
+    items: Collection<String>,
     selectedIndex: Int = -1,
     maxHeight: Dp = Dp.Unspecified,
     onItemClicked: (Int) -> Unit,

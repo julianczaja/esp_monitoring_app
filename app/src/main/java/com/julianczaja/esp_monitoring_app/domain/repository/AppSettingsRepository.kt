@@ -13,7 +13,11 @@ interface AppSettingsRepository {
 
     fun getBaseUrl(): Flow<String>
 
-    suspend fun setBaseUrl(baseUrl: String)
+    suspend fun setBaseUrl(baseUrl: String, addToHistory: Boolean = true)
+
+    fun getBaseUrlHistory(): Flow<Set<String>>
+
+    suspend fun setBaseUrlHistory(history: Set<String>)
 
     fun getDynamicColor(): Flow<Boolean>
 

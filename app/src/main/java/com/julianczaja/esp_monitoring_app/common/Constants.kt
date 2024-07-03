@@ -10,9 +10,9 @@ object Constants {
     val defaultBaseUrl = if (BuildConfig.DEBUG) DEFAULT_BASE_URL_DEBUG else DEFAULT_BASE_URL
 
     const val SETTINGS_DATA_STORE_NAME = "settings_data_store"
-
     const val DEFAULT_DEVICE_NAME = "ESP Monitoring device"
 
+    const val BASE_URL_HISTORY_LIMIT = 10
     const val DEFAULT_IS_DYNAMIC_COLOR = false
 
     const val SCAN_DURATION_MILLIS = 5000L
