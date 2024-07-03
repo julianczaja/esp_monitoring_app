@@ -4,67 +4,32 @@ import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import androidx.navigation.toRoute
-import com.julianczaja.esp_monitoring_app.di.IoDispatcher
-import com.julianczaja.esp_monitoring_app.domain.model.InternalAppException
+import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
-import com.julianczaja.esp_monitoring_app.domain.model.getErrorMessageId
-import com.julianczaja.esp_monitoring_app.domain.repository.PhotoRepository
-import com.julianczaja.esp_monitoring_app.navigation.DeviceIdArgs
-import com.julianczaja.esp_monitoring_app.navigation.PhotoPreviewDialog
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapNotNull
-import kotlinx.coroutines.flow.stateIn
 import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
 class PhotoPreviewDialogViewModel @Inject constructor(
-    savedStateHandle: SavedStateHandle,
-    private val photoRepository: PhotoRepository,
-    @IoDispatcher private val ioDispatcher: CoroutineDispatcher
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    private val deviceId = savedStateHandle.toRoute<PhotoPreviewDialog>().deviceId
-    private val photoFileName = savedStateHandle.toRoute<PhotoPreviewDialog>().photoFileName
+    // FIXME: It seems to not work in beta04
+    // private val photos = savedStateHandle.toRoute<PhotoPreviewDialog>().photos
+    // private val initialIndex = savedStateHandle.toRoute<PhotoPreviewDialog>().initialIndex
+    private val photos: List<Photo> = savedStateHandle.get<Array<Photo>>("photos")?.toList() ?: emptyList()
+    private val initialIndex: Int = savedStateHandle.get<Int>("initialIndex") ?: -1
 
-    val uiState: StateFlow<UiState> = photoPreviewUiState()
-        .catch {
-            Timber.e(it)
-            UiState.Error(it.getErrorMessageId())
+
+    val uiState: UiState = when (initialIndex) {
+        -1 -> {
+            Timber.e("Something went wrong: initialIndex is -1")
+            UiState.Error(R.string.unknown_error_message)
         }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = UiState.Loading
-        )
-
-    private fun photoPreviewUiState() = photosStream()
-        .map { photos ->
-            if (photos.isNotEmpty()) {
-               UiState.Success(
-                    photos = photos,
-                    initialPhotoIndex = photos.indexOfFirst { it.fileName == photoFileName }
-                )
-            } else {
-                UiState.Error(InternalAppException().getErrorMessageId())
-            }
+        else -> {
+            UiState.Success(photos, initialIndex)
         }
-        .flowOn(ioDispatcher)
-
-    private fun photosStream(): Flow<List<Photo>> = if (deviceId != DeviceIdArgs.NO_VALUE) {
-        photoRepository.getAllPhotosLocal(deviceId)
-    } else {
-        photoRepository.getPhotoByFileNameLocal(photoFileName)
-            .mapNotNull { photo -> photo?.let { listOf(it) } } // FIXME
     }
 
     @Immutable
@@ -74,7 +39,6 @@ class PhotoPreviewDialogViewModel @Inject constructor(
             val initialPhotoIndex: Int,
         ) : UiState
 
-        data object Loading : UiState
         data class Error(@StringRes val messageId: Int) : UiState
     }
 }

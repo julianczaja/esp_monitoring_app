@@ -86,7 +86,9 @@ fun EspMonitoringNavHost(
                 onDismiss = onBackClick
             )
         }
-        dialog<PhotoPreviewDialog> {
+        dialog<PhotoPreviewDialog>(
+            typeMap = mapOf(typeOf<List<Photo>>() to parcelableCollectionType<Photo>())
+        ) {
             PhotoPreviewDialog(
                 onDismiss = onBackClick
             )

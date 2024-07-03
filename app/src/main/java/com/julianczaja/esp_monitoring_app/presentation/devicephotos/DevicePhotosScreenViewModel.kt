@@ -161,7 +161,7 @@ class DevicePhotosScreenViewModel @Inject constructor(
 
         when (isSelectionMode) {
             true -> onPhotoLongClick(selectablePhoto)
-            false -> viewModelScope.launch { eventFlow.emit(Event.NavigateToPhotoPreview(selectablePhoto.item)) }
+            false -> openPhotoPreview(selectablePhoto.item)
         }
     }
 
@@ -257,8 +257,16 @@ class DevicePhotosScreenViewModel @Inject constructor(
             }
     }
 
+    private fun openPhotoPreview(selectedPhoto: Photo) = viewModelScope.launch(ioDispatcher) {
+        val photos = devicePhotosUiState.value.dateGroupedSelectablePhotos.values
+            .flatten()
+            .map { it.item }
+
+        eventFlow.emit(Event.NavigateToPhotoPreview(photos, photos.indexOf(selectedPhoto)))
+    }
+
     sealed class Event {
-        data class NavigateToPhotoPreview(val photo: Photo) : Event()
+        data class NavigateToPhotoPreview(val photos: List<Photo>, val initialIndex: Int) : Event()
         data class NavigateToRemovePhotosDialog(val photos: List<Photo>) : Event()
         data class NavigateToTimelapseCreatorScreen(val photos: List<Photo>) : Event()
         data class ShowSavedInfo(val totalCount: Int, val savedCount: Int) : Event()

@@ -39,7 +39,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.SubcomposeAsyncImage
 import coil.request.CachePolicy
 import coil.request.ImageRequest
@@ -57,10 +56,8 @@ fun PhotoPreviewDialog(
     onDismiss: () -> Unit,
     viewModel: PhotoPreviewDialogViewModel = hiltViewModel(),
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
     PhotoPreviewDialogContent(
-        uiState = uiState,
+        uiState = viewModel.uiState,
         onDismiss = onDismiss,
     )
 }
@@ -93,10 +90,6 @@ fun PhotoPreviewDialogContent(
         ) {
             when (uiState) {
                 is UiState.Success -> PhotoPreview(uiState)
-                is UiState.Loading -> Box(modifier = Modifier.fillMaxSize()) {
-                    DefaultProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                }
-
                 is UiState.Error -> Box(modifier = Modifier.fillMaxSize()) {
                     ErrorText(text = stringResource(uiState.messageId), modifier = Modifier.align(Alignment.Center))
                 }

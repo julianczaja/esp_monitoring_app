@@ -71,10 +71,10 @@ fun NavController.navigateToRemovePhotosDialog(photos: List<Photo>) {
 
 // Photo preview
 @Serializable
-data class PhotoPreviewDialog(val deviceId: Long, val photoFileName: String)
+data class PhotoPreviewDialog(val photos: List<Photo>, val initialIndex: Int)
 
-fun NavController.navigateToPhotoPreview(deviceId: Long?, photoFileName: String) {
-    navigate(PhotoPreviewDialog(deviceId ?: DeviceIdArgs.NO_VALUE, photoFileName)) {
+fun NavController.navigateToPhotoPreview(photos: List<Photo>, initialIndex: Int) {
+    navigate(PhotoPreviewDialog(photos, initialIndex)) {
         launchSingleTop = true
     }
 }
