@@ -54,7 +54,7 @@ class AppSettingsRepositoryImpl @Inject constructor(
                 if (history.size > Constants.BASE_URL_HISTORY_LIMIT) {
                     history.remove(history.first())
                 }
-                setBaseUrlHistory(history)
+                preferences[BASE_URL_HISTORY_KEY] = history
             }
         }
     }
@@ -63,12 +63,6 @@ class AppSettingsRepositoryImpl @Inject constructor(
         .map { preferences ->
             preferences[BASE_URL_HISTORY_KEY] ?: emptySet()
         }
-
-    override suspend fun setBaseUrlHistory(history: Set<String>) {
-        dataStore.edit { preferences ->
-            preferences[BASE_URL_HISTORY_KEY] = history
-        }
-    }
 
     override fun getDynamicColor(): Flow<Boolean> = dataStore.data
         .map { preferences ->
