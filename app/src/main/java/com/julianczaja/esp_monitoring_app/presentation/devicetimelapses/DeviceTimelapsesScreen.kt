@@ -3,6 +3,8 @@ package com.julianczaja.esp_monitoring_app.presentation.devicetimelapses
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -226,8 +228,11 @@ private fun TimelapsesScreen(
         verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium),
         contentPadding = PaddingValues(MaterialTheme.spacing.medium)
     ) {
-        if (shouldShowPermissionMissingNotice) {
-            item {
+        item {
+            AnimatedVisibility(
+                visible = shouldShowPermissionMissingNotice,
+                exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut()
+            ) {
                 Notice(
                     modifier = Modifier.fillMaxWidth(),
                     text = stringResource(id = R.string.storage_timelapses_permission_notice),
@@ -307,7 +312,10 @@ private fun EmptyScreen(
             textAlign = TextAlign.Center
         )
     }
-    AnimatedVisibility(visible = shouldShowPermissionMissingNotice) {
+    AnimatedVisibility(
+        visible = shouldShowPermissionMissingNotice,
+        exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut()
+    ) {
         Box {
             Notice(
                 modifier = Modifier

@@ -5,8 +5,9 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -216,9 +217,11 @@ private fun DevicePhotosScreenContent(
             when (uiState.dateGroupedSelectablePhotos.isEmpty()) {
                 true -> DevicePhotosEmptyScreen(
                     isRefreshed = uiState.isRefreshed,
+                    filterMode = uiState.filterMode,
                     shouldShowPermissionMissingNotice = shouldShowPermissionMissingNotice,
                     onPermissionNoticeActionClicked = onPermissionNoticeActionClicked,
-                    onPermissionNoticeIgnoreClicked = onPermissionNoticeIgnoreClicked
+                    onPermissionNoticeIgnoreClicked = onPermissionNoticeIgnoreClicked,
+                    onFilterModeClicked = onFilterModeClicked
                 )
 
                 false -> DevicePhotosNotEmptyScreen(
@@ -311,45 +314,58 @@ private fun DevicePhotosNotEmptyScreen(
 @Composable
 private fun DevicePhotosEmptyScreen(
     isRefreshed: Boolean,
+    filterMode: PhotosFilterMode,
     shouldShowPermissionMissingNotice: Boolean,
     onPermissionNoticeActionClicked: () -> Unit,
     onPermissionNoticeIgnoreClicked: () -> Unit,
+    onFilterModeClicked: () -> Unit
 ) {
-    AnimatedVisibility(
-        visible = isRefreshed,
-        enter = fadeIn()
+    Column(
+        modifier = Modifier.fillMaxSize()
     ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.veryLarge, Alignment.CenterVertically),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+        FilterBar(
+            modifier = Modifier.fillMaxWidth(),
+            dates = emptyList(),
+            filterMode = filterMode,
+            onFilterModeClicked = onFilterModeClicked,
+            onDateClicked = { }
+        )
+        AnimatedVisibility(
+            visible = shouldShowPermissionMissingNotice,
+            exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut()
         ) {
-            Icon(
-                modifier = Modifier.size(200.dp),
-                painter = painterResource(id = R.drawable.ic_image_question_thin),
-                contentDescription = null
-            )
-            Text(
-                text = stringResource(R.string.photos_not_found_message),
-                style = MaterialTheme.typography.headlineSmall,
-                textAlign = TextAlign.Center
-            )
-        }
-    }
-    AnimatedVisibility(visible = shouldShowPermissionMissingNotice) {
-        Box {
             Notice(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(MaterialTheme.spacing.medium)
-                    .align(Alignment.TopCenter),
+                    .padding(MaterialTheme.spacing.medium),
                 text = stringResource(id = R.string.storage_photos_permission_notice),
                 actionText = stringResource(id = R.string.grant_permission_button_label),
                 onActionClicked = onPermissionNoticeActionClicked,
                 onIgnoreClicked = onPermissionNoticeIgnoreClicked
             )
+        }
+        AnimatedVisibility(
+            visible = isRefreshed,
+            enter = fadeIn()
+        ) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.veryLarge, Alignment.CenterVertically),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+            ) {
+                Icon(
+                    modifier = Modifier.size(200.dp),
+                    painter = painterResource(id = R.drawable.ic_image_question_thin),
+                    contentDescription = null
+                )
+                Text(
+                    text = stringResource(R.string.photos_not_found_message),
+                    style = MaterialTheme.typography.headlineSmall,
+                    textAlign = TextAlign.Center
+                )
+            }
         }
     }
 }
@@ -362,28 +378,13 @@ private fun DevicePhotosStateItemsPreview() {
     val date2 = LocalDate.of(2023, 1, 11)
     val dateGroupedSelectablePhotos = mapOf(
         date1 to listOf(
-            Selectable(
-                item = Photo(1L, date1.atTime(10, 10), "fileName 1", "1600x1200", "url", "url"),
-                isSelected = false
-            ),
-            Selectable(
-                item = Photo(2L, date1.atTime(10, 11), "fileName 2", "1600x1200", "url", "url"),
-                isSelected = false
-            ),
-            Selectable(
-                item = Photo(3L, date1.atTime(10, 12), "fileName 3", "1600x1200", "url", "url"),
-                isSelected = false
-            ),
+            Selectable(Photo.mock(dateTime = date1.atTime(10, 10)), false),
+            Selectable(Photo.mock(dateTime = date1.atTime(10, 11)), false),
+            Selectable(Photo.mock(dateTime = date1.atTime(10, 12)), false),
         ),
         date2 to listOf(
-            Selectable(
-                item = Photo(4L, date2.atTime(10, 13), "fileName 4", "1600x1200", "url", "url"),
-                isSelected = false
-            ),
-            Selectable(
-                item = Photo(5L, date2.atTime(10, 14), "fileName 5", "1600x1200", "url", "url"),
-                isSelected = false
-            ),
+            Selectable(Photo.mock(dateTime = date1.atTime(10, 13)), false),
+            Selectable(Photo.mock(dateTime = date1.atTime(10, 14)), false),
         )
     )
     AppBackground {
@@ -416,28 +417,13 @@ private fun DevicePhotosStateSelectedItemsPreview() {
     val date2 = LocalDate.of(2023, 1, 11)
     val dateGroupedSelectablePhotos = mapOf(
         date1 to listOf(
-            Selectable(
-                item = Photo(1L, date1.atTime(10, 10), "fileName 1", "1600x1200", "url", "url"),
-                isSelected = true
-            ),
-            Selectable(
-                item = Photo(2L, date1.atTime(10, 11), "fileName 2", "1600x1200", "url", "url"),
-                isSelected = true
-            ),
-            Selectable(
-                item = Photo(3L, date1.atTime(10, 12), "fileName 3", "1600x1200", "url", "url"),
-                isSelected = false
-            ),
+            Selectable(Photo.mock(dateTime = date1.atTime(10, 10)), true),
+            Selectable(Photo.mock(dateTime = date1.atTime(10, 11)), true),
+            Selectable(Photo.mock(dateTime = date1.atTime(10, 12)), false),
         ),
         date2 to listOf(
-            Selectable(
-                item = Photo(4L, date2.atTime(10, 13), "fileName 4", "1600x1200", "url", "url"),
-                isSelected = false
-            ),
-            Selectable(
-                item = Photo(5L, date2.atTime(10, 14), "fileName 5", "1600x1200", "url", "url"),
-                isSelected = false
-            ),
+            Selectable(Photo.mock(dateTime = date1.atTime(10, 13)), false),
+            Selectable(Photo.mock(dateTime = date1.atTime(10, 14)), false),
         )
     )
     AppBackground {
