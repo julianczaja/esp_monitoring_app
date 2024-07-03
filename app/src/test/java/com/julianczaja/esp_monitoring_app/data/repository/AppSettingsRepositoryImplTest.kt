@@ -71,4 +71,52 @@ class AppSettingsRepositoryImplTest {
             assertThat(awaitItem()).isEqualTo(AppSettings(newBaseUrl, newIsFirstTimeUser, isDynamicColor))
         }
     }
+
+    @Test
+    fun `Updating base url adds new entries to base url history`() = runTest {
+        val baseUrl1 = "base_url_1"
+        val baseUrl2 = "base_url_2"
+
+        appSettingsRepository.getBaseUrlHistory().test {
+            assertThat(awaitItem()).isEmpty()
+            appSettingsRepository.setBaseUrl(baseUrl1)
+            assertThat(awaitItem()).isEqualTo(setOf(baseUrl1))
+            appSettingsRepository.setBaseUrl(baseUrl2)
+            assertThat(awaitItem()).isEqualTo(setOf(baseUrl1, baseUrl2))
+        }
+    }
+
+    @Test
+    fun `Updating base url does not adds new entries to base url history if addToHistory is false`() = runTest {
+        val baseUrl1 = "base_url_1"
+        val baseUrl2 = "base_url_2"
+
+        appSettingsRepository.getBaseUrlHistory().test {
+            assertThat(awaitItem()).isEmpty()
+            appSettingsRepository.setBaseUrl(baseUrl1, addToHistory = false)
+            assertThat(awaitItem()).isEmpty()
+            appSettingsRepository.setBaseUrl(baseUrl2, addToHistory = false)
+            assertThat(awaitItem()).isEmpty()
+        }
+    }
+
+    @Test
+    fun `Base url history size is limited`() = runTest {
+        val baseUrlFormat = "base_url_%d"
+        val baseUrls = mutableSetOf<String>()
+        val limit = Constants.BASE_URL_HISTORY_LIMIT
+
+        repeat(limit + 5) {
+            val baseUrl = baseUrlFormat.format(it + 1)
+            baseUrls.add(baseUrl)
+            appSettingsRepository.setBaseUrl(baseUrl, addToHistory = true)
+        }
+
+        appSettingsRepository.getBaseUrlHistory().test {
+            awaitItem().let { history ->
+                assertThat(history).hasSize(limit)
+                assertThat(history).isEqualTo(baseUrls.drop(5).toSet())
+            }
+        }
+    }
 }
