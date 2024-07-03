@@ -4,6 +4,7 @@ compose-ui = "1.6.8"
 hilt = "2.51.1"
 coil = "2.6.0"
 coroutines = "1.8.1"
+lifecycle = "2.8.3"
 room = "2.6.1"
 robolectric = "4.12.2"
 android-gradle-plugin = "8.5.0"
@@ -11,7 +12,7 @@ ksp = "2.0.0-1.0.21"
 material3 = "1.3.0-beta04"
 navigation-compose = "2.8.0-beta04"
 exifinterface = "1.3.7"
-serialization-json = "1.7.0"
+serialization-json = "1.7.1"
 retrofit = "2.11.0"
 okhttp = "4.12.0"
 datastore = "1.1.1"
@@ -23,15 +24,15 @@ kable = "0.32.0"
 ffmpeg = "6.0-2"
 media = "1.3.1"
 junit = "4.13.2"
-truth = "1.4.2"
+truth = "1.4.3"
 mockk = "1.13.11"
 turbine = "1.1.0"
 
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version = "1.13.1" }
-androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version = "2.8.2" }
-androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version = "2.8.2" }
+androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycle" }
+androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycle" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version = "1.9.0" }
 androidx-compose-ui = { group = "androidx.compose.ui", name = "ui", version.ref = "compose-ui" }
 androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview", version.ref = "compose-ui" }
