@@ -117,6 +117,7 @@
     <string name="seconds_format">%.1f s</string>
     <string name="selected_photos_count_format">Selected: %1$d</string>
     <string name="server_info_label">Server info</string>
+    <string name="share_image_label">Share Image</string>
     <string name="size_format">Size: %1$s</string>
     <string name="special_effect_blue_tint">Blue Tint</string>
     <string name="special_effect_grayscale">Grayscale</string>

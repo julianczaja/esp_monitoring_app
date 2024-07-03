@@ -48,6 +48,7 @@ import com.julianczaja.esp_monitoring_app.components.PhotoInfoRow
 import com.julianczaja.esp_monitoring_app.data.utils.toPrettyString
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.presentation.photopreview.PhotoPreviewDialogViewModel.UiState
+import com.julianczaja.esp_monitoring_app.presentation.photopreview.components.PhotoActionsRow
 import com.julianczaja.esp_monitoring_app.presentation.theme.shape
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 
@@ -192,6 +193,7 @@ private fun ZoomableCoilPhoto(
                 )
                 if (!isZoomed.value) {
                     PhotoInfoRow(listOf(photo.dateTime.toPrettyString(), photo.size))
+                    PhotoActionsRow(photo)
                 }
             }
         }
