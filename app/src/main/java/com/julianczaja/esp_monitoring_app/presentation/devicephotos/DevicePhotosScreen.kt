@@ -46,7 +46,6 @@ import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.components.AppBackground
 import com.julianczaja.esp_monitoring_app.components.Notice
 import com.julianczaja.esp_monitoring_app.components.PermissionRationaleDialog
-import com.julianczaja.esp_monitoring_app.components.SelectablePhotosLazyGrid
 import com.julianczaja.esp_monitoring_app.components.SelectedEditBar
 import com.julianczaja.esp_monitoring_app.components.StateBar
 import com.julianczaja.esp_monitoring_app.data.utils.getActivity
@@ -60,6 +59,7 @@ import com.julianczaja.esp_monitoring_app.domain.model.Selectable
 import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DevicePhotosScreenViewModel.Event
 import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DevicePhotosScreenViewModel.UiState
 import com.julianczaja.esp_monitoring_app.presentation.devicephotos.components.FilterBar
+import com.julianczaja.esp_monitoring_app.presentation.devicephotos.components.SelectablePhotosLazyGrid
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -268,8 +268,7 @@ private fun DevicePhotosNotEmptyScreen(
             } else {
                 visibleItemsInfo.first()
             }
-            return@derivedStateOf (visibleKey.key as? LocalDate)
-                ?: (visibleKey.key as? LocalDateTime)?.toLocalDate()
+            return@derivedStateOf (visibleKey.key as? LocalDate) ?: (visibleKey.key as? LocalDateTime)?.toLocalDate()
         }
     }
 

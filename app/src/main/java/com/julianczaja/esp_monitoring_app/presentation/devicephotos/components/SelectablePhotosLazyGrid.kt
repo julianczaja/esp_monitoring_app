@@ -1,4 +1,5 @@
-package com.julianczaja.esp_monitoring_app.components
+package com.julianczaja.esp_monitoring_app.presentation.devicephotos.components
+
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -54,6 +55,12 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.julianczaja.esp_monitoring_app.R
+import com.julianczaja.esp_monitoring_app.components.AppBackground
+import com.julianczaja.esp_monitoring_app.components.CircularCheckbox
+import com.julianczaja.esp_monitoring_app.components.Notice
+import com.julianczaja.esp_monitoring_app.components.PhotoCoilImage
+import com.julianczaja.esp_monitoring_app.components.PhotoInfoRow
+import com.julianczaja.esp_monitoring_app.components.header
 import com.julianczaja.esp_monitoring_app.data.utils.toPrettyString
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.domain.model.Selectable
@@ -136,9 +143,11 @@ fun SelectablePhotosLazyGrid(
                                     style = MaterialTheme.typography.bodyMedium
                                 )
                             }
-                            val allPhotosWithDateAreSelected = photos
-                                .filter { it.item.dateTime.toLocalDate() == localDate }
-                                .all { it.isSelected }
+                            val allPhotosWithDateAreSelected = remember(photos) {
+                                photos
+                                    .filter { it.item.dateTime.toLocalDate() == localDate }
+                                    .all { it.isSelected }
+                            }
 
                             val selectDeselectIcon = when (allPhotosWithDateAreSelected) {
                                 true -> R.drawable.ic_deselect_all

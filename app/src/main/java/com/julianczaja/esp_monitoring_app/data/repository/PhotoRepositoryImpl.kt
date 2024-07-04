@@ -71,11 +71,11 @@ class PhotoRepositoryImpl @Inject constructor(
             return Result.failure(Exception("Photo already exists"))
         }
 
-        val photoUri = createPhotoUri(context, photo) ?: return Result.failure(Exception("Image URI is null"))
-
         val bitmap: Bitmap = bitmapDownloader.downloadBitmap(photo.url).getOrElse {
             return Result.failure(Exception("Error while downloading image from server"))
         }
+
+        val photoUri = createPhotoUri(context, photo) ?: return Result.failure(Exception("Image URI is null"))
 
         try {
             contentResolver.openOutputStream(photoUri)?.use {
