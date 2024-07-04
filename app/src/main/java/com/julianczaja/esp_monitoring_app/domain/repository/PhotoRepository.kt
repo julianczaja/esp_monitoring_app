@@ -20,7 +20,7 @@ interface PhotoRepository {
 
     suspend fun downloadPhotoAndSaveToExternalStorage(photo: Photo): Result<Unit>
 
-    suspend fun readAllSavedPhotosFromExternalStorage(deviceId: Long): Result<List<Photo>>
+    fun getAllSavedPhotosFromExternalStorageFlow(deviceId: Long): Flow<Result<List<Photo>>>
 
     suspend fun removeSavedPhotoFromExternalStorage(photo: Photo): Result<Unit>
 }

@@ -407,7 +407,6 @@ private fun DevicePhotosStateItemsPreview() {
                 isRefreshed = true,
                 selectedCount = 0,
                 filterMode = PhotosFilterMode.ALL,
-                isSavedPhotosListEmpty = false
             ),
             shouldShowPermissionMissingNotice = true,
             {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}
@@ -446,7 +445,6 @@ private fun DevicePhotosStateSelectedItemsPreview() {
                 isRefreshed = true,
                 selectedCount = 2,
                 filterMode = PhotosFilterMode.ALL,
-                isSavedPhotosListEmpty = false
             ),
             shouldShowPermissionMissingNotice = false,
             {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}
@@ -468,7 +466,6 @@ private fun DevicePhotosStateSuccessNoItemsPreview() {
                 isRefreshed = true,
                 selectedCount = 0,
                 filterMode = PhotosFilterMode.ALL,
-                isSavedPhotosListEmpty = false
             ),
             shouldShowPermissionMissingNotice = false,
             {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}
@@ -490,7 +487,6 @@ private fun DevicePhotosStateSuccessNoItemsWithNoticePreview() {
                 isRefreshed = true,
                 selectedCount = 0,
                 filterMode = PhotosFilterMode.ALL,
-                isSavedPhotosListEmpty = false
             ),
             shouldShowPermissionMissingNotice = true,
             {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}

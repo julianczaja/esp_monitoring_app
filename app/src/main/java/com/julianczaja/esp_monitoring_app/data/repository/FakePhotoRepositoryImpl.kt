@@ -11,19 +11,23 @@ import kotlinx.coroutines.flow.map
 class FakePhotoRepositoryImpl : PhotoRepository {
 
     private val _allPhotosLocalFlow = MutableSharedFlow<List<Photo>>(replay = 1, extraBufferCapacity = 1)
+    private val _allSavedPhotosFlow = MutableSharedFlow<Result<List<Photo>>>(replay = 1, extraBufferCapacity = 1)
 
     var getLastPhotoLocalThrowsError = false
     var updateAllPhotosReturnsException = false
-    var readAllSavedPhotosReturnsException = false
     var removePhotoByFileNameLocalReturnsException = false
     var removePhotoByFileNameRemoteReturnsException = false
 
     var remotePhotos = emptyList<Photo>()
-    var savedPhotos = emptyList<Photo>()
 
     suspend fun emitAllPhotosLocalData(data: List<Photo>) = _allPhotosLocalFlow.emit(data)
 
+    suspend fun emitAllSavedPhotosData(data: Result<List<Photo>>) = _allSavedPhotosFlow.emit(data)
+    fun tryEmitAllSavedPhotosData(data: Result<List<Photo>>) = _allSavedPhotosFlow.tryEmit(data)
+
     override fun getAllPhotosLocal(deviceId: Long) = _allPhotosLocalFlow
+
+    override fun getAllSavedPhotosFromExternalStorageFlow(deviceId: Long) = _allSavedPhotosFlow
 
     override fun getLastPhotoLocal(deviceId: Long) = when (getLastPhotoLocalThrowsError) {
         true -> flow { throw Exception("error") }
@@ -40,15 +44,6 @@ class FakePhotoRepositoryImpl : PhotoRepository {
         } else {
             emitAllPhotosLocalData(remotePhotos)
             Result.success(Unit)
-        }
-    }
-
-    override suspend fun readAllSavedPhotosFromExternalStorage(deviceId: Long): Result<List<Photo>> {
-        delay(1000)
-        return if (readAllSavedPhotosReturnsException) {
-            Result.failure(Exception("error"))
-        } else {
-            Result.success(savedPhotos)
         }
     }
 

@@ -5,6 +5,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.data.NetworkManager
 import com.julianczaja.esp_monitoring_app.di.IoDispatcher
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
@@ -25,6 +26,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -45,8 +47,6 @@ class DevicePhotosScreenViewModel @Inject constructor(
 
     private val _selectedPhotos = MutableStateFlow<List<Photo>>(emptyList())
 
-    private val _savedPhotos = MutableStateFlow<List<Photo>>(emptyList())
-
     private val _selectedFilterDates = MutableStateFlow<List<Selectable<LocalDate>>>(emptyList())
 
     private val _filterMode = MutableStateFlow(PhotosFilterMode.ALL)
@@ -58,6 +58,18 @@ class DevicePhotosScreenViewModel @Inject constructor(
     private val _isRefreshed = MutableStateFlow(false)
 
     private val _isOnline = networkManager.isOnline
+
+    private val serverPhotosFlow = photoRepository.getAllPhotosLocal(deviceId).distinctUntilChanged()
+
+    private val savedPhotosFlow = photoRepository.getAllSavedPhotosFromExternalStorageFlow(deviceId)
+        .map {
+            it.exceptionOrNull()?.let { e ->
+                Timber.e("Error while reading saved photos: $e")
+                eventFlow.emit(Event.ShowError(R.string.saved_photos_read_error_message))
+            }
+            return@map it.getOrNull() ?: emptyList()
+        }
+        .distinctUntilChanged()
 
     val eventFlow = MutableSharedFlow<Event>()
 
@@ -71,7 +83,6 @@ class DevicePhotosScreenViewModel @Inject constructor(
             dateGroupedSelectablePhotos = dateGroupedSelectablePhotos,
             selectableFilterDates = selectableFilterDates,
             filterMode = _filterMode.value,
-            isSavedPhotosListEmpty = _savedPhotos.value.isEmpty(),
             isLoading = isLoading,
             isOnline = isOnline,
             isSelectionMode = _selectedPhotos.value.isNotEmpty(),
@@ -91,7 +102,6 @@ class DevicePhotosScreenViewModel @Inject constructor(
                 dateGroupedSelectablePhotos = emptyMap(),
                 selectableFilterDates = emptyList(),
                 filterMode = PhotosFilterMode.ALL,
-                isSavedPhotosListEmpty = true,
                 isLoading = false,
                 isOnline = true,
                 isSelectionMode = false,
@@ -102,17 +112,17 @@ class DevicePhotosScreenViewModel @Inject constructor(
 
     private fun filteredGroupedSelectablePhotosFlow(): Flow<Pair<List<Selectable<LocalDate>>, Map<LocalDate, List<Selectable<Photo>>>>> =
         combine(
-            photoRepository.getAllPhotosLocal(deviceId).distinctUntilChanged(),
-            _savedPhotos,
+            serverPhotosFlow,
+            savedPhotosFlow,
             _selectedPhotos,
             _selectedFilterDates,
             _filterMode,
-        ) { localPhotos, savedPhotos, selectedPhotos, selectedFilterDates, filterMode ->
+        ) { serverPhotos, savedPhotos, selectedPhotos, selectedFilterDates, filterMode ->
 
             val allPhotos = when (filterMode) {
                 PhotosFilterMode.SAVED_ONLY -> savedPhotos
-                PhotosFilterMode.SERVER_ONLY -> localPhotos
-                PhotosFilterMode.ALL -> savedPhotos + localPhotos
+                PhotosFilterMode.SERVER_ONLY -> serverPhotos
+                PhotosFilterMode.ALL -> savedPhotos + serverPhotos
             }
 
             // Map photos to SelectablePhoto
@@ -151,7 +161,6 @@ class DevicePhotosScreenViewModel @Inject constructor(
                 Timber.e(it)
                 eventFlow.emit(Event.ShowError(it.getErrorMessageId()))
             }
-        updateSavedPhotos()
         _isRefreshing.update { false }
         _isRefreshed.update { true }
     }
@@ -226,7 +235,6 @@ class DevicePhotosScreenViewModel @Inject constructor(
                     }
             }
             resetSelectedPhotos()
-            updateSavedPhotos()
             eventFlow.emit(Event.ShowSavedInfo(totalCount, savedCount))
             _isSaving.update { false }
         }
@@ -246,15 +254,6 @@ class DevicePhotosScreenViewModel @Inject constructor(
                 eventFlow.emit(Event.ShowNotEnoughSelectedInfo)
             }
         }
-    }
-
-    private suspend fun updateSavedPhotos() {
-        photoRepository.readAllSavedPhotosFromExternalStorage(deviceId)
-            .onSuccess { _savedPhotos.emit(it) }
-            .onFailure {
-                Timber.e(it)
-                eventFlow.emit(Event.ShowError(it.getErrorMessageId()))
-            }
     }
 
     private fun openPhotoPreview(selectedPhoto: Photo) = viewModelScope.launch(ioDispatcher) {
@@ -279,7 +278,6 @@ class DevicePhotosScreenViewModel @Inject constructor(
         val dateGroupedSelectablePhotos: Map<LocalDate, List<Selectable<Photo>>>,
         val selectableFilterDates: List<Selectable<LocalDate>>,
         val filterMode: PhotosFilterMode,
-        val isSavedPhotosListEmpty: Boolean,
         val isLoading: Boolean,
         val isOnline: Boolean,
         val isSelectionMode: Boolean,

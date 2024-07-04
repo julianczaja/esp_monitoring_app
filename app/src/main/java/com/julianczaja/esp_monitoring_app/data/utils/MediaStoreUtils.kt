@@ -1,13 +1,18 @@
 package com.julianczaja.esp_monitoring_app.data.utils
 
+import android.content.ContentResolver
 import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Context
+import android.database.ContentObserver
 import android.media.MediaScannerConnection
 import android.net.Uri
 import android.provider.MediaStore
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -115,5 +120,21 @@ suspend fun scanPhotoUri(context: Context, uri: Uri, mimeType: String = PHOTO_MI
                 continuation.resume(scannedUri)
             }
         }
+    }
+}
+
+fun ContentResolver.observe(uri: Uri): Flow<Unit> = callbackFlow {
+    val observer = object : ContentObserver(null) {
+        override fun onChange(selfChange: Boolean) {
+            trySend(Unit)
+        }
+    }
+
+    registerContentObserver(uri, true, observer)
+
+    trySend(Unit)
+
+    awaitClose {
+        unregisterContentObserver(observer)
     }
 }

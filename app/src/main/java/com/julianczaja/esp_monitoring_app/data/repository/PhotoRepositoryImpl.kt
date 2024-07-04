@@ -15,13 +15,17 @@ import com.julianczaja.esp_monitoring_app.data.utils.PHOTOS_DIR_PATH_FORMAT
 import com.julianczaja.esp_monitoring_app.data.utils.checkIfPhotoExists
 import com.julianczaja.esp_monitoring_app.data.utils.createPhotoUri
 import com.julianczaja.esp_monitoring_app.data.utils.millisToDefaultFormatLocalDateTime
+import com.julianczaja.esp_monitoring_app.data.utils.observe
 import com.julianczaja.esp_monitoring_app.data.utils.scanPhotoUri
 import com.julianczaja.esp_monitoring_app.data.utils.toExifString
 import com.julianczaja.esp_monitoring_app.domain.BitmapDownloader
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.domain.model.toPhotoEntity
 import com.julianczaja.esp_monitoring_app.domain.repository.PhotoRepository
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import timber.log.Timber
 import java.io.IOException
@@ -33,6 +37,15 @@ class PhotoRepositoryImpl @Inject constructor(
     private val api: RetrofitEspMonitoringApi,
     private val bitmapDownloader: BitmapDownloader
 ) : PhotoRepository {
+
+    private val projection = arrayOf(
+        MediaStore.Images.Media.DATA,
+        MediaStore.Images.Media.DISPLAY_NAME,
+        MediaStore.Images.Media.WIDTH,
+        MediaStore.Images.Media.HEIGHT,
+        MediaStore.Images.Media.DATE_TAKEN,
+        MediaStore.Images.Media._ID,
+    )
 
     override fun getAllPhotosLocal(deviceId: Long): Flow<List<Photo>> =
         photoDao.getAll(deviceId).map { photos -> photos.map { it.toPhoto() } }
@@ -98,28 +111,29 @@ class PhotoRepositoryImpl @Inject constructor(
         return Result.success(Unit)
     }
 
-    override suspend fun readAllSavedPhotosFromExternalStorage(deviceId: Long): Result<List<Photo>> {
+    @OptIn(FlowPreview::class)
+    override fun getAllSavedPhotosFromExternalStorageFlow(deviceId: Long): Flow<Result<List<Photo>>> = flow {
+        context.contentResolver.observe(uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+            .debounce(300)
+            .collect {
+                val result = readAllSavedPhotosFromExternalStorage(deviceId)
+                emit(result)
+            }
+    }
+
+    private fun readAllSavedPhotosFromExternalStorage(deviceId: Long): Result<List<Photo>> {
         if (Environment.getExternalStorageState() != Environment.MEDIA_MOUNTED) {
             return Result.failure(Exception("External storage not mounted"))
         }
 
-        val photos = mutableListOf<Photo>()
-        val contentResolver = context.contentResolver
-
         val directory = PHOTOS_DIR_PATH_FORMAT.format(deviceId)
-        val projection = arrayOf(
-            MediaStore.Images.Media.DATA,
-            MediaStore.Images.Media.DISPLAY_NAME,
-            MediaStore.Images.Media.WIDTH,
-            MediaStore.Images.Media.HEIGHT,
-            MediaStore.Images.Media.DATE_TAKEN,
-            MediaStore.Images.Media._ID,
-        )
         val selection = "${MediaStore.Images.Media.DATA} LIKE ?"
         val selectionArgs = arrayOf("%${directory}%")
 
+        val photos = mutableListOf<Photo>()
+
         return try {
-            contentResolver.query(
+            context.contentResolver.query(
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                 projection,
                 selection,

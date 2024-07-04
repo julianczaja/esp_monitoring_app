@@ -18,6 +18,7 @@ import io.mockk.mockk
 import io.mockk.spyk
 import io.mockk.verify
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -26,7 +27,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import java.time.LocalDate
-import java.time.LocalDateTime
 
 /**
  * These tests use Robolectric because the subject under test (the ViewModel) uses
@@ -52,6 +52,7 @@ class DevicePhotosScreenViewModelTest {
     fun setup() {
         savedStateHandle = SavedStateHandle(route = DeviceScreen(deviceId))
         photoRepository = spyk(FakePhotoRepositoryImpl())
+        photoRepository.tryEmitAllSavedPhotosData(Result.success(emptyList()))
         networkManager = mockk()
         every { networkManager.isOnline } returns flow { delay(1000); emit(true) }
         viewModel = DevicePhotosScreenViewModel(
@@ -73,7 +74,7 @@ class DevicePhotosScreenViewModelTest {
 
     @Test
     fun `isLoading should be true after updatePhotos has been called`() = runTest {
-        val remotePhotos = listOf(Photo(1L, LocalDateTime.MAX, "", "", "", ""))
+        val remotePhotos = listOf(Photo.mock())
         photoRepository.remotePhotos = remotePhotos
 
         viewModel.devicePhotosUiState.test {
@@ -115,25 +116,36 @@ class DevicePhotosScreenViewModelTest {
 
     @Test
     fun `event flow emits ShowError when readAllSavedPhotos thrown exception`() = runTest {
-        photoRepository.readAllSavedPhotosReturnsException = true
+        photoRepository.emitAllPhotosLocalData(emptyList())
+        photoRepository.emitAllSavedPhotosData(Result.failure(Exception("error")))
 
         viewModel.eventFlow.test {
-            viewModel.updatePhotos()
+            viewModel.devicePhotosUiState.first()
             assertThat(awaitItem()).isInstanceOf(DevicePhotosScreenViewModel.Event.ShowError::class.java)
         }
-        coVerify(exactly = 1) { photoRepository.updateAllPhotosRemote(deviceId) }
     }
 
     @Test
-    fun `should select all photos if only one photos with given date is selected`() = runTest {
+    fun `saved photos list is empty when readAllSavedPhotos thrown exception`() = runTest {
+        photoRepository.emitAllPhotosLocalData(emptyList())
+        photoRepository.emitAllSavedPhotosData(Result.failure(Exception("error")))
+
+        viewModel.devicePhotosUiState.test {
+            with(awaitItem()) { assertThat(dateGroupedSelectablePhotos).isEmpty() }
+        }
+    }
+
+    @Test
+    fun `should select all photos if only one photo with given date is selected`() = runTest {
         val localDate = LocalDate.of(2024, 6, 6)
         val remotePhotos = listOf(
             Photo.mock(dateTime = localDate.atTime(10, 0)),
             Photo.mock(dateTime = localDate.atTime(11, 0)),
             Photo.mock(dateTime = localDate.atTime(12, 0)),
         )
-        photoRepository.remotePhotos = remotePhotos
-        viewModel.updatePhotos()
+
+        photoRepository.emitAllPhotosLocalData(remotePhotos)
+        photoRepository.emitAllSavedPhotosData(Result.success(emptyList()))
 
         viewModel.devicePhotosUiState.test {
             delay(5000L)
@@ -155,8 +167,8 @@ class DevicePhotosScreenViewModelTest {
             Photo.mock(dateTime = localDate.atTime(11, 0)),
             Photo.mock(dateTime = localDate.atTime(12, 0)),
         )
-        photoRepository.remotePhotos = remotePhotos
-        viewModel.updatePhotos()
+
+        photoRepository.emitAllPhotosLocalData(remotePhotos)
 
         viewModel.devicePhotosUiState.test {
             delay(5000L)
@@ -175,8 +187,8 @@ class DevicePhotosScreenViewModelTest {
             Photo.mock(dateTime = localDate.atTime(11, 0)),
             Photo.mock(dateTime = localDate.atTime(12, 0)),
         )
-        photoRepository.remotePhotos = remotePhotos
-        viewModel.updatePhotos()
+
+        photoRepository.emitAllPhotosLocalData(remotePhotos)
 
         viewModel.devicePhotosUiState.test {
             delay(5000L)
@@ -197,21 +209,23 @@ class DevicePhotosScreenViewModelTest {
     @Test
     fun `all photos should contain sorted local and saved photos`() = runTest {
         val localDate = LocalDate.of(2024, 6, 6)
-        photoRepository.remotePhotos = listOf(
+        val remotePhotos = listOf(
             Photo.mock(dateTime = localDate.atTime(10, 0), fileName = "fileName1"),
             Photo.mock(dateTime = localDate.atTime(11, 0), fileName = "fileName2")
         )
-        photoRepository.savedPhotos = listOf(
+        val savedPhotos = listOf(
             Photo.mock(dateTime = localDate.atTime(20, 0), fileName = "fileName3"),
             Photo.mock(dateTime = localDate.atTime(21, 0), fileName = "fileName4")
         )
         val expectedPhotos = listOf(
-            Selectable(photoRepository.savedPhotos[1], false),
-            Selectable(photoRepository.savedPhotos[0], false),
-            Selectable(photoRepository.remotePhotos[1], false),
-            Selectable(photoRepository.remotePhotos[0], false)
+            Selectable(savedPhotos[1], false),
+            Selectable(savedPhotos[0], false),
+            Selectable(remotePhotos[1], false),
+            Selectable(remotePhotos[0], false)
         )
-        viewModel.updatePhotos()
+
+        photoRepository.emitAllPhotosLocalData(remotePhotos)
+        photoRepository.emitAllSavedPhotosData(Result.success(savedPhotos))
 
         viewModel.devicePhotosUiState.test {
             delay(5000L)
@@ -222,22 +236,23 @@ class DevicePhotosScreenViewModelTest {
     @Test
     fun `all photos should contain sorted server and saved photos when filter mode is set to all`() = runTest {
         val localDate = LocalDate.of(2024, 6, 6)
-        photoRepository.remotePhotos = listOf(
+        val remotePhotos = listOf(
             Photo.mock(dateTime = localDate.atTime(10, 0), fileName = "fileName1"),
             Photo.mock(dateTime = localDate.atTime(11, 0), fileName = "fileName2")
         )
-        photoRepository.savedPhotos = listOf(
+        val savedPhotos = listOf(
             Photo.mock(dateTime = localDate.atTime(20, 0), fileName = "fileName3"),
             Photo.mock(dateTime = localDate.atTime(21, 0), fileName = "fileName4")
         )
         val expectedPhotos = listOf(
-            Selectable(photoRepository.savedPhotos[1], false),
-            Selectable(photoRepository.savedPhotos[0], false),
-            Selectable(photoRepository.remotePhotos[1], false),
-            Selectable(photoRepository.remotePhotos[0], false)
+            Selectable(savedPhotos[1], false),
+            Selectable(savedPhotos[0], false),
+            Selectable(remotePhotos[1], false),
+            Selectable(remotePhotos[0], false)
         )
 
-        viewModel.updatePhotos()
+        photoRepository.emitAllPhotosLocalData(remotePhotos)
+        photoRepository.emitAllSavedPhotosData(Result.success(savedPhotos))
 
         viewModel.devicePhotosUiState.test {
             delay(5000L)
@@ -251,20 +266,21 @@ class DevicePhotosScreenViewModelTest {
     @Test
     fun `all photos should contain only sorted saved photos when filter mode is set to saved only`() = runTest {
         val localDate = LocalDate.of(2024, 6, 6)
-        photoRepository.remotePhotos = listOf(
+        val remotePhotos = listOf(
             Photo.mock(dateTime = localDate.atTime(10, 0), fileName = "fileName1"),
             Photo.mock(dateTime = localDate.atTime(11, 0), fileName = "fileName2")
         )
-        photoRepository.savedPhotos = listOf(
+        val savedPhotos = listOf(
             Photo.mock(dateTime = localDate.atTime(20, 0), fileName = "fileName3"),
             Photo.mock(dateTime = localDate.atTime(21, 0), fileName = "fileName4")
         )
         val expectedPhotos = listOf(
-            Selectable(photoRepository.savedPhotos[1], false),
-            Selectable(photoRepository.savedPhotos[0], false)
+            Selectable(savedPhotos[1], false),
+            Selectable(savedPhotos[0], false)
         )
 
-        viewModel.updatePhotos()
+        photoRepository.emitAllPhotosLocalData(remotePhotos)
+        photoRepository.emitAllSavedPhotosData(Result.success(savedPhotos))
         viewModel.onFilterModeClicked()
 
         viewModel.devicePhotosUiState.test {
@@ -279,20 +295,22 @@ class DevicePhotosScreenViewModelTest {
     @Test
     fun `all photos should contain only sorted server photos when filter mode is set to server only`() = runTest {
         val localDate = LocalDate.of(2024, 6, 6)
-        photoRepository.remotePhotos = listOf(
+        val remotePhotos = listOf(
             Photo.mock(dateTime = localDate.atTime(10, 0), fileName = "fileName1"),
             Photo.mock(dateTime = localDate.atTime(11, 0), fileName = "fileName2")
         )
-        photoRepository.savedPhotos = listOf(
+        val savedPhotos = listOf(
             Photo.mock(dateTime = localDate.atTime(20, 0), fileName = "fileName3"),
             Photo.mock(dateTime = localDate.atTime(21, 0), fileName = "fileName4")
         )
         val expectedPhotos = listOf(
-            Selectable(photoRepository.remotePhotos[1], false),
-            Selectable(photoRepository.remotePhotos[0], false)
+            Selectable(remotePhotos[1], false),
+            Selectable(remotePhotos[0], false)
         )
 
-        viewModel.updatePhotos()
+        photoRepository.emitAllPhotosLocalData(remotePhotos)
+        photoRepository.emitAllSavedPhotosData(Result.success(savedPhotos))
+
         viewModel.onFilterModeClicked()
         viewModel.onFilterModeClicked()
 

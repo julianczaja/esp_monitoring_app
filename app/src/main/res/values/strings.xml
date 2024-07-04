@@ -113,6 +113,7 @@
     <string name="save_action">Save</string>
     <string name="save_photo_to_external_storage_result_message">%1$d/%2$d photos saved</string>
     <string name="saved_label">Saved</string>
+    <string name="saved_photos_read_error_message">Error while reading saved photo</string>
     <string name="saved_tab_label">Saved</string>
     <string name="seconds_format">%.1f s</string>
     <string name="selected_photos_count_format">Selected: %1$d</string>
