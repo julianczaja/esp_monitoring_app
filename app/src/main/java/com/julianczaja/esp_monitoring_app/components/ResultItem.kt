@@ -1,4 +1,4 @@
-package com.julianczaja.esp_monitoring_app.presentation.removephotos.components
+package com.julianczaja.esp_monitoring_app.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -15,7 +15,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.julianczaja.esp_monitoring_app.R
-import com.julianczaja.esp_monitoring_app.components.AppBackground
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.presentation.theme.color_green
 import com.julianczaja.esp_monitoring_app.presentation.theme.color_red
@@ -23,7 +22,7 @@ import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 
 
 @Composable
-fun RemovePhotoResultItem(
+fun PhotoResultItem(
     modifier: Modifier = Modifier,
     photo: Photo,
     error: Int?
@@ -71,7 +70,7 @@ fun RemovePhotoResultItem(
 @Composable
 private fun SuccessPreview() {
     AppBackground {
-        RemovePhotoResultItem(
+        PhotoResultItem(
             photo = Photo.mock(),
             error = null
         )
@@ -82,7 +81,7 @@ private fun SuccessPreview() {
 @Composable
 private fun SavedPhotoSuccessPreview() {
     AppBackground {
-        RemovePhotoResultItem(
+        PhotoResultItem(
             photo = Photo.mock(isSaved = true),
             error = null
         )
@@ -93,7 +92,7 @@ private fun SavedPhotoSuccessPreview() {
 @Composable
 private fun ErrorPreview() {
     AppBackground {
-        RemovePhotoResultItem(
+        PhotoResultItem(
             photo = Photo.mock(),
             error = R.string.unknown_error_message
         )
@@ -104,7 +103,7 @@ private fun ErrorPreview() {
 @Composable
 private fun ErrorLongFileNamePreview() {
     AppBackground(Modifier.width(250.dp)) {
-        RemovePhotoResultItem(
+        PhotoResultItem(
             photo = Photo.mock(fileName = "looooooooooooooooooooooong file name"),
             error = R.string.unknown_error_message
         )
@@ -115,7 +114,7 @@ private fun ErrorLongFileNamePreview() {
 @Composable
 private fun SavedPhotoErrorPreview() {
     AppBackground {
-        RemovePhotoResultItem(
+        PhotoResultItem(
             photo = Photo.mock(isSaved = true),
             error = R.string.unknown_error_message
         )

@@ -75,6 +75,7 @@ fun DevicePhotosScreen(
     navigateToPhotoPreview: (List<Photo>, Int) -> Unit,
     navigateToTimelapseCreatorScreen: (List<Photo>) -> Unit,
     navigateToRemovePhotosDialog: (List<Photo>) -> Unit,
+    navigateToSavePhotosDialog: (List<Photo>) -> Unit,
     viewModel: DevicePhotosScreenViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.devicePhotosUiState.collectAsStateWithLifecycle()
@@ -140,6 +141,7 @@ fun DevicePhotosScreen(
 
                 is Event.NavigateToPhotoPreview -> navigateToPhotoPreview(event.photos, event.initialIndex)
                 is Event.NavigateToRemovePhotosDialog -> navigateToRemovePhotosDialog(event.photos)
+                is Event.NavigateToSavePhotosDialog -> navigateToSavePhotosDialog(event.photos)
                 is Event.NavigateToTimelapseCreatorScreen -> navigateToTimelapseCreatorScreen(event.photos)
             }
         }

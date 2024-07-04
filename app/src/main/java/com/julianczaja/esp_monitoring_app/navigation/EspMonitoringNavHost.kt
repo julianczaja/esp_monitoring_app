@@ -23,6 +23,7 @@ import com.julianczaja.esp_monitoring_app.presentation.devicesettings.DeviceSett
 import com.julianczaja.esp_monitoring_app.presentation.photopreview.PhotoPreviewDialog
 import com.julianczaja.esp_monitoring_app.presentation.removedevice.RemoveDeviceDialog
 import com.julianczaja.esp_monitoring_app.presentation.removephotos.RemovePhotosDialog
+import com.julianczaja.esp_monitoring_app.presentation.savephotos.SavePhotosDialog
 import com.julianczaja.esp_monitoring_app.presentation.timelapsecreator.TimelapseCreatorScreen
 import kotlin.reflect.typeOf
 
@@ -59,6 +60,7 @@ fun EspMonitoringNavHost(
                 snackbarHostState = snackbarHostState,
                 navigateToPhotoPreview = navController::navigateToPhotoPreview,
                 navigateToRemovePhotosDialog = navController::navigateToRemovePhotosDialog,
+                navigateToSavePhotosDialog = navController::navigateToSavePhotosDialog,
                 navigateToTimelapseCreatorScreen = navController::navigateToTimelapseCreatorScreen
             )
         }
@@ -97,6 +99,13 @@ fun EspMonitoringNavHost(
             typeMap = mapOf(typeOf<List<Photo>>() to parcelableCollectionType<Photo>())
         ) {
             RemovePhotosDialog(
+                onDismiss = onBackClick
+            )
+        }
+        dialog<SavePhotosDialog>(
+            typeMap = mapOf(typeOf<List<Photo>>() to parcelableCollectionType<Photo>())
+        ) {
+            SavePhotosDialog(
                 onDismiss = onBackClick
             )
         }

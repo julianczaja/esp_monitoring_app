@@ -51,8 +51,6 @@ class DevicePhotosScreenViewModel @Inject constructor(
 
     private val _filterMode = MutableStateFlow(PhotosFilterMode.ALL)
 
-    private val _isSaving = MutableStateFlow(false)
-
     private val _isRefreshing = MutableStateFlow(false)
 
     private val _isRefreshed = MutableStateFlow(false)
@@ -75,7 +73,7 @@ class DevicePhotosScreenViewModel @Inject constructor(
 
     val devicePhotosUiState: StateFlow<UiState> = combine(
         filteredGroupedSelectablePhotosFlow(),
-        isLoadingFlow(),
+        _isRefreshing,
         _isOnline,
         _isRefreshed
     ) { (selectableFilterDates, dateGroupedSelectablePhotos), isLoading, isOnline, isRefreshed ->
@@ -150,10 +148,6 @@ class DevicePhotosScreenViewModel @Inject constructor(
             return@combine (newSelectedFilterDates to filteredPhotos)
         }
 
-    private fun isLoadingFlow() = combine(_isSaving, _isRefreshing) { isSaving, isRefreshing ->
-        return@combine isRefreshing || isSaving
-    }
-
     fun updatePhotos() = viewModelScope.launch(ioDispatcher) {
         _isRefreshing.update { true }
         photoRepository.updateAllPhotosRemote(deviceId)
@@ -220,28 +214,9 @@ class DevicePhotosScreenViewModel @Inject constructor(
         _selectedPhotos.update { emptyList() }
     }
 
-    fun saveSelectedPhotos() {
-        _isSaving.update { true }
-
-        val selectedPhotos = _selectedPhotos.value
-        val totalCount = selectedPhotos.size
-        var savedCount = 0
-
-        viewModelScope.launch(ioDispatcher) {
-            selectedPhotos.forEach { photo ->
-                photoRepository.downloadPhotoAndSaveToExternalStorage(photo)
-                    .onSuccess {
-                        Timber.i("Saved ${photo.fileName}")
-                        savedCount += 1
-                    }
-                    .onFailure {
-                        Timber.e("Error while saving ${photo.fileName}: $it")
-                    }
-            }
-            resetSelectedPhotos()
-            eventFlow.emit(Event.ShowSavedInfo(totalCount, savedCount))
-            _isSaving.update { false }
-        }
+    fun saveSelectedPhotos() = viewModelScope.launch {
+        eventFlow.emit(Event.NavigateToSavePhotosDialog(_selectedPhotos.value))
+        resetSelectedPhotos()
     }
 
     fun removeSelectedPhotos() = viewModelScope.launch {
@@ -271,6 +246,7 @@ class DevicePhotosScreenViewModel @Inject constructor(
     sealed class Event {
         data class NavigateToPhotoPreview(val photos: List<Photo>, val initialIndex: Int) : Event()
         data class NavigateToRemovePhotosDialog(val photos: List<Photo>) : Event()
+        data class NavigateToSavePhotosDialog(val photos: List<Photo>) : Event()
         data class NavigateToTimelapseCreatorScreen(val photos: List<Photo>) : Event()
         data class ShowSavedInfo(val totalCount: Int, val savedCount: Int) : Event()
         data class ShowError(val messageId: Int) : Event()

@@ -20,6 +20,7 @@ import com.julianczaja.esp_monitoring_app.data.utils.scanPhotoUri
 import com.julianczaja.esp_monitoring_app.data.utils.toExifString
 import com.julianczaja.esp_monitoring_app.domain.BitmapDownloader
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
+import com.julianczaja.esp_monitoring_app.domain.model.PhotoAlreadyExistsException
 import com.julianczaja.esp_monitoring_app.domain.model.toPhotoEntity
 import com.julianczaja.esp_monitoring_app.domain.repository.PhotoRepository
 import kotlinx.coroutines.FlowPreview
@@ -81,7 +82,7 @@ class PhotoRepositoryImpl @Inject constructor(
         val contentResolver = context.contentResolver
 
         if (checkIfPhotoExists(context, photo)) {
-            return Result.failure(Exception("Photo already exists"))
+            return Result.failure(PhotoAlreadyExistsException())
         }
 
         val bitmap: Bitmap = bitmapDownloader.downloadBitmap(photo.url).getOrElse {

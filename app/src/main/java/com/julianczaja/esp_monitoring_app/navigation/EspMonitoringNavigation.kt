@@ -62,9 +62,18 @@ fun NavController.navigateToRemoveDeviceDialog(deviceId: Long) {
 @Serializable
 data class RemovePhotosDialog(val photos: List<Photo>)
 
-
 fun NavController.navigateToRemovePhotosDialog(photos: List<Photo>) {
     navigate(RemovePhotosDialog(photos)) {
+        launchSingleTop = true
+    }
+}
+
+// Save photos
+@Serializable
+data class SavePhotosDialog(val photos: List<Photo>)
+
+fun NavController.navigateToSavePhotosDialog(photos: List<Photo>) {
+    navigate(SavePhotosDialog(photos)) {
         launchSingleTop = true
     }
 }

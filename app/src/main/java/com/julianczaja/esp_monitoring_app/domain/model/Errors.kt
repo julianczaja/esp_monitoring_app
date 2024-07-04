@@ -28,6 +28,7 @@ class GenericInternetException : Exception()
 class GenericServerException : Exception()
 class InternalAppException : Exception()
 class TimelapseCancelledException : Exception()
+class PhotoAlreadyExistsException : Exception()
 
 fun Throwable.getErrorMessageId(): Int = when (this) {
     is NoInternetConnectionException -> R.string.no_internet_connection_error_message
@@ -40,6 +41,7 @@ fun Throwable.getErrorMessageId(): Int = when (this) {
     is NotConnectedException -> R.string.bluetooth_connection_not_connected_error_message
     is BluetoothDisabledException -> R.string.bluetooth_disabled_error_message
     is TimelapseCancelledException -> R.string.timelapse_cancelled
+    is PhotoAlreadyExistsException -> R.string.photo_already_exists
     else -> R.string.unknown_error_message
 }
 

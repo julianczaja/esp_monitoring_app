@@ -44,7 +44,7 @@ import com.julianczaja.esp_monitoring_app.components.DialogTwoButtons
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.presentation.removephotos.RemovePhotosDialogViewModel.Event
 import com.julianczaja.esp_monitoring_app.presentation.removephotos.RemovePhotosDialogViewModel.UiState
-import com.julianczaja.esp_monitoring_app.presentation.removephotos.components.RemovePhotoResultItem
+import com.julianczaja.esp_monitoring_app.components.PhotoResultItem
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 import kotlin.collections.component1
 import kotlin.collections.component2
@@ -261,7 +261,7 @@ private fun ErrorScreen(
         ) {
             uiState.results.forEach { (photo, error) ->
                 item {
-                    RemovePhotoResultItem(photo = photo, error = error)
+                    PhotoResultItem(photo = photo, error = error)
                 }
             }
         }
