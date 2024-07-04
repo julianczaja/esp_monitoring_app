@@ -8,17 +8,19 @@ import androidx.navigation.toRoute
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.di.IoDispatcher
 import com.julianczaja.esp_monitoring_app.domain.model.Timelapse
+import com.julianczaja.esp_monitoring_app.domain.model.getErrorMessageId
 import com.julianczaja.esp_monitoring_app.domain.repository.TimelapseRepository
 import com.julianczaja.esp_monitoring_app.navigation.DeviceScreen
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -28,41 +30,40 @@ class DeviceTimelapsesScreenViewModel @Inject constructor(
     private val timelapseRepository: TimelapseRepository,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
-
     private val deviceId = savedStateHandle.toRoute<DeviceScreen>().deviceId
+
+    private val savedTimelapsesFlow = timelapseRepository.getAllTimelapsesFromExternalStorageFlow(deviceId)
+        .map {
+            it.exceptionOrNull()?.let { e ->
+                Timber.e("Error while reading timelapses: $e")
+                eventFlow.emit(Event.ShowError(R.string.timelapses_read_error_message))
+            }
+            return@map it.getOrNull() ?: emptyList()
+        }
+        .distinctUntilChanged()
 
     val eventFlow = MutableSharedFlow<Event>()
 
-    private val _savedTimelapses = MutableStateFlow<List<Timelapse>>(emptyList())
-    private val _isLoading = MutableStateFlow(false)
-
-    val uiState: StateFlow<UiState> = combine(_savedTimelapses, _isLoading) { savedTimelapses, isLoading ->
-        UiState(savedTimelapses, isLoading)
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = UiState(emptyList(), false)
-    )
+    val uiState: StateFlow<UiState> = savedTimelapsesFlow
+        .map(::UiState)
+        .flowOn(ioDispatcher)
+        .catch {
+            Timber.e(it)
+            eventFlow.emit(Event.ShowError(it.getErrorMessageId()))
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = UiState(emptyList())
+        )
 
     fun updateTimelapses() {
-        readSavedTimelapses()
-    }
-
-    private fun readSavedTimelapses() = viewModelScope.launch(ioDispatcher) {
-        _isLoading.emit(true)
-        timelapseRepository.readAllTimelapsesFromExternalStorage(deviceId)
-            .onSuccess { _savedTimelapses.emit(it) }
-            .onFailure {
-                Timber.e(it)
-                eventFlow.emit(Event.ShowError(R.string.internal_app_error_message))
-            }
-        _isLoading.emit(false)
+        timelapseRepository.forceRefreshContent()
     }
 
     @Immutable
     data class UiState(
-        val timelapses: List<Timelapse>,
-        val isLoading: Boolean
+        val timelapses: List<Timelapse>
     )
 
     sealed class Event {

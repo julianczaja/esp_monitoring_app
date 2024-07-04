@@ -151,6 +151,7 @@
     <string name="timelapse_processing_label">Processing timelapse…</string>
     <string name="timelapse_saved">Timelapse saved</string>
     <string name="timelapse_size_label">"Size: "</string>
+    <string name="timelapses_read_error_message">Error while reading timelapses</string>
     <string name="timelapses_tab_label">Timelapses</string>
     <string name="unknown_error_message">Unknown error</string>
     <string name="update_label">Update</string>

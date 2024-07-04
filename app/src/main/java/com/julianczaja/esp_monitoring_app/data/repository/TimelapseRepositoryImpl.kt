@@ -6,9 +6,14 @@ import android.os.Environment
 import android.provider.MediaStore
 import com.julianczaja.esp_monitoring_app.data.utils.TIMELAPSES_DIR_PATH_FORMAT
 import com.julianczaja.esp_monitoring_app.data.utils.millisToDefaultFormatLocalDateTime
+import com.julianczaja.esp_monitoring_app.data.utils.observe
 import com.julianczaja.esp_monitoring_app.domain.model.Timelapse
 import com.julianczaja.esp_monitoring_app.domain.model.TimelapseData
 import com.julianczaja.esp_monitoring_app.domain.repository.TimelapseRepository
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.flow
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -16,7 +21,21 @@ class TimelapseRepositoryImpl @Inject constructor(
     private val context: Context
 ) : TimelapseRepository {
 
-    override fun readAllTimelapsesFromExternalStorage(deviceId: Long): Result<List<Timelapse>> {
+    @OptIn(FlowPreview::class)
+    override fun getAllTimelapsesFromExternalStorageFlow(deviceId: Long): Flow<Result<List<Timelapse>>> = flow {
+        context.contentResolver.observe(uri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
+            .debounce(300)
+            .collect {
+                val result = readAllTimelapsesFromExternalStorage(deviceId)
+                emit(result)
+            }
+    }
+
+    override fun forceRefreshContent() {
+        context.contentResolver.notifyChange(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, null)
+    }
+
+    private fun readAllTimelapsesFromExternalStorage(deviceId: Long): Result<List<Timelapse>> {
         if (Environment.getExternalStorageState() != Environment.MEDIA_MOUNTED) {
             return Result.failure(Exception("External storage not mounted"))
         }

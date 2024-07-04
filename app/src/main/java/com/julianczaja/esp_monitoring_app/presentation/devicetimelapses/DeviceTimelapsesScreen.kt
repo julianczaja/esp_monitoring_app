@@ -141,7 +141,6 @@ fun DeviceTimelapsesScreen(
     DeviceTimelapsesScreenContent(
         modifier = Modifier.fillMaxSize(),
         timelapses = uiState.timelapses,
-        isLoading = uiState.isLoading,
         shouldShowPermissionMissingNotice = shouldShowPermissionMissingNotice,
         onPermissionNoticeActionClicked = { readExternalStoragePermissionLauncher.launch(storagePermissionName) },
         onPermissionNoticeIgnoreClicked = { shouldShowPermissionMissingNotice = false },
@@ -154,16 +153,11 @@ fun DeviceTimelapsesScreen(
 private fun DeviceTimelapsesScreenContent(
     modifier: Modifier = Modifier,
     timelapses: List<Timelapse>,
-    isLoading: Boolean,
     shouldShowPermissionMissingNotice: Boolean,
     onPermissionNoticeActionClicked: () -> Unit,
     onPermissionNoticeIgnoreClicked: () -> Unit,
     onRefreshTriggered: () -> Unit
 ) {
-    LaunchedEffect(true) {
-        onRefreshTriggered.invoke()
-    }
-
     var isTimelapsePreviewDialogVisible by remember { mutableStateOf(false) }
     var timelapseData: TimelapseData? by remember { mutableStateOf(null) }
 
@@ -181,7 +175,7 @@ private fun DeviceTimelapsesScreenContent(
 
     PullToRefreshBox(
         modifier = modifier,
-        isRefreshing = isLoading,
+        isRefreshing = false,
         onRefresh = onRefreshTriggered
     ) {
         when (timelapses.isEmpty()) {
@@ -348,7 +342,6 @@ private fun DeviceTimelapsesSuccessPreview() {
                     data = TimelapseData(path = "path 2", sizeBytes = 55000, durationSeconds = 23.5f)
                 )
             ),
-            isLoading = false,
             shouldShowPermissionMissingNotice = false,
             onPermissionNoticeActionClicked = {},
             onPermissionNoticeIgnoreClicked = {},
@@ -373,7 +366,6 @@ private fun DeviceTimelapsesSuccessWithNoticePreview() {
                     data = TimelapseData(path = "path 2", sizeBytes = 55000, durationSeconds = 23.5f)
                 )
             ),
-            isLoading = false,
             shouldShowPermissionMissingNotice = true,
             onPermissionNoticeActionClicked = {},
             onPermissionNoticeIgnoreClicked = {},
