@@ -61,6 +61,7 @@ import com.julianczaja.esp_monitoring_app.components.Notice
 import com.julianczaja.esp_monitoring_app.components.PhotoCoilImage
 import com.julianczaja.esp_monitoring_app.components.PhotoInfoRow
 import com.julianczaja.esp_monitoring_app.components.header
+import com.julianczaja.esp_monitoring_app.data.utils.toDefaultFormatString
 import com.julianczaja.esp_monitoring_app.data.utils.toPrettyString
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.domain.model.Selectable
@@ -165,7 +166,7 @@ fun SelectablePhotosLazyGrid(
                         }
                     }
                 }
-                items(photos, key = { it.item.dateTime }) { selectablePhoto ->
+                items(photos, key = { it.item.dateTime.toDefaultFormatString() + "|${it.item.isSaved}" }) { selectablePhoto ->
                     SelectableDevicePhoto(
                         selectablePhoto = selectablePhoto,
                         isSelectionMode = isSelectionMode,

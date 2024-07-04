@@ -49,6 +49,8 @@ fun LocalDate.toMonthDayString(): String = this.format(DateTimeFormatter.ofPatte
 
 fun LocalDateTime.toDayMonthYearString(): String = this.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))
 
+fun String.toLocalDate(): LocalDate = LocalDate.parse(this, localDateTimeDefaultFormatter)
+
 object LocalDateTimeAsStringSerializer : KSerializer<LocalDateTime> {
     override val descriptor = PrimitiveSerialDescriptor("LocalDateTimeAsStringSerializer", PrimitiveKind.STRING)
     override fun serialize(encoder: Encoder, value: LocalDateTime) = encoder.encodeString(value.toDefaultFormatString())

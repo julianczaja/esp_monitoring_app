@@ -52,6 +52,7 @@ import com.julianczaja.esp_monitoring_app.data.utils.getActivity
 import com.julianczaja.esp_monitoring_app.data.utils.getPermissionState
 import com.julianczaja.esp_monitoring_app.data.utils.getReadExternalStorageImagesPermissionName
 import com.julianczaja.esp_monitoring_app.data.utils.openAppSettings
+import com.julianczaja.esp_monitoring_app.data.utils.toLocalDate
 import com.julianczaja.esp_monitoring_app.domain.model.PermissionState
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.domain.model.PhotosFilterMode
@@ -64,7 +65,6 @@ import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.LocalDate
-import java.time.LocalDateTime
 
 
 const val DEFAULT_PHOTO_WIDTH = 150
@@ -268,7 +268,14 @@ private fun DevicePhotosNotEmptyScreen(
             } else {
                 visibleItemsInfo.first()
             }
-            return@derivedStateOf (visibleKey.key as? LocalDate) ?: (visibleKey.key as? LocalDateTime)?.toLocalDate()
+            return@derivedStateOf try {
+                visibleKey.key.toString()
+                    .split("|")
+                    .first()
+                    .toLocalDate()
+            } catch (e: Exception) {
+                null
+            }
         }
     }
 
