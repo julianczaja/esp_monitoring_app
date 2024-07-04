@@ -30,6 +30,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -137,6 +138,7 @@ fun DevicesScreenSuccessContent(
         ) {
             item {
                 CardButton(
+                    modifier =Modifier.testTag("add_new_device_button"),
                     labelId = R.string.add_new_device_label,
                     iconId = R.drawable.ic_add_24,
                     onClicked = onAddDeviceClicked

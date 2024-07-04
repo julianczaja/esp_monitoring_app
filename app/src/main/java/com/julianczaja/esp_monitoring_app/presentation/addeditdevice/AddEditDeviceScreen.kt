@@ -26,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.PreviewLightDark
@@ -130,7 +131,9 @@ fun AddEditDeviceScreenContent(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             OutlinedTextField(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("device_name_text_filed"),
                 value = name,
                 label = { Text(stringResource(R.string.device_name_label)) },
                 onValueChange = updateName,
@@ -149,7 +152,8 @@ fun AddEditDeviceScreenContent(
             OutlinedTextField(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = MaterialTheme.spacing.medium),
+                    .padding(top = MaterialTheme.spacing.medium)
+                    .testTag("device_id_text_filed"),
                 value = id,
                 enabled = isIdEnabled,
                 label = { Text(stringResource(R.string.device_id_label)) },
@@ -171,7 +175,9 @@ fun AddEditDeviceScreenContent(
         Button(
             onClick = apply,
             enabled = (idError == null) && (nameError == null) && id.isNotEmpty() && name.isNotEmpty(),
-            modifier = Modifier.fillMaxWidth(0.5f)
+            modifier = Modifier
+                .fillMaxWidth(0.5f)
+                .testTag("apply_button")
         ) {
             Text(text = stringResource(id = applyButtonLabelId))
         }
