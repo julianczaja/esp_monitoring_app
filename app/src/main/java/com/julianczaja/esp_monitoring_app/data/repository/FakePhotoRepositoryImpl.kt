@@ -66,4 +66,6 @@ class FakePhotoRepositoryImpl : PhotoRepository {
     override suspend fun removeSavedPhotoFromExternalStorage(photo: Photo): Result<Unit> {
         return Result.success(Unit)
     }
+
+    override fun forceRefreshSavedPhotosContent() {}
 }

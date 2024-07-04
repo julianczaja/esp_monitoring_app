@@ -99,6 +99,7 @@ fun DevicePhotosScreen(
                     shouldShowPermissionRationaleDialog = false
                     shouldShowPermissionMissingNotice = false
                     viewModel.updatePhotos()
+                    viewModel.updateSavedPhotos()
                 }
 
                 false -> {

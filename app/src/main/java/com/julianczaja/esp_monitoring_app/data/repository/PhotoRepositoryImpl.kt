@@ -195,6 +195,10 @@ class PhotoRepositoryImpl @Inject constructor(
         }
     }
 
+    override fun forceRefreshSavedPhotosContent() {
+        context.contentResolver.notifyChange(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, null)
+    }
+
     private suspend fun refreshPhotosCache(deviceId: Long, photos: List<Photo>) = photoDao.withTransaction {
         photoDao.deleteAll(deviceId)
         photoDao.insertAll(photos.map(Photo::toPhotoEntity))

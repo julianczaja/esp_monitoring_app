@@ -165,6 +165,10 @@ class DevicePhotosScreenViewModel @Inject constructor(
         _isRefreshed.update { true }
     }
 
+    fun updateSavedPhotos() {
+        photoRepository.forceRefreshSavedPhotosContent()
+    }
+
     fun onPhotoClick(selectablePhoto: Selectable<Photo>) {
         val isSelectionMode = _selectedPhotos.value.isNotEmpty()
 

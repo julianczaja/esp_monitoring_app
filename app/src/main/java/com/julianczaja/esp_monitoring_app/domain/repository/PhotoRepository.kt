@@ -23,4 +23,6 @@ interface PhotoRepository {
     fun getAllSavedPhotosFromExternalStorageFlow(deviceId: Long): Flow<Result<List<Photo>>>
 
     suspend fun removeSavedPhotoFromExternalStorage(photo: Photo): Result<Unit>
+
+    fun forceRefreshSavedPhotosContent()
 }
