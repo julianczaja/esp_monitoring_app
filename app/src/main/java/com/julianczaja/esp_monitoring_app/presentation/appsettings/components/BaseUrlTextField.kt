@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.components.DefaultDropdownMenu
 import com.julianczaja.esp_monitoring_app.domain.model.FieldState
+import kotlinx.collections.immutable.ImmutableSet
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -26,7 +27,7 @@ import com.julianczaja.esp_monitoring_app.domain.model.FieldState
 fun BaseUrlTextField(
     modifier: Modifier = Modifier,
     fieldState: FieldState<String>,
-    history: Set<String>,
+    history: ImmutableSet<String>,
     onBaseUrlUpdate: (String) -> Unit,
 ) {
     val focusManager = LocalFocusManager.current

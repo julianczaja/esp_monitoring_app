@@ -35,6 +35,8 @@ import com.julianczaja.esp_monitoring_app.domain.model.PhotosFilterMode
 import com.julianczaja.esp_monitoring_app.domain.model.Selectable
 import com.julianczaja.esp_monitoring_app.presentation.theme.shape
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import java.time.LocalDate
 
 private const val FILTER_BAR_HEIGHT_DP = 50
@@ -42,7 +44,7 @@ private const val FILTER_BAR_HEIGHT_DP = 50
 @Composable
 fun FilterBar(
     modifier: Modifier = Modifier,
-    dates: List<Selectable<LocalDate>>,
+    dates: ImmutableList<Selectable<LocalDate>>,
     highlightedDate: LocalDate? = null,
     filterMode: PhotosFilterMode,
     onDateClicked: (Selectable<LocalDate>) -> Unit,
@@ -126,7 +128,7 @@ fun FilterBar(
 private fun FilterBarPreview() {
     AppBackground(Modifier.height((FILTER_BAR_HEIGHT_DP + 20).dp)) {
         FilterBar(
-            dates = listOf(
+            dates = persistentListOf(
                 Selectable(LocalDate.of(2024, 4, 25), true),
                 Selectable(LocalDate.of(2024, 4, 10), true),
                 Selectable(LocalDate.of(2024, 1, 20), false),
@@ -144,7 +146,7 @@ private fun FilterBarPreview() {
 private fun FilterBarOverflowPreview() {
     AppBackground(Modifier.height((FILTER_BAR_HEIGHT_DP + 20).dp)) {
         FilterBar(
-            dates = listOf(
+            dates = persistentListOf(
                 Selectable(LocalDate.of(2024, 4, 25), true),
                 Selectable(LocalDate.of(2024, 4, 14), true),
                 Selectable(LocalDate.of(2024, 4, 13), false),

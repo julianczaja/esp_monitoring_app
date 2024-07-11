@@ -1,22 +1,10 @@
 package com.julianczaja.esp_monitoring_app.data.utils
 
 import android.Manifest
-import android.content.Context
-import android.content.pm.PackageManager
 import android.os.Build
+import kotlinx.collections.immutable.ImmutableSet
+import kotlinx.collections.immutable.persistentSetOf
 
-
-fun checkPermissionAndDoAction(
-    context: Context,
-    permission: String,
-    onGranted: () -> Unit,
-    onDenied: (() -> Unit)? = null,
-) {
-    when (PackageManager.PERMISSION_GRANTED) {
-        context.checkSelfPermission(permission) -> onGranted()
-        else -> onDenied?.invoke()
-    }
-}
 
 fun getReadExternalStorageImagesPermissionName() = when {
     Build.VERSION.SDK_INT < 33 -> Manifest.permission.READ_EXTERNAL_STORAGE
@@ -33,7 +21,11 @@ fun getLocationPermissionNameOrEmpty() = when {
     else -> Manifest.permission.ACCESS_FINE_LOCATION
 }
 
-fun getBluetoothPermissionsNamesOrEmpty(): Array<String> = when {
-    Build.VERSION.SDK_INT >= 31 -> arrayOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT)
-    else -> emptyArray()
+fun getBluetoothPermissionsNamesOrEmpty(): ImmutableSet<String> = when {
+    Build.VERSION.SDK_INT >= 31 -> persistentSetOf(
+        Manifest.permission.BLUETOOTH_SCAN,
+        Manifest.permission.BLUETOOTH_CONNECT
+    )
+
+    else -> persistentSetOf()
 }

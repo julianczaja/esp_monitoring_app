@@ -5,7 +5,6 @@ import android.os.Bundle
 import android.os.Parcelable
 import androidx.navigation.CollectionNavType
 import androidx.navigation.NavController
-import androidx.navigation.NavType
 import com.julianczaja.esp_monitoring_app.domain.model.Device
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import kotlinx.serialization.Serializable
@@ -111,27 +110,6 @@ fun NavController.navigateToTimelapseCreatorScreen(photos: List<Photo>) {
 // Args
 object DeviceIdArgs {
     const val NO_VALUE = -1L
-}
-
-// https://github.com/edgarmiro/compose-navigation-type-safety/blob/main/app/src/main/java/com/example/composenavigation/typesafety/ParcelableType.kt
-inline fun <reified T : Parcelable> parcelableType(
-    isNullableAllowed: Boolean = false,
-    json: Json = Json,
-) = object : NavType<T>(isNullableAllowed) {
-
-    override fun get(bundle: Bundle, key: String) =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            bundle.getParcelable(key, T::class.java)
-        } else {
-            @Suppress("DEPRECATION")
-            bundle.getParcelable(key)
-        }
-
-    override fun parseValue(value: String): T = json.decodeFromString(value)
-
-    override fun serializeAsValue(value: T): String = json.encodeToString(value)
-
-    override fun put(bundle: Bundle, key: String, value: T) = bundle.putParcelable(key, value)
 }
 
 inline fun <reified T : Parcelable> parcelableCollectionType(

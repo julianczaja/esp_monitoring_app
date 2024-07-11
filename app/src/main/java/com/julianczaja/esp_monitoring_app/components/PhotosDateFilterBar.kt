@@ -24,13 +24,15 @@ import com.julianczaja.esp_monitoring_app.data.utils.toMonthDayString
 import com.julianczaja.esp_monitoring_app.domain.model.Selectable
 import com.julianczaja.esp_monitoring_app.presentation.theme.shape
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import java.time.LocalDate
 
 
 @Composable
 fun PhotosDateFilterBar(
     modifier: Modifier = Modifier,
-    dates: List<Selectable<LocalDate>>,
+    dates: ImmutableList<Selectable<LocalDate>>,
     highlightedDate: LocalDate? = null,
     onDateClicked: (Selectable<LocalDate>) -> Unit
 ) {
@@ -81,7 +83,7 @@ fun PhotosDateFilterBar(
 private fun PhotosDateFilterBarPreview() {
     AppBackground(Modifier.height(100.dp)) {
         PhotosDateFilterBar(
-            dates = listOf(
+            dates = persistentListOf(
                 Selectable(LocalDate.of(2024, 4, 25), true),
                 Selectable(LocalDate.of(2024, 4, 10), true),
                 Selectable(LocalDate.of(2024, 1, 20), false),
@@ -97,7 +99,7 @@ private fun PhotosDateFilterBarPreview() {
 private fun PhotosDateFilterBarOverflowPreview() {
     AppBackground {
         PhotosDateFilterBar(
-            dates = listOf(
+            dates = persistentListOf(
                 Selectable(LocalDate.of(2024, 4, 25), true),
                 Selectable(LocalDate.of(2024, 4, 14), true),
                 Selectable(LocalDate.of(2024, 4, 13), false),

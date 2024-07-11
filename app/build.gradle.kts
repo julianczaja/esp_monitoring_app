@@ -84,7 +84,7 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.retrofit.kotlinx.serialization.converter)
-    implementation(libs.androidx.constraintlayout.compose)
+    implementation(libs.kotlinx.collections.immutable)
 
     // Splash screen
     implementation(libs.androidx.core.splashscreen)

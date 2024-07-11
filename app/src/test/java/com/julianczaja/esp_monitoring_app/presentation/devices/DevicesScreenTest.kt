@@ -8,6 +8,7 @@ import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.domain.model.Device
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.presentation.devices.DevicesScreenViewModel.UiState
+import kotlinx.collections.immutable.persistentMapOf
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -38,7 +39,7 @@ class DevicesScreenTest {
 
         composeTestRule.setContent {
             DevicesScreenContent(
-                uiState = UiState.Success(mapOf(device to photo)),
+                uiState = UiState.Success(persistentMapOf(device to photo)),
                 onDeviceClicked = {},
                 onRemoveDeviceClicked = {},
                 onEditDeviceClicked = {},

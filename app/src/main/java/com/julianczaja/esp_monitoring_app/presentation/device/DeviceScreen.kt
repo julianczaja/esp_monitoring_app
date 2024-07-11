@@ -13,6 +13,7 @@ import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -23,6 +24,7 @@ import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.presentation.deviceinfo.DeviceInfoScreen
 import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DevicePhotosScreen
 import com.julianczaja.esp_monitoring_app.presentation.devicetimelapses.DeviceTimelapsesScreen
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.launch
 
 
@@ -36,7 +38,9 @@ fun DeviceScreen(
     navigateToTimelapseCreatorScreen: (List<Photo>) -> Unit,
 ) {
     val coroutineScope = rememberCoroutineScope()
-    val pages = listOf(DevicePage.Photos, DevicePage.Timelapse, DevicePage.Info)
+    val pages = remember {
+        persistentListOf(DevicePage.Photos, DevicePage.Timelapse, DevicePage.Info)
+    }
     val pagerState = rememberPagerState(pageCount = { pages.size })
 
     LaunchedEffect(key1 = true) {

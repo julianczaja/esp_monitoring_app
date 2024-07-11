@@ -8,6 +8,8 @@ import com.julianczaja.esp_monitoring_app.di.IoDispatcher
 import com.julianczaja.esp_monitoring_app.domain.model.FieldState
 import com.julianczaja.esp_monitoring_app.domain.repository.AppSettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.collections.immutable.ImmutableSet
+import kotlinx.collections.immutable.toImmutableSet
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -46,7 +48,7 @@ class AppSettingsScreenViewModel @Inject constructor(
         }
         return@combine UiState.Success(
             baseUrlFieldState = baseUrlFieldState,
-            baseUrlHistory = baseUrlHistory,
+            baseUrlHistory = baseUrlHistory.toImmutableSet(),
             isDynamicColor = dynamicColor
         )
     }.stateIn(
@@ -87,7 +89,7 @@ class AppSettingsScreenViewModel @Inject constructor(
         data object Loading : UiState()
         data class Success(
             val baseUrlFieldState: FieldState<String>,
-            val baseUrlHistory: Set<String>,
+            val baseUrlHistory: ImmutableSet<String>,
             val isDynamicColor: Boolean,
         ) : UiState()
     }

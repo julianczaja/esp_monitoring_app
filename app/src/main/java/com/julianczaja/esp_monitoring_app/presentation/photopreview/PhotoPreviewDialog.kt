@@ -51,6 +51,7 @@ import com.julianczaja.esp_monitoring_app.presentation.photopreview.PhotoPreview
 import com.julianczaja.esp_monitoring_app.presentation.photopreview.components.PhotoActionsRow
 import com.julianczaja.esp_monitoring_app.presentation.theme.shape
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
+import kotlinx.collections.immutable.persistentListOf
 
 @Composable
 fun PhotoPreviewDialog(
@@ -130,6 +131,9 @@ private fun ZoomableCoilPhoto(
     val isZoomed = remember {
         derivedStateOf { zoom > 1f }
     }
+    val photoInfoRowItems by remember(photo) {
+        mutableStateOf(persistentListOf(photo.dateTime.toPrettyString(), photo.size))
+    }
 
     SubcomposeAsyncImage(
         modifier = modifier
@@ -192,7 +196,7 @@ private fun ZoomableCoilPhoto(
                     contentDescription = null
                 )
                 if (!isZoomed.value) {
-                    PhotoInfoRow(listOf(photo.dateTime.toPrettyString(), photo.size))
+                    PhotoInfoRow(photoInfoRowItems)
                     PhotoActionsRow(photo)
                 }
             }

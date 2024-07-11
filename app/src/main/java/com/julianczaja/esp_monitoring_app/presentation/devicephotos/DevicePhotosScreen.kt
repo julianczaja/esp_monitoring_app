@@ -62,6 +62,8 @@ import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DevicePhotos
 import com.julianczaja.esp_monitoring_app.presentation.devicephotos.components.FilterBar
 import com.julianczaja.esp_monitoring_app.presentation.devicephotos.components.SelectablePhotosLazyGrid
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -334,7 +336,7 @@ private fun DevicePhotosEmptyScreen(
     ) {
         FilterBar(
             modifier = Modifier.fillMaxWidth(),
-            dates = emptyList(),
+            dates = persistentListOf(),
             filterMode = filterMode,
             onFilterModeClicked = onFilterModeClicked,
             onDateClicked = { }
@@ -385,7 +387,7 @@ private fun DevicePhotosEmptyScreen(
 private fun DevicePhotosStateItemsPreview() {
     val date1 = LocalDate.of(2023, 1, 10)
     val date2 = LocalDate.of(2023, 1, 11)
-    val dateGroupedSelectablePhotos = mapOf(
+    val dateGroupedSelectablePhotos = persistentMapOf(
         date1 to listOf(
             Selectable(Photo.mock(dateTime = date1.atTime(10, 10)), false),
             Selectable(Photo.mock(dateTime = date1.atTime(10, 11)), false),
@@ -403,7 +405,7 @@ private fun DevicePhotosStateItemsPreview() {
                 isLoading = false,
                 isOnline = false,
                 isSelectionMode = false,
-                selectableFilterDates = listOf(
+                selectableFilterDates = persistentListOf(
                     Selectable(date2, false),
                     Selectable(date1, false),
                 ),
@@ -423,7 +425,7 @@ private fun DevicePhotosStateItemsPreview() {
 private fun DevicePhotosStateSelectedItemsPreview() {
     val date1 = LocalDate.of(2023, 1, 10)
     val date2 = LocalDate.of(2023, 1, 11)
-    val dateGroupedSelectablePhotos = mapOf(
+    val dateGroupedSelectablePhotos = persistentMapOf(
         date1 to listOf(
             Selectable(Photo.mock(dateTime = date1.atTime(10, 10)), true),
             Selectable(Photo.mock(dateTime = date1.atTime(10, 11)), true),
@@ -441,7 +443,7 @@ private fun DevicePhotosStateSelectedItemsPreview() {
                 isLoading = false,
                 isOnline = true,
                 isSelectionMode = true,
-                selectableFilterDates = listOf(
+                selectableFilterDates = persistentListOf(
                     Selectable(date2, false),
                     Selectable(date1, false),
                 ),
@@ -461,11 +463,11 @@ private fun DevicePhotosStateSuccessNoItemsPreview() {
     AppBackground {
         DevicePhotosScreenContent(
             UiState(
-                dateGroupedSelectablePhotos = emptyMap(),
+                dateGroupedSelectablePhotos = persistentMapOf(),
                 isLoading = false,
                 isOnline = true,
                 isSelectionMode = false,
-                selectableFilterDates = emptyList(),
+                selectableFilterDates = persistentListOf(),
                 isRefreshed = true,
                 selectedCount = 0,
                 filterMode = PhotosFilterMode.ALL,
@@ -482,11 +484,11 @@ private fun DevicePhotosStateSuccessNoItemsWithNoticePreview() {
     AppBackground {
         DevicePhotosScreenContent(
             UiState(
-                dateGroupedSelectablePhotos = emptyMap(),
+                dateGroupedSelectablePhotos = persistentMapOf(),
                 isLoading = false,
                 isOnline = true,
                 isSelectionMode = false,
-                selectableFilterDates = emptyList(),
+                selectableFilterDates = persistentListOf(),
                 isRefreshed = true,
                 selectedCount = 0,
                 filterMode = PhotosFilterMode.ALL,

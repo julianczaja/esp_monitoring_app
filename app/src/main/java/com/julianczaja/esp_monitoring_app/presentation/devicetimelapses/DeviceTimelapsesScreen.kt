@@ -71,6 +71,8 @@ import com.julianczaja.esp_monitoring_app.presentation.devicetimelapses.DeviceTi
 import com.julianczaja.esp_monitoring_app.presentation.devicetimelapses.components.TimelapsePreviewDialog
 import com.julianczaja.esp_monitoring_app.presentation.theme.shape
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import java.time.LocalDateTime
 
 @Composable
@@ -152,7 +154,7 @@ fun DeviceTimelapsesScreen(
 @Composable
 private fun DeviceTimelapsesScreenContent(
     modifier: Modifier = Modifier,
-    timelapses: List<Timelapse>,
+    timelapses: ImmutableList<Timelapse>,
     shouldShowPermissionMissingNotice: Boolean,
     onPermissionNoticeActionClicked: () -> Unit,
     onPermissionNoticeIgnoreClicked: () -> Unit,
@@ -204,7 +206,7 @@ private fun DeviceTimelapsesScreenContent(
 @Composable
 private fun TimelapsesScreen(
     modifier: Modifier,
-    timelapses: List<Timelapse>,
+    timelapses: ImmutableList<Timelapse>,
     shouldShowPermissionMissingNotice: Boolean,
     onPermissionNoticeActionClicked: () -> Unit,
     onPermissionNoticeIgnoreClicked: () -> Unit,
@@ -270,7 +272,7 @@ private fun TimelapsesScreen(
                     )
                 }
                 PhotoInfoRow(
-                    listOf(
+                    persistentListOf(
                         stringResource(id = R.string.date_format, it.addedDateTime.toDayMonthYearString()),
                         stringResource(id = R.string.duration_seconds_format, it.data.durationSeconds),
                         stringResource(id = R.string.size_format, formatBytes(it.data.sizeBytes)),
@@ -332,7 +334,7 @@ private fun DeviceTimelapsesSuccessPreview() {
     AppBackground {
         DeviceTimelapsesScreenContent(
             modifier = Modifier.fillMaxSize(),
-            timelapses = listOf(
+            timelapses = persistentListOf(
                 Timelapse(
                     addedDateTime = LocalDateTime.now(),
                     data = TimelapseData(path = "path", sizeBytes = 5000, durationSeconds = 3.5f)
@@ -356,7 +358,7 @@ private fun DeviceTimelapsesSuccessWithNoticePreview() {
     AppBackground {
         DeviceTimelapsesScreenContent(
             modifier = Modifier.fillMaxSize(),
-            timelapses = listOf(
+            timelapses = persistentListOf(
                 Timelapse(
                     addedDateTime = LocalDateTime.now(),
                     data = TimelapseData(path = "path", sizeBytes = 5000, durationSeconds = 3.5f)

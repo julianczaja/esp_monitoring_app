@@ -1,5 +1,6 @@
 package com.julianczaja.esp_monitoring_app.presentation.timelapsecreator
 
+import androidx.compose.runtime.Stable
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -159,6 +160,7 @@ class TimelapseCreatorScreenViewModel @Inject constructor(
     }
 
     sealed class UiState {
+        @Stable
         data class Configure(
             val photosCount: Int,
             val oldestPhotoDateTime: LocalDateTime,

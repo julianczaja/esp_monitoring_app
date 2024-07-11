@@ -34,7 +34,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewLightDark
@@ -46,6 +45,8 @@ import coil.request.ImageRequest
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.domain.model.Device
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableSet
 
 const val DEVICE_ITEM_MIN_HEIGHT_DP = 100
 const val DEVICE_ITEM_MIN_WIDTH_DP = 300
@@ -138,11 +139,17 @@ private fun BoxScope.MoreMenuButton(
     onRemoveClicked: (Long) -> Unit,
     onEditClicked: (Device) -> Unit,
 ) {
+    val context = LocalContext.current
     var expanded by remember { mutableStateOf(false) }
-    val items = listOf(
-        stringResource(R.string.remove_device_menu_item_remove) to { onRemoveClicked(device.id) },
-        stringResource(R.string.edit_label) to { onEditClicked(device) }
-    )
+    val items = remember(onRemoveClicked, onEditClicked) {
+        persistentListOf(
+            context.getString(R.string.remove_device_menu_item_remove) to { onRemoveClicked(device.id) },
+            context.getString(R.string.edit_label) to { onEditClicked(device) }
+        )
+    }
+    val itemsNames = remember(items) {
+        items.map { it.first }.toImmutableSet()
+    }
 
     ExposedDropdownMenuBox(
         expanded = expanded,
@@ -177,7 +184,7 @@ private fun BoxScope.MoreMenuButton(
         }
         DefaultDropdownMenu(
             isExpanded = expanded,
-            items = items.map { it.first },
+            items = itemsNames,
             onItemClicked = {
                 expanded = false
                 items[it].second.invoke()

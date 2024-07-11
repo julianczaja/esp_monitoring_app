@@ -39,6 +39,7 @@ import com.julianczaja.esp_monitoring_app.domain.model.FieldState
 import com.julianczaja.esp_monitoring_app.presentation.appsettings.AppSettingsScreenViewModel.UiState
 import com.julianczaja.esp_monitoring_app.presentation.appsettings.components.BaseUrlTextField
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
+import kotlinx.collections.immutable.persistentSetOf
 
 @Composable
 fun AppSettingsScreen(
@@ -188,7 +189,7 @@ private fun SuccessScreenNoBaseUrlErrorPreview() {
         SuccessScreen(
             uiState = UiState.Success(
                 baseUrlFieldState = FieldState("goodBaseUrl", null),
-                baseUrlHistory = setOf("goodBaseUrl1", "goodBaseUrl2", "goodBaseUrl3"),
+                baseUrlHistory = persistentSetOf("goodBaseUrl1", "goodBaseUrl2", "goodBaseUrl3"),
                 isDynamicColor = false
             ),
             onBaseUrlUpdate = {},
@@ -206,7 +207,7 @@ private fun SuccessScreenBaseUrlErrorPreview() {
         SuccessScreen(
             uiState = UiState.Success(
                 baseUrlFieldState = FieldState("goodBaseUrl", R.string.base_url_invalid),
-                baseUrlHistory = setOf("goodBaseUrl1", "goodBaseUrl2", "goodBaseUrl3"),
+                baseUrlHistory = persistentSetOf("goodBaseUrl1", "goodBaseUrl2", "goodBaseUrl3"),
                 isDynamicColor = true
             ),
             onBaseUrlUpdate = {},

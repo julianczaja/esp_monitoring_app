@@ -86,6 +86,9 @@ import com.julianczaja.esp_monitoring_app.presentation.devicesettings.DeviceSett
 import com.julianczaja.esp_monitoring_app.presentation.devicesettings.components.ServerInfoEditDialog
 import com.julianczaja.esp_monitoring_app.presentation.devicesettings.components.WiFiCredentialsEditDialog
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
+import kotlinx.collections.immutable.ImmutableSet
+import kotlinx.collections.immutable.persistentSetOf
+import kotlinx.collections.immutable.toImmutableList
 
 @Composable
 fun DeviceSettingsScreen(
@@ -183,7 +186,7 @@ private fun DeviceSettingsScreenContent(
     locationPermissionName: String,
     onLocationPermissionChanged: (PermissionState) -> Unit,
     bluetoothPermissionState: PermissionState,
-    bluetoothPermissionsNames: Array<String>,
+    bluetoothPermissionsNames: ImmutableSet<String>,
     onBluetoothPermissionChanged: (PermissionState) -> Unit,
     onStartScanClicked: () -> Unit,
     onStopScanClicked: () -> Unit,
@@ -233,12 +236,15 @@ private fun PermissionsRequiredScreen(
     locationPermissionName: String,
     onLocationPermissionChanged: (PermissionState) -> Unit,
     bluetoothPermissionState: PermissionState,
-    bluetoothPermissionsNames: Array<String>,
+    bluetoothPermissionsNames: ImmutableSet<String>,
     onBluetoothPermissionChanged: (PermissionState) -> Unit,
 ) {
     val context = LocalContext.current
     var shouldShowLocationPermissionRationaleDialog by rememberSaveable { mutableStateOf(false) }
     var shouldShowBluetoothPermissionRationaleDialog by rememberSaveable { mutableStateOf(false) }
+    val bluetoothPermissionsNamesArray by remember(bluetoothPermissionsNames) {
+        mutableStateOf(bluetoothPermissionsNames.toTypedArray())
+    }
 
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
@@ -295,7 +301,7 @@ private fun PermissionsRequiredScreen(
             permissionState = bluetoothPermissionState,
             onRequestPermission = {
                 if (bluetoothPermissionState == PermissionState.RATIONALE_NEEDED) {
-                    bluetoothPermissionsLauncher.launch(bluetoothPermissionsNames)
+                    bluetoothPermissionsLauncher.launch(bluetoothPermissionsNamesArray)
                 } else {
                     context.getActivity().openAppSettings()
                 }
@@ -320,7 +326,7 @@ private fun PermissionsRequiredScreen(
         if (bluetoothPermissionState != PermissionState.GRANTED) {
             GrantPermissionButton(
                 titleId = R.string.bluetooth_permission_needed_title,
-                onButtonClicked = { bluetoothPermissionsLauncher.launch(bluetoothPermissionsNames) }
+                onButtonClicked = { bluetoothPermissionsLauncher.launch(bluetoothPermissionsNamesArray) }
             )
         }
     }
@@ -511,8 +517,22 @@ private fun DeviceSettingsContent(
     onWifiCredentialsChanged: (WifiCredentials) -> Unit,
     onDeviceServerUrlChanged: (String) -> Unit,
 ) {
+    val context = LocalContext.current
     var isWifiCredentialsDialogVisible by rememberSaveable { mutableStateOf(false) }
     var isServerInfoDialogVisible by rememberSaveable { mutableStateOf(false) }
+
+    val espCameraFrameSizeItems = remember {
+        EspCameraFrameSize.entries.map { it.description }.toImmutableList()
+    }
+    val espCameraPhotoIntervalItems = remember {
+        EspCameraPhotoInterval.entries.map { it.description }.toImmutableList()
+    }
+    val espCameraSpecialEffectItems = remember {
+        EspCameraSpecialEffect.entries.map { context.getString(it.descriptionResId) }.toImmutableList()
+    }
+    val espCameraWhiteBalanceItems = remember {
+        EspCameraWhiteBalanceMode.entries.map { context.getString(it.descriptionResId) }.toImmutableList()
+    }
 
     if (isWifiCredentialsDialogVisible) {
         WiFiCredentialsEditDialog(
@@ -567,7 +587,7 @@ private fun DeviceSettingsContent(
     DropdownMenuBox(
         modifier = Modifier.fillMaxWidth(),
         title = stringResource(R.string.device_settings_frame_size_label),
-        items = EspCameraFrameSize.entries.map { it.description },
+        items = espCameraFrameSizeItems,
         selectedIndex = deviceSettings.frameSize.ordinal,
         enabled = enabled,
         onItemClicked = { onSettingsChanged(deviceSettings.copy(frameSize = EspCameraFrameSize.entries[it])) }
@@ -575,7 +595,7 @@ private fun DeviceSettingsContent(
     DropdownMenuBox(
         modifier = Modifier.fillMaxWidth(),
         title = stringResource(R.string.device_settings_photo_interval_label),
-        items = EspCameraPhotoInterval.entries.map { it.description },
+        items = espCameraPhotoIntervalItems,
         selectedIndex = deviceSettings.photoInterval.ordinal,
         enabled = enabled,
         onItemClicked = { onSettingsChanged(deviceSettings.copy(photoInterval = EspCameraPhotoInterval.entries[it])) }
@@ -583,7 +603,7 @@ private fun DeviceSettingsContent(
     DropdownMenuBox(
         modifier = Modifier.fillMaxWidth(),
         title = stringResource(R.string.device_settings_special_effect_label),
-        items = EspCameraSpecialEffect.entries.map { stringResource(id = it.descriptionResId) },
+        items = espCameraSpecialEffectItems,
         selectedIndex = deviceSettings.specialEffect.ordinal,
         enabled = enabled,
         onItemClicked = { onSettingsChanged(deviceSettings.copy(specialEffect = EspCameraSpecialEffect.entries[it])) }
@@ -591,7 +611,7 @@ private fun DeviceSettingsContent(
     DropdownMenuBox(
         modifier = Modifier.fillMaxWidth(),
         title = stringResource(R.string.device_settings_white_balance_mode_label),
-        items = EspCameraWhiteBalanceMode.entries.map { stringResource(id = it.descriptionResId) },
+        items = espCameraWhiteBalanceItems,
         selectedIndex = deviceSettings.whiteBalanceMode.ordinal,
         enabled = enabled,
         onItemClicked = { onSettingsChanged(deviceSettings.copy(whiteBalanceMode = EspCameraWhiteBalanceMode.entries[it])) }
@@ -739,9 +759,27 @@ private fun DeviceSettingsScanScreenPreview() {
             uiState = UiState.Scan(
                 isScanning = true,
                 bleAdvertisements = listOf(
-                    BleAdvertisement("ESP Monitoring device", "address", true, true, -50),
-                    BleAdvertisement("Name123", "address", false, true, -70),
-                    BleAdvertisement("Name321", "address", false, false, -100),
+                    BleAdvertisement(
+                        name = "ESP Monitoring device",
+                        address = "address",
+                        isEspMonitoringDevice = true,
+                        isConnectable = true,
+                        rssi = -50
+                    ),
+                    BleAdvertisement(
+                        name = "Name123",
+                        address = "address",
+                        isEspMonitoringDevice = false,
+                        isConnectable = true,
+                        rssi = -70
+                    ),
+                    BleAdvertisement(
+                        name = "Name321",
+                        address = "address",
+                        isEspMonitoringDevice = false,
+                        isConnectable = false,
+                        rssi = -100
+                    ),
                 )
             ),
             isBluetoothEnabled = true,
@@ -779,7 +817,7 @@ private fun PermissionsRequiredScreenTwoPermissionsPreview() {
             locationPermissionName = "",
             locationPermissionState = PermissionState.DENIED,
             onLocationPermissionChanged = {},
-            bluetoothPermissionsNames = emptyArray(),
+            bluetoothPermissionsNames = persistentSetOf(),
             bluetoothPermissionState = PermissionState.DENIED,
             onBluetoothPermissionChanged = {}
         )
@@ -794,7 +832,7 @@ private fun PermissionsRequiredScreenOnePermissionPreview() {
             locationPermissionName = "",
             locationPermissionState = PermissionState.GRANTED,
             onLocationPermissionChanged = {},
-            bluetoothPermissionsNames = emptyArray(),
+            bluetoothPermissionsNames = persistentSetOf(),
             bluetoothPermissionState = PermissionState.DENIED,
             onBluetoothPermissionChanged = {}
         )

@@ -18,6 +18,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 private const val DROPDOWN_MENU_HEIGHT_DP = 250
 
@@ -26,7 +28,7 @@ private const val DROPDOWN_MENU_HEIGHT_DP = 250
 fun DropdownMenuBox(
     modifier: Modifier = Modifier,
     title: String,
-    items: List<String>,
+    items: ImmutableList<String>,
     selectedIndex: Int,
     enabled: Boolean,
     initialIsCollapsed: Boolean = false,
@@ -75,7 +77,7 @@ private fun DropdownMenuBoxExpandedPreview() {
         DropdownMenuBox(
             modifier = Modifier.fillMaxWidth(),
             title = "Title",
-            items = listOf("Item 1", "Item 2", "Item 3", "Item 4", "Item 5"),
+            items = persistentListOf("Item 1", "Item 2", "Item 3", "Item 4", "Item 5"),
             selectedIndex = 2,
             enabled = true,
             initialIsCollapsed = true,
@@ -90,7 +92,7 @@ private fun DropdownMenuBoxCollapsedPreview() {
     AppBackground {
         DropdownMenuBox(
             title = "Title",
-            items = listOf("Item 1", "Item 2", "Item 3", "Item 4", "Item 5"),
+            items = persistentListOf("Item 1", "Item 2", "Item 3", "Item 4", "Item 5"),
             selectedIndex = 2,
             initialIsCollapsed = false,
             enabled = true,
@@ -105,7 +107,7 @@ private fun DropdownMenuBoxCollapsedAndDisabledPreview() {
     AppBackground {
         DropdownMenuBox(
             title = "Title",
-            items = listOf("Item 1", "Item 2", "Item 3", "Item 4", "Item 5"),
+            items = persistentListOf("Item 1", "Item 2", "Item 3", "Item 4", "Item 5"),
             selectedIndex = 2,
             initialIsCollapsed = false,
             enabled = false,

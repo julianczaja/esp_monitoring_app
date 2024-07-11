@@ -13,6 +13,7 @@ import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.core.app.ActivityCompat
 import com.julianczaja.esp_monitoring_app.domain.model.PermissionState
+import kotlinx.collections.immutable.ImmutableSet
 import timber.log.Timber
 
 
@@ -33,7 +34,7 @@ fun Activity.openAppSettings() {
     ).also(::startActivity)
 }
 
-fun Activity.getPermissionsState(permissions: Array<String>): PermissionState {
+fun Activity.getPermissionsState(permissions: ImmutableSet<String>): PermissionState {
     val permissionsStates = permissions.map { getPermissionState(it) }
     return when {
         permissionsStates.all { it == PermissionState.GRANTED } -> PermissionState.GRANTED

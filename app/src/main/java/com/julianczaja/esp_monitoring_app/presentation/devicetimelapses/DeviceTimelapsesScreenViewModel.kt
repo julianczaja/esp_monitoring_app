@@ -12,6 +12,9 @@ import com.julianczaja.esp_monitoring_app.domain.model.getErrorMessageId
 import com.julianczaja.esp_monitoring_app.domain.repository.TimelapseRepository
 import com.julianczaja.esp_monitoring_app.navigation.DeviceScreen
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -45,7 +48,7 @@ class DeviceTimelapsesScreenViewModel @Inject constructor(
     val eventFlow = MutableSharedFlow<Event>()
 
     val uiState: StateFlow<UiState> = savedTimelapsesFlow
-        .map(::UiState)
+        .map { UiState(it.toImmutableList()) }
         .flowOn(ioDispatcher)
         .catch {
             Timber.e(it)
@@ -54,7 +57,7 @@ class DeviceTimelapsesScreenViewModel @Inject constructor(
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = UiState(emptyList())
+            initialValue = UiState(persistentListOf())
         )
 
     fun updateTimelapses() {
@@ -63,7 +66,7 @@ class DeviceTimelapsesScreenViewModel @Inject constructor(
 
     @Immutable
     data class UiState(
-        val timelapses: List<Timelapse>
+        val timelapses: ImmutableList<Timelapse>
     )
 
     sealed class Event {

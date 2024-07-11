@@ -37,6 +37,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -68,6 +69,9 @@ import com.julianczaja.esp_monitoring_app.domain.model.Selectable
 import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DEFAULT_PHOTO_WIDTH
 import com.julianczaja.esp_monitoring_app.presentation.theme.shape
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
+import kotlinx.collections.immutable.ImmutableMap
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -77,7 +81,7 @@ private const val NUMBER_OF_ITEMS_TO_SCROLL_TO_SHOW_SCROLL_TO_TOP_BUTTON = 20
 @Composable
 fun SelectablePhotosLazyGrid(
     modifier: Modifier = Modifier,
-    dateGroupedSelectablePhotos: Map<LocalDate, List<Selectable<Photo>>>,
+    dateGroupedSelectablePhotos: ImmutableMap<LocalDate, List<Selectable<Photo>>>,
     isSelectionMode: Boolean,
     minSize: Dp = DEFAULT_PHOTO_WIDTH.dp,
     state: LazyGridState = rememberLazyGridState(),
@@ -166,7 +170,9 @@ fun SelectablePhotosLazyGrid(
                         }
                     }
                 }
-                items(photos, key = { it.item.dateTime.toDefaultFormatString() + "|${it.item.isSaved}" }) { selectablePhoto ->
+                items(
+                    photos,
+                    key = { it.item.dateTime.toDefaultFormatString() + "|${it.item.isSaved}" }) { selectablePhoto ->
                     SelectableDevicePhoto(
                         selectablePhoto = selectablePhoto,
                         isSelectionMode = isSelectionMode,
@@ -235,6 +241,11 @@ private fun LazyGridItemScope.SelectableDevicePhoto(
     onLongClick: (Selectable<Photo>) -> Unit,
 ) {
     val haptics = LocalHapticFeedback.current
+    val photoInfoRowItems by remember(selectablePhoto) {
+        mutableStateOf(
+            persistentListOf(selectablePhoto.item.dateTime.toLocalTime().toPrettyString())
+        )
+    }
 
     Box(
         modifier = Modifier
@@ -275,9 +286,7 @@ private fun LazyGridItemScope.SelectableDevicePhoto(
                 checked = selectablePhoto.isSelected
             )
         }
-        PhotoInfoRow(
-            listOf(selectablePhoto.item.dateTime.toLocalTime().toPrettyString())
-        )
+        PhotoInfoRow(photoInfoRowItems)
     }
 }
 
@@ -305,37 +314,29 @@ private fun BoxScope.SavedIcon() {
 @Preview(device = "spec: width = 411dp, height = 891dp, orientation = landscape, dpi = 420", showSystemUi = true)
 @Composable
 fun SelectableDevicePhotosPreview() {
-    val dateGroupedSelectablePhotos = mapOf(
+    val dateGroupedSelectablePhotos = persistentMapOf(
         LocalDate.of(2023, 1, 1) to listOf(
             Selectable(
-                item = Photo(
-                    123L,
-                    LocalDateTime.of(2023, 1, 1, 10, 10),
-                    "fileName 1",
-                    "1600x1200",
-                    "url",
-                    "url",
-                    true
-                ),
+                item = Photo.mock(dateTime = LocalDateTime.of(2023, 1, 1, 10, 10)),
                 isSelected = true
             ),
             Selectable(
-                item = Photo(123L, LocalDateTime.of(2023, 1, 1, 10, 11), "fileName 2", "1600x1200", "url", "url"),
+                item = Photo.mock(dateTime = LocalDateTime.of(2023, 1, 1, 10, 11)),
                 isSelected = true
             ),
             Selectable(
-                item = Photo(123L, LocalDateTime.of(2023, 1, 1, 10, 12), "fileName 3", "1600x1200", "url", "url"),
-                isSelected = false
+                item = Photo.mock(dateTime = LocalDateTime.of(2023, 1, 1, 10, 12)),
+                isSelected = true
             ),
         ),
         LocalDate.of(2023, 1, 2) to listOf(
             Selectable(
-                item = Photo(123L, LocalDateTime.of(2023, 1, 2, 10, 13), "fileName 4", "1600x1200", "url", "url"),
-                isSelected = false
+                item = Photo.mock(dateTime = LocalDateTime.of(2023, 1, 1, 10, 13)),
+                isSelected = true
             ),
             Selectable(
-                item = Photo(123L, LocalDateTime.of(2023, 1, 2, 10, 14), "fileName 5", "1600x1200", "url", "url"),
-                isSelected = false
+                item = Photo.mock(dateTime = LocalDateTime.of(2023, 1, 1, 10, 14)),
+                isSelected = true
             ),
         )
     )
@@ -355,37 +356,29 @@ fun SelectableDevicePhotosPreview() {
 @Preview(device = "spec: width = 411dp, height = 891dp, orientation = landscape, dpi = 420", showSystemUi = true)
 @Composable
 fun SelectableDevicePhotosWithNoticePreview() {
-    val dateGroupedSelectablePhotos = mapOf(
+    val dateGroupedSelectablePhotos = persistentMapOf(
         LocalDate.of(2023, 1, 1) to listOf(
             Selectable(
-                item = Photo(
-                    123L,
-                    LocalDateTime.of(2023, 1, 1, 10, 10),
-                    "fileName 1",
-                    "1600x1200",
-                    "url",
-                    "url",
-                    true
-                ),
+                item = Photo.mock(dateTime = LocalDateTime.of(2023, 1, 1, 10, 10)),
                 isSelected = true
             ),
             Selectable(
-                item = Photo(123L, LocalDateTime.of(2023, 1, 1, 10, 11), "fileName 2", "1600x1200", "url", "url"),
+                item = Photo.mock(dateTime = LocalDateTime.of(2023, 1, 1, 10, 11)),
                 isSelected = true
             ),
             Selectable(
-                item = Photo(123L, LocalDateTime.of(2023, 1, 1, 10, 12), "fileName 3", "1600x1200", "url", "url"),
-                isSelected = false
+                item = Photo.mock(dateTime = LocalDateTime.of(2023, 1, 1, 10, 12)),
+                isSelected = true
             ),
         ),
         LocalDate.of(2023, 1, 2) to listOf(
             Selectable(
-                item = Photo(123L, LocalDateTime.of(2023, 1, 2, 10, 13), "fileName 4", "1600x1200", "url", "url"),
-                isSelected = false
+                item = Photo.mock(dateTime = LocalDateTime.of(2023, 1, 1, 10, 13)),
+                isSelected = true
             ),
             Selectable(
-                item = Photo(123L, LocalDateTime.of(2023, 1, 2, 10, 14), "fileName 5", "1600x1200", "url", "url"),
-                isSelected = false
+                item = Photo.mock(dateTime = LocalDateTime.of(2023, 1, 1, 10, 14)),
+                isSelected = true
             ),
         )
     )

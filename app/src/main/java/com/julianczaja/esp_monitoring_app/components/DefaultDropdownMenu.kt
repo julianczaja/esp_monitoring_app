@@ -11,11 +11,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
+import kotlinx.collections.immutable.ImmutableCollection
 
 @Composable
 fun DefaultDropdownMenu(
     isExpanded: Boolean,
-    items: Collection<String>,
+    items: ImmutableCollection<String>,
     selectedIndex: Int = -1,
     maxHeight: Dp = Dp.Unspecified,
     onItemClicked: (Int) -> Unit,

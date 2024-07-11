@@ -11,6 +11,8 @@ import com.julianczaja.esp_monitoring_app.domain.model.getErrorMessageId
 import com.julianczaja.esp_monitoring_app.domain.repository.DeviceRepository
 import com.julianczaja.esp_monitoring_app.domain.repository.PhotoRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.collections.immutable.ImmutableMap
+import kotlinx.collections.immutable.toImmutableMap
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
@@ -45,7 +47,7 @@ class DevicesScreenViewModel @Inject constructor(
             }
             return@flatMapLatest combine(flows) { it.toMap() }
         }
-        .map<Map<Device, Photo?>, UiState>(UiState::Success)
+        .map<Map<Device, Photo?>, UiState> { UiState.Success(it.toImmutableMap()) }
         .flowOn(ioDispatcher)
         .catch {
             Timber.e(it)
@@ -59,7 +61,7 @@ class DevicesScreenViewModel @Inject constructor(
 
     @Immutable
     sealed interface UiState {
-        data class Success(val devicesWithLastPhoto: Map<Device, Photo?>) : UiState
+        data class Success(val devicesWithLastPhoto: ImmutableMap<Device, Photo?>) : UiState
         data object Loading : UiState
         data class Error(@StringRes val messageId: Int) : UiState
     }

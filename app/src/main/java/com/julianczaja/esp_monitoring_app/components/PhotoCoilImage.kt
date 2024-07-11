@@ -17,7 +17,7 @@ import coil.request.ImageRequest
 @Composable
 fun PhotoCoilImage(
     modifier: Modifier = Modifier,
-    data: Any?,
+    data: String,
     height: Dp,
 ) {
     val context = LocalContext.current

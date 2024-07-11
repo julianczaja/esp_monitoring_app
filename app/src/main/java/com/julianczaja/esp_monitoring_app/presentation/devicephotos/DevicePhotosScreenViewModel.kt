@@ -16,6 +16,12 @@ import com.julianczaja.esp_monitoring_app.domain.repository.PhotoRepository
 import com.julianczaja.esp_monitoring_app.domain.usecase.SelectOrDeselectAllPhotosByDateUseCase
 import com.julianczaja.esp_monitoring_app.navigation.DeviceScreen
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableMap
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentMapOf
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toPersistentMap
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -78,8 +84,8 @@ class DevicePhotosScreenViewModel @Inject constructor(
         _isRefreshed
     ) { (selectableFilterDates, dateGroupedSelectablePhotos), isLoading, isOnline, isRefreshed ->
         UiState(
-            dateGroupedSelectablePhotos = dateGroupedSelectablePhotos,
-            selectableFilterDates = selectableFilterDates,
+            dateGroupedSelectablePhotos = dateGroupedSelectablePhotos.toPersistentMap(),
+            selectableFilterDates = selectableFilterDates.toImmutableList(),
             filterMode = _filterMode.value,
             isLoading = isLoading,
             isOnline = isOnline,
@@ -97,8 +103,8 @@ class DevicePhotosScreenViewModel @Inject constructor(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = UiState(
-                dateGroupedSelectablePhotos = emptyMap(),
-                selectableFilterDates = emptyList(),
+                dateGroupedSelectablePhotos = persistentMapOf(),
+                selectableFilterDates = persistentListOf(),
                 filterMode = PhotosFilterMode.ALL,
                 isLoading = false,
                 isOnline = true,
@@ -255,8 +261,8 @@ class DevicePhotosScreenViewModel @Inject constructor(
 
     @Immutable
     data class UiState(
-        val dateGroupedSelectablePhotos: Map<LocalDate, List<Selectable<Photo>>>,
-        val selectableFilterDates: List<Selectable<LocalDate>>,
+        val dateGroupedSelectablePhotos: ImmutableMap<LocalDate, List<Selectable<Photo>>>,
+        val selectableFilterDates: ImmutableList<Selectable<LocalDate>>,
         val filterMode: PhotosFilterMode,
         val isLoading: Boolean,
         val isOnline: Boolean,

@@ -16,10 +16,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.julianczaja.esp_monitoring_app.presentation.theme.shape
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
+import kotlinx.collections.immutable.ImmutableList
 
 
 @Composable
-fun BoxScope.PhotoInfoRow(infoStrings: List<String>) {
+fun BoxScope.PhotoInfoRow(infoStrings: ImmutableList<String>) {
     Row(
         modifier = Modifier
             .align(Alignment.BottomCenter)

@@ -4,9 +4,10 @@ compose-ui = "1.6.8"
 hilt = "2.51.1"
 coil = "2.6.0"
 coroutines = "1.8.1"
+kotlinx-collections-immutable = "0.3.7"
 lifecycle = "2.8.3"
 room = "2.6.1"
-robolectric = "4.12.2"
+robolectric = "4.13"
 android-gradle-plugin = "8.5.0"
 ksp = "2.0.0-1.0.21"
 material3 = "1.3.0-beta04"
@@ -17,7 +18,6 @@ retrofit = "2.11.0"
 okhttp = "4.12.0"
 datastore = "1.1.1"
 timber = "5.0.1"
-constraintlayout-compose = "1.0.1"
 core-splashscreen = "1.0.1"
 hilt-navigation-compose = "1.2.0"
 kable = "0.32.0"
@@ -42,9 +42,9 @@ androidx-navigation-compose = { group = "androidx.navigation", name = "navigatio
 androidx-navigation-testing = { group = "androidx.navigation", name = "navigation-testing", version.ref = "navigation-compose" }
 androidx-exifinterface = { group = "androidx.exifinterface", name = "exifinterface", version.ref = "exifinterface" }
 androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling", version.ref = "compose-ui" }
+kotlinx-collections-immutable = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version.ref = "kotlinx-collections-immutable" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "serialization-json" }
 retrofit-kotlinx-serialization-converter = { group = "com.jakewharton.retrofit", name = "retrofit2-kotlinx-serialization-converter", version = "1.0.0" }
-androidx-constraintlayout-compose = { group = "androidx.constraintlayout", name = "constraintlayout-compose", version.ref = "constraintlayout-compose" }
 androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "core-splashscreen" }
 androidx-hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hilt-navigation-compose" }
 dagger-hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
