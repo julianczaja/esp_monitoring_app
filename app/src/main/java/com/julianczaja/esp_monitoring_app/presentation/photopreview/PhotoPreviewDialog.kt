@@ -19,11 +19,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,6 +41,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.SubcomposeAsyncImage
 import coil.request.CachePolicy
 import coil.request.ImageRequest
@@ -47,6 +50,7 @@ import com.julianczaja.esp_monitoring_app.components.ErrorText
 import com.julianczaja.esp_monitoring_app.components.PhotoInfoRow
 import com.julianczaja.esp_monitoring_app.data.utils.toPrettyString
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
+import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DevicePhotosScreenViewModel
 import com.julianczaja.esp_monitoring_app.presentation.photopreview.PhotoPreviewDialogViewModel.UiState
 import com.julianczaja.esp_monitoring_app.presentation.photopreview.components.PhotoActionsRow
 import com.julianczaja.esp_monitoring_app.presentation.theme.shape
@@ -56,10 +60,21 @@ import kotlinx.collections.immutable.persistentListOf
 @Composable
 fun PhotoPreviewDialog(
     onDismiss: () -> Unit,
+    parentViewModel: DevicePhotosScreenViewModel,
     viewModel: PhotoPreviewDialogViewModel = hiltViewModel(),
 ) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    var viewModelInitiated by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        if (!viewModelInitiated) {
+            viewModel.init(parentViewModel.devicePhotosUiState.value)
+            viewModelInitiated = true
+        }
+    }
+
     PhotoPreviewDialogContent(
-        uiState = viewModel.uiState,
+        uiState = uiState,
         onDismiss = onDismiss,
     )
 }
@@ -94,6 +109,10 @@ fun PhotoPreviewDialogContent(
                 is UiState.Success -> PhotoPreview(uiState)
                 is UiState.Error -> Box(modifier = Modifier.fillMaxSize()) {
                     ErrorText(text = stringResource(uiState.messageId), modifier = Modifier.align(Alignment.Center))
+                }
+
+                is UiState.Loading -> Box(modifier = Modifier.fillMaxSize()) {
+                    DefaultProgressIndicator(Modifier.align(Alignment.Center))
                 }
             }
         }

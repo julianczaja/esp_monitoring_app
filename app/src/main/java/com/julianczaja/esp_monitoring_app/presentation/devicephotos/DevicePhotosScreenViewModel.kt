@@ -246,11 +246,11 @@ class DevicePhotosScreenViewModel @Inject constructor(
             .flatten()
             .map { it.item }
 
-        eventFlow.emit(Event.NavigateToPhotoPreview(photos, photos.indexOf(selectedPhoto)))
+        eventFlow.emit(Event.NavigateToPhotoPreview(photos.indexOf(selectedPhoto)))
     }
 
     sealed class Event {
-        data class NavigateToPhotoPreview(val photos: List<Photo>, val initialIndex: Int) : Event()
+        data class NavigateToPhotoPreview(val initialIndex: Int) : Event()
         data class NavigateToRemovePhotosDialog(val photos: List<Photo>) : Event()
         data class NavigateToSavePhotosDialog(val photos: List<Photo>) : Event()
         data class NavigateToTimelapseCreatorScreen(val photos: List<Photo>) : Event()

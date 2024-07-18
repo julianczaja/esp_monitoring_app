@@ -74,7 +74,7 @@ const val DEFAULT_PHOTO_WIDTH = 150
 @Composable
 fun DevicePhotosScreen(
     snackbarHostState: SnackbarHostState,
-    navigateToPhotoPreview: (List<Photo>, Int) -> Unit,
+    navigateToPhotoPreview: (Int) -> Unit,
     navigateToTimelapseCreatorScreen: (List<Photo>) -> Unit,
     navigateToRemovePhotosDialog: (List<Photo>) -> Unit,
     navigateToSavePhotosDialog: (List<Photo>) -> Unit,
@@ -141,7 +141,7 @@ fun DevicePhotosScreen(
                     duration = SnackbarDuration.Short
                 )
 
-                is Event.NavigateToPhotoPreview -> navigateToPhotoPreview(event.photos, event.initialIndex)
+                is Event.NavigateToPhotoPreview -> navigateToPhotoPreview(event.initialIndex)
                 is Event.NavigateToRemovePhotosDialog -> navigateToRemovePhotosDialog(event.photos)
                 is Event.NavigateToSavePhotosDialog -> navigateToSavePhotosDialog(event.photos)
                 is Event.NavigateToTimelapseCreatorScreen -> navigateToTimelapseCreatorScreen(event.photos)

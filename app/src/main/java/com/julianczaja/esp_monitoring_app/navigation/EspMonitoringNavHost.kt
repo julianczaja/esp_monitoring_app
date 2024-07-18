@@ -8,7 +8,9 @@ import androidx.compose.animation.core.EaseOut
 import androidx.compose.animation.core.tween
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -88,11 +90,11 @@ fun EspMonitoringNavHost(
                 onDismiss = onBackClick
             )
         }
-        dialog<PhotoPreviewDialog>(
-            typeMap = mapOf(typeOf<List<Photo>>() to parcelableCollectionType<Photo>())
-        ) {
+        dialog<PhotoPreviewDialog> {
+            val parentBackStackEntry = remember { navController.getBackStackEntry<DeviceScreen>() }
             PhotoPreviewDialog(
-                onDismiss = onBackClick
+                onDismiss = onBackClick,
+                parentViewModel = hiltViewModel(parentBackStackEntry)
             )
         }
         dialog<RemovePhotosDialog>(

@@ -79,10 +79,10 @@ fun NavController.navigateToSavePhotosDialog(photos: List<Photo>) {
 
 // Photo preview
 @Serializable
-data class PhotoPreviewDialog(val photos: List<Photo>, val initialIndex: Int)
+data class PhotoPreviewDialog(val initialIndex: Int)
 
-fun NavController.navigateToPhotoPreview(photos: List<Photo>, initialIndex: Int) {
-    navigate(PhotoPreviewDialog(photos, initialIndex)) {
+fun NavController.navigateToPhotoPreview( initialIndex: Int) {
+    navigate(PhotoPreviewDialog(initialIndex)) {
         launchSingleTop = true
     }
 }

@@ -32,7 +32,7 @@ import kotlinx.coroutines.launch
 fun DeviceScreen(
     onSetAppBarTitle: (Int) -> Unit,
     snackbarHostState: SnackbarHostState,
-    navigateToPhotoPreview: (List<Photo>, Int) -> Unit,
+    navigateToPhotoPreview: (Int) -> Unit,
     navigateToRemovePhotosDialog: (List<Photo>) -> Unit,
     navigateToSavePhotosDialog: (List<Photo>) -> Unit,
     navigateToTimelapseCreatorScreen: (List<Photo>) -> Unit,
