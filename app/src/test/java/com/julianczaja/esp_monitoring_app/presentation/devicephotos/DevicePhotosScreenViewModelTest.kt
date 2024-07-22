@@ -7,6 +7,7 @@ import com.google.common.truth.Truth.assertThat
 import com.julianczaja.esp_monitoring_app.MainDispatcherRule
 import com.julianczaja.esp_monitoring_app.data.NetworkManager
 import com.julianczaja.esp_monitoring_app.data.repository.FakePhotoRepositoryImpl
+import com.julianczaja.esp_monitoring_app.domain.TimelapseCreator
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.domain.model.PhotosFilterMode
 import com.julianczaja.esp_monitoring_app.domain.model.Selectable
@@ -44,6 +45,7 @@ class DevicePhotosScreenViewModelTest {
     private lateinit var savedStateHandle: SavedStateHandle
     private lateinit var photoRepository: FakePhotoRepositoryImpl
     private lateinit var networkManager: NetworkManager
+    private lateinit var timelapseCreator: TimelapseCreator
     private lateinit var viewModel: DevicePhotosScreenViewModel
 
     private val deviceId = 1L
@@ -54,11 +56,13 @@ class DevicePhotosScreenViewModelTest {
         photoRepository = spyk(FakePhotoRepositoryImpl())
         photoRepository.tryEmitAllSavedPhotosData(Result.success(emptyList()))
         networkManager = mockk()
+        timelapseCreator = mockk()
         every { networkManager.isOnline } returns flow { delay(1000); emit(true) }
         viewModel = DevicePhotosScreenViewModel(
             savedStateHandle = savedStateHandle,
             photoRepository = photoRepository,
             networkManager = networkManager,
+            timelapseCreator = timelapseCreator,
             selectOrDeselectAllPhotosByDateUseCase = SelectOrDeselectAllPhotosByDateUseCase(),
             ioDispatcher = dispatcherRule.testDispatcher
         )

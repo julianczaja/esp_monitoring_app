@@ -81,7 +81,7 @@ fun NavController.navigateToSavePhotosDialog(photos: List<Photo>) {
 @Serializable
 data class PhotoPreviewDialog(val initialIndex: Int)
 
-fun NavController.navigateToPhotoPreview( initialIndex: Int) {
+fun NavController.navigateToPhotoPreview(initialIndex: Int) {
     navigate(PhotoPreviewDialog(initialIndex)) {
         launchSingleTop = true
     }
@@ -99,10 +99,10 @@ fun NavController.navigateToAppSettings() {
 
 // Timelapse creator
 @Serializable
-data class TimelapseCreatorScreen(val photos: List<Photo>)
+data object TimelapseCreatorScreen
 
-fun NavController.navigateToTimelapseCreatorScreen(photos: List<Photo>) {
-    navigate(TimelapseCreatorScreen(photos)) {
+fun NavController.navigateToTimelapseCreatorScreen() {
+    navigate(TimelapseCreatorScreen) {
         launchSingleTop = true
     }
 }

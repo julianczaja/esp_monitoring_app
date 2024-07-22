@@ -30,6 +30,7 @@
     <string name="cant_add_device">Error - can\'t add device.</string>
     <string name="cant_update_device">Error - can\'t update device.</string>
     <string name="clear_photos_cache_label">Clear photos cache</string>
+    <string name="compression_rate_label">Compression</string>
     <string name="connectable_label">Connectable</string>
     <string name="date_format">Date: %1$s</string>
     <string name="device_configuration_label">Configure device</string>

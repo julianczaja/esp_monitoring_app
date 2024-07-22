@@ -35,7 +35,7 @@ fun DeviceScreen(
     navigateToPhotoPreview: (Int) -> Unit,
     navigateToRemovePhotosDialog: (List<Photo>) -> Unit,
     navigateToSavePhotosDialog: (List<Photo>) -> Unit,
-    navigateToTimelapseCreatorScreen: (List<Photo>) -> Unit,
+    navigateToTimelapseCreatorScreen: () -> Unit,
 ) {
     val coroutineScope = rememberCoroutineScope()
     val pages = remember {

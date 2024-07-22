@@ -8,6 +8,7 @@ import androidx.navigation.toRoute
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.data.NetworkManager
 import com.julianczaja.esp_monitoring_app.di.IoDispatcher
+import com.julianczaja.esp_monitoring_app.domain.TimelapseCreator
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.domain.model.PhotosFilterMode
 import com.julianczaja.esp_monitoring_app.domain.model.Selectable
@@ -45,6 +46,7 @@ class DevicePhotosScreenViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     networkManager: NetworkManager,
     private val photoRepository: PhotoRepository,
+    private val timelapseCreator: TimelapseCreator,
     private val selectOrDeselectAllPhotosByDateUseCase: SelectOrDeselectAllPhotosByDateUseCase,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
@@ -230,14 +232,15 @@ class DevicePhotosScreenViewModel @Inject constructor(
         resetSelectedPhotos()
     }
 
-    fun createTimelapseFromSelectedPhotos() {
-        viewModelScope.launch {
-            if (_selectedPhotos.value.size >= 2) {
-                eventFlow.emit(Event.NavigateToTimelapseCreatorScreen(_selectedPhotos.value))
-                resetSelectedPhotos()
-            } else {
-                eventFlow.emit(Event.ShowNotEnoughSelectedInfo)
-            }
+    fun createTimelapseFromSelectedPhotos() = viewModelScope.launch {
+        val timelapsePhotos = _selectedPhotos.value.sortedBy { it.dateTime }
+
+        if (timelapsePhotos.size >= 2) {
+            timelapseCreator.prepare(timelapsePhotos)
+            eventFlow.emit(Event.NavigateToTimelapseCreatorScreen)
+            resetSelectedPhotos()
+        } else {
+            eventFlow.emit(Event.ShowNotEnoughSelectedInfo)
         }
     }
 
@@ -253,7 +256,7 @@ class DevicePhotosScreenViewModel @Inject constructor(
         data class NavigateToPhotoPreview(val initialIndex: Int) : Event()
         data class NavigateToRemovePhotosDialog(val photos: List<Photo>) : Event()
         data class NavigateToSavePhotosDialog(val photos: List<Photo>) : Event()
-        data class NavigateToTimelapseCreatorScreen(val photos: List<Photo>) : Event()
+        data object NavigateToTimelapseCreatorScreen : Event()
         data class ShowSavedInfo(val totalCount: Int, val savedCount: Int) : Event()
         data class ShowError(val messageId: Int) : Event()
         data object ShowNotEnoughSelectedInfo : Event()

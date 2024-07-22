@@ -43,10 +43,18 @@ class LocalTimelapseCreator @Inject constructor(
 
     private val cacheDir = File(context.cacheDir, VIDEO_CACHE_FOLDER_NAME)
 
+    override var photos: List<Photo> = emptyList()
+
+    override fun prepare(photos: List<Photo>) {
+        clear()
+        this.photos = photos
+    }
+
     override suspend fun createTimelapse(
         photos: List<Photo>,
         isHighQuality: Boolean,
-        frameRate: Int
+        frameRate: Int,
+        compressionRate: Int,
     ): Result<TimelapseData> = withContext(ioDispatcher) {
         downloadProgress.update { 0f }
         processProgress.update { 0f }
@@ -79,7 +87,7 @@ class LocalTimelapseCreator @Inject constructor(
             "-framerate", frameRate.toString(),
             "-i", "$cacheDir/$photoPrefix%4d.jpeg",
             "-c:v", "mpeg4",
-            "-q:v", "3",
+            "-q:v", compressionRate.toString(),
             "-vf", "scale=$aspectRatioString:force_original_aspect_ratio=decrease,pad=$aspectRatioString:(ow-iw)/2:(oh-ih)/2",
             "-r", frameRate.toString(),
             outputPath
@@ -147,6 +155,7 @@ class LocalTimelapseCreator @Inject constructor(
     }
 
     override fun clear() {
+        this.photos = emptyList()
         cacheDir.deleteRecursively()
     }
 

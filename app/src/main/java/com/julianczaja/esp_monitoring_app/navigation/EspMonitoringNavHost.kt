@@ -111,9 +111,7 @@ fun EspMonitoringNavHost(
                 onDismiss = onBackClick
             )
         }
-        composable<TimelapseCreatorScreen>(
-            typeMap = mapOf(typeOf<List<Photo>>() to parcelableCollectionType<Photo>())
-        ) {
+        composable<TimelapseCreatorScreen> {
             TimelapseCreatorScreen(
                 onSetAppBarTitle = onSetAppBarTitle,
                 snackbarHostState = snackbarHostState

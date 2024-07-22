@@ -1,7 +1,6 @@
 package com.julianczaja.esp_monitoring_app.presentation.timelapsecreator
 
 import androidx.compose.runtime.Stable
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.julianczaja.esp_monitoring_app.di.IoDispatcher
@@ -28,26 +27,16 @@ import javax.inject.Inject
 
 @HiltViewModel
 class TimelapseCreatorScreenViewModel @Inject constructor(
-    savedStateHandle: SavedStateHandle,
     private val timelapseCreator: TimelapseCreator,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
 
     private companion object {
         const val DEFAULT_FRAME_RATE = 30
+        const val DEFAULT_COMPRESSION_RATE = 4
     }
 
-    private val photos: List<Photo> = savedStateHandle.get<Array<Photo>>("photos")
-        ?.sortedBy { it.dateTime }
-        ?.toList()
-        ?: emptyList()
-
-    // FIXME: It seems to not work in beta03
-    // private val photos: List<Photo> = (savedStateHandle.toRoute<TimelapseCreatorScreen>().photos as ArrayList).toList()
-
-    init {
-        timelapseCreator.clear()
-    }
+    private val photos: List<Photo> = timelapseCreator.photos
 
     private val _uiState: MutableStateFlow<UiState> = MutableStateFlow(UiState.initial(photos))
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
@@ -55,6 +44,7 @@ class TimelapseCreatorScreenViewModel @Inject constructor(
     val eventFlow = MutableSharedFlow<Event>()
 
     private var lastFrameRate = DEFAULT_FRAME_RATE
+    private var lastCompressionRate = DEFAULT_COMPRESSION_RATE
     private var lastIsHighQuality = false
 
     private var processTimelapseJob: Job? = null
@@ -69,7 +59,7 @@ class TimelapseCreatorScreenViewModel @Inject constructor(
                 timelapseCreator.cancel()
                 processTimelapseJob?.cancel()
                 createTimelapseJob?.cancel()
-                _uiState.update { UiState.initial(photos, lastFrameRate, lastIsHighQuality) }
+                _uiState.update { UiState.initial(photos, lastFrameRate, lastCompressionRate, lastIsHighQuality) }
             }
         }
     }
@@ -83,6 +73,13 @@ class TimelapseCreatorScreenViewModel @Inject constructor(
                     frameRate = newFrameRate
                 )
             }
+        }
+    }
+
+    fun updateCompressionRate(newCompressionRate: Int) {
+        (_uiState.value as? UiState.Configure)?.let { uiState ->
+            lastCompressionRate = newCompressionRate
+            _uiState.update { uiState.copy(compressionRate = newCompressionRate) }
         }
     }
 
@@ -112,7 +109,8 @@ class TimelapseCreatorScreenViewModel @Inject constructor(
                     timelapseCreator.createTimelapse(
                         photos = photos,
                         isHighQuality = uiState.isHighQuality,
-                        frameRate = uiState.frameRate
+                        frameRate = uiState.frameRate,
+                        compressionRate = uiState.compressionRate
                     ).onSuccess { timelapseData ->
                         _uiState.update { UiState.Preview(timelapseData) }
                     }.onFailure { e ->
@@ -145,7 +143,7 @@ class TimelapseCreatorScreenViewModel @Inject constructor(
 
     private fun onError(throwable: Throwable) = viewModelScope.launch {
         Timber.e(throwable)
-        _uiState.update { UiState.initial(photos, lastFrameRate, lastIsHighQuality) }
+        _uiState.update { UiState.initial(photos, lastFrameRate, lastCompressionRate, lastIsHighQuality) }
         eventFlow.emit(Event.ShowError(throwable.getErrorMessageId()))
     }
 
@@ -167,6 +165,7 @@ class TimelapseCreatorScreenViewModel @Inject constructor(
             val newestPhotoDateTime: LocalDateTime,
             val estimatedTime: Float,
             val frameRate: Int,
+            val compressionRate: Int,
             val isHighQuality: Boolean
         ) : UiState()
 
@@ -185,6 +184,7 @@ class TimelapseCreatorScreenViewModel @Inject constructor(
             fun initial(
                 photos: List<Photo>,
                 frameRate: Int = DEFAULT_FRAME_RATE,
+                compressionRate: Int = DEFAULT_COMPRESSION_RATE,
                 isHighQuality: Boolean = false
             ) = Configure(
                 photosCount = photos.size,
@@ -192,6 +192,7 @@ class TimelapseCreatorScreenViewModel @Inject constructor(
                 newestPhotoDateTime = photos.last().dateTime,
                 estimatedTime = photos.size.toFloat() / DEFAULT_FRAME_RATE,
                 frameRate = frameRate,
+                compressionRate = compressionRate,
                 isHighQuality = isHighQuality
             )
         }

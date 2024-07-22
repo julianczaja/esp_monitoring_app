@@ -36,12 +36,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.components.AppBackground
@@ -91,6 +89,7 @@ fun TimelapseCreatorScreen(
             .padding(MaterialTheme.spacing.large),
         uiState = uiState,
         onFrameRateChanged = viewModel::updateFrameRate,
+        onCompressionRateChanged = viewModel::updateCompressionRate,
         onIsHighQualityChanged = viewModel::updateIsHighQuality,
         onStartClicked = viewModel::start,
         onSaveTimelapseClicked = viewModel::saveTimelapse
@@ -102,6 +101,7 @@ private fun TimelapseCreatorScreenContent(
     modifier: Modifier = Modifier,
     uiState: UiState,
     onFrameRateChanged: (Int) -> Unit,
+    onCompressionRateChanged: (Int) -> Unit,
     onIsHighQualityChanged: (Boolean) -> Unit,
     onStartClicked: () -> Unit,
     onSaveTimelapseClicked: () -> Unit,
@@ -111,6 +111,7 @@ private fun TimelapseCreatorScreenContent(
             modifier = modifier,
             uiState = uiState,
             onFrameRateChanged = onFrameRateChanged,
+            onCompressionRateChanged = onCompressionRateChanged,
             onIsHighQualityChanged = onIsHighQualityChanged,
             onStartClicked = onStartClicked
         )
@@ -133,6 +134,7 @@ private fun TimelapseCreatorConfigureScreen(
     modifier: Modifier = Modifier,
     uiState: UiState.Configure,
     onFrameRateChanged: (Int) -> Unit,
+    onCompressionRateChanged: (Int) -> Unit,
     onIsHighQualityChanged: (Boolean) -> Unit,
     onStartClicked: () -> Unit
 ) {
@@ -174,6 +176,21 @@ private fun TimelapseCreatorConfigureScreen(
                 valueRange = 1f..60f,
                 onValueChange = onFrameRateChanged
             )
+            IntSliderRow(
+                label = stringResource(R.string.compression_rate_label),
+                value = uiState.compressionRate,
+                steps = 31,
+                enabled = true,
+                valueRange = 1f..31f,
+                onValueChange = onCompressionRateChanged
+            )
+            SwitchWithLabel(
+                label = stringResource(R.string.high_quality_label),
+                isChecked = uiState.isHighQuality,
+                enabled = true,
+                onCheckedChange = onIsHighQualityChanged
+            )
+            HorizontalDivider(modifier = Modifier.padding(vertical = MaterialTheme.spacing.medium))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -181,13 +198,6 @@ private fun TimelapseCreatorConfigureScreen(
                 Text(text = stringResource(R.string.timelapse_estimated_time_label))
                 Text(text = stringResource(R.string.seconds_format).format(uiState.estimatedTime))
             }
-            HorizontalDivider(modifier = Modifier.padding(top = MaterialTheme.spacing.medium))
-            SwitchWithLabel(
-                label = stringResource(R.string.high_quality_label),
-                isChecked = uiState.isHighQuality,
-                enabled = true,
-                onCheckedChange = onIsHighQualityChanged
-            )
         }
         Button(onClick = onStartClicked) {
             Text(text = stringResource(id = R.string.start_action))
@@ -232,7 +242,6 @@ private fun TimelapseCreatorPreviewScreen(
     val context = LocalContext.current
     val exoPlayer = remember {
         ExoPlayer.Builder(context)
-            .setVideoScalingMode(C.VIDEO_SCALING_MODE_SCALE_TO_FIT)
             .build()
             .apply {
                 repeatMode = Player.REPEAT_MODE_ALL
@@ -268,7 +277,6 @@ private fun TimelapseCreatorPreviewScreen(
                     PlayerView(ctx).apply {
                         player = exoPlayer
                         useController = true
-                        resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIXED_WIDTH
                         hideController()
                         setShowRewindButton(false)
                         setShowFastForwardButton(false)
@@ -316,10 +324,12 @@ private fun TimelapseCreatorConfigureDialogPreview() {
                 newestPhotoDateTime = LocalDateTime.of(2024, 6, 14, 14, 44),
                 oldestPhotoDateTime = LocalDateTime.of(2024, 5, 14, 14, 44),
                 frameRate = 30,
+                compressionRate = 3,
                 isHighQuality = true,
                 estimatedTime = 10.2f
             ),
             onFrameRateChanged = {},
+            onCompressionRateChanged = {},
             onIsHighQualityChanged = {},
             onStartClicked = {},
             onSaveTimelapseClicked = {}
@@ -335,6 +345,7 @@ private fun TimelapseCreatorProcessDialogPreview() {
             modifier = Modifier.fillMaxSize(),
             uiState = UiState.Process(.5f, 0.2f),
             onFrameRateChanged = {},
+            onCompressionRateChanged = {},
             onIsHighQualityChanged = {},
             onStartClicked = {},
             onSaveTimelapseClicked = {}

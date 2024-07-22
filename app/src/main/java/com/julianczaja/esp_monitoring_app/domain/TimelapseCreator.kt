@@ -10,13 +10,18 @@ interface TimelapseCreator {
     val downloadProgress: MutableStateFlow<Float>
     val processProgress: MutableStateFlow<Float>
 
+    var photos: List<Photo>
+
+    fun prepare(photos: List<Photo>)
+
     suspend fun createTimelapse(
         photos: List<Photo>,
         isHighQuality: Boolean = false,
-        frameRate: Int = 60
+        frameRate: Int = 60,
+        compressionRate: Int,
     ): Result<TimelapseData>
 
-    suspend fun saveTimelapse(deviceId: Long) : Result<Unit>
+    suspend fun saveTimelapse(deviceId: Long): Result<Unit>
 
     fun cancel()
 

@@ -75,7 +75,7 @@ const val DEFAULT_PHOTO_WIDTH = 150
 fun DevicePhotosScreen(
     snackbarHostState: SnackbarHostState,
     navigateToPhotoPreview: (Int) -> Unit,
-    navigateToTimelapseCreatorScreen: (List<Photo>) -> Unit,
+    navigateToTimelapseCreatorScreen: () -> Unit,
     navigateToRemovePhotosDialog: (List<Photo>) -> Unit,
     navigateToSavePhotosDialog: (List<Photo>) -> Unit,
     viewModel: DevicePhotosScreenViewModel = hiltViewModel(),
@@ -144,7 +144,7 @@ fun DevicePhotosScreen(
                 is Event.NavigateToPhotoPreview -> navigateToPhotoPreview(event.initialIndex)
                 is Event.NavigateToRemovePhotosDialog -> navigateToRemovePhotosDialog(event.photos)
                 is Event.NavigateToSavePhotosDialog -> navigateToSavePhotosDialog(event.photos)
-                is Event.NavigateToTimelapseCreatorScreen -> navigateToTimelapseCreatorScreen(event.photos)
+                is Event.NavigateToTimelapseCreatorScreen -> navigateToTimelapseCreatorScreen()
             }
         }
     }
