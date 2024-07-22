@@ -68,6 +68,8 @@
 
         </activity>
 
+        <activity android:name="androidx.activity.ComponentActivity" />
+
     </application>
 
 </manifest>

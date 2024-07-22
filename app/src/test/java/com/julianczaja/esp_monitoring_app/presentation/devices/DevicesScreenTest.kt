@@ -14,11 +14,9 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowLog
 import java.time.LocalDateTime
 
-@Config(instrumentedPackages = ["androidx.loader.content"]) // https://github.com/robolectric/robolectric/issues/6593
 @RunWith(RobolectricTestRunner::class)
 class DevicesScreenTest {
 
