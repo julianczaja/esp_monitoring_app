@@ -2,6 +2,7 @@ package com.julianczaja.esp_monitoring_app.presentation.devicephotos.components
 
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -37,9 +38,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,6 +51,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
@@ -106,6 +110,9 @@ fun SelectablePhotosLazyGrid(
             lastVisibleItemIndex / dateGroupedSelectablePhotos.values.flatten().size.toFloat()
         }
     }
+    val hiddenDates = remember(dateGroupedSelectablePhotos.size) {
+        mutableStateMapOf(*dateGroupedSelectablePhotos.keys.map { it to false }.toTypedArray())
+    }
 
     Box(modifier) {
         LazyVerticalGrid(
@@ -121,65 +128,27 @@ fun SelectablePhotosLazyGrid(
             }
             dateGroupedSelectablePhotos.onEachIndexed { index, (localDate, photos) ->
                 header(key = localDate) {
-                    Column {
-                        if (index > 0) {
+                    PhotoDateHeader(localDate, photos, hiddenDates, onSelectDeselectAllClick)
+                }
+                if (hiddenDates[localDate] == false) {
+                    items(
+                        items = photos,
+                        key = { it.item.dateTime.toDefaultFormatString() + "|${it.item.isSaved}" }) { selectablePhoto ->
+                        SelectableDevicePhoto(
+                            selectablePhoto = selectablePhoto,
+                            isSelectionMode = isSelectionMode,
+                            minSize = minSize,
+                            onClick = onPhotoClick,
+                            onLongClick = onPhotoLongClick
+                        )
+                    }
+                    header {
+                        if (index <= photos.size) {
                             HorizontalDivider(
-                                modifier = Modifier.padding(vertical = MaterialTheme.spacing.medium)
+                                modifier = Modifier
                             )
                         }
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(
-                                    space = MaterialTheme.spacing.small,
-                                    alignment = Alignment.Start
-                                )
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.ic_calendar),
-                                    contentDescription = null
-                                )
-                                Text(
-                                    text = localDate.toString(),
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                            }
-                            val allPhotosWithDateAreSelected = remember(photos) {
-                                photos
-                                    .filter { it.item.dateTime.toLocalDate() == localDate }
-                                    .all { it.isSelected }
-                            }
-
-                            val selectDeselectIcon = when (allPhotosWithDateAreSelected) {
-                                true -> R.drawable.ic_deselect_all
-                                false -> R.drawable.ic_select_all
-                            }
-                            IconButton(
-                                modifier = Modifier.size(24.dp),
-                                onClick = { onSelectDeselectAllClick(localDate) }
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = selectDeselectIcon),
-                                    contentDescription = null
-                                )
-                            }
-                        }
                     }
-                }
-                items(
-                    photos,
-                    key = { it.item.dateTime.toDefaultFormatString() + "|${it.item.isSaved}" }) { selectablePhoto ->
-                    SelectableDevicePhoto(
-                        selectablePhoto = selectablePhoto,
-                        isSelectionMode = isSelectionMode,
-                        minSize = minSize,
-                        onClick = onPhotoClick,
-                        onLongClick = onPhotoLongClick
-                    )
                 }
             }
         }
@@ -188,6 +157,59 @@ fun SelectablePhotosLazyGrid(
             scrollProgress = scrollProgress,
             onClicked = { coroutineScope.launch { state.animateScrollToItem(0) } }
         )
+    }
+}
+
+@Composable
+private fun PhotoDateHeader(
+    localDate: LocalDate,
+    photos: List<Selectable<Photo>>,
+    hiddenDates: SnapshotStateMap<LocalDate, Boolean>,
+    onSelectDeselectAllClick: (LocalDate) -> Unit,
+) {
+    val allPhotosWithDateAreSelected = remember(photos) {
+        photos
+            .filter { it.item.dateTime.toLocalDate() == localDate }
+            .all { it.isSelected }
+    }
+    val selectDeselectIcon = remember(allPhotosWithDateAreSelected) {
+        when (allPhotosWithDateAreSelected) {
+            true -> R.drawable.ic_deselect_all
+            false -> R.drawable.ic_select_all
+        }
+    }
+    val isHidden = hiddenDates[localDate] ?: false
+    val rotationAngle by animateFloatAsState(targetValue = if (isHidden) 0f else 180f, label = "rotate")
+
+    Column(Modifier) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = localDate.toString(),
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small)) {
+                IconButton(
+                    modifier = Modifier.size(24.dp),
+                    onClick = { onSelectDeselectAllClick(localDate) }
+                ) {
+                    Icon(painterResource(id = selectDeselectIcon), null)
+                }
+                IconButton(
+                    modifier = Modifier.size(24.dp),
+                    onClick = { hiddenDates[localDate] = !isHidden }
+                ) {
+                    Icon(
+                        modifier = Modifier.graphicsLayer(rotationZ = rotationAngle),
+                        painter = painterResource(id = R.drawable.ic_caret_down),
+                        contentDescription = null
+                    )
+                }
+            }
+        }
     }
 }
 
