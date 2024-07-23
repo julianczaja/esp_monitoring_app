@@ -227,11 +227,11 @@ private fun DevicesListPortrait(
         horizontalAlignment = Alignment.CenterHorizontally,
         contentPadding = PaddingValues(MaterialTheme.spacing.medium)
     ) {
-        items(devicesWithLastPhotoList, key = { it.first.id }) {
+        items(devicesWithLastPhotoList, key = { it.first.id }) { (device, photo) ->
             DeviceItem(
-                device = it.first,
-                lastPhotoUri = it.second?.thumbnailUrl,
-                onClicked = onDeviceClicked,
+                device = device,
+                lastPhotoUri = photo?.thumbnailUrl,
+                onClicked = { onDeviceClicked(it.id) },
                 onRemoveClicked = onRemoveDeviceClicked,
                 onEditClicked = onEditDeviceClicked
             )
@@ -257,11 +257,11 @@ private fun DevicesListLandscape(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(MaterialTheme.spacing.medium)
     ) {
-        items(devicesWithLastPhotoList, key = { it.first.id }) {
+        items(devicesWithLastPhotoList, key = { it.first.id }) { (device, photo) ->
             DeviceItem(
-                device = it.first,
-                lastPhotoUri = it.second?.thumbnailUrl,
-                onClicked = onDeviceClicked,
+                device = device,
+                lastPhotoUri = photo?.thumbnailUrl,
+                onClicked = { onDeviceClicked(device.id) },
                 onRemoveClicked = onRemoveDeviceClicked,
                 onEditClicked = onEditDeviceClicked
             )

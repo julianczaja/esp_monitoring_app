@@ -37,7 +37,7 @@ class FakePhotoRepositoryImpl : PhotoRepository {
     override fun getPhotoByFileNameLocal(fileName: String) =
         _allPhotosLocalFlow.map { photos -> photos.firstOrNull { it.fileName == fileName } }
 
-    override suspend fun updateAllPhotosRemote(deviceId: Long): Result<Unit> {
+    override suspend fun updateAllPhotosRemote(deviceId: Long, limit: Int?): Result<Unit> {
         delay(1000)
         return if (updateAllPhotosReturnsException) {
             Result.failure(Exception("error"))

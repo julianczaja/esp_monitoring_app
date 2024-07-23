@@ -49,6 +49,7 @@ class AppSettingsScreenViewModelTest {
 
     private fun getViewModel() = AppSettingsScreenViewModel(
         appSettingsRepository = appSettingsRepository,
+        workManager = mockk(relaxed = true),
         ioDispatcher = dispatcherRule.testDispatcher
     )
 

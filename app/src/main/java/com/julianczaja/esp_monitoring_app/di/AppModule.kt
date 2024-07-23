@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStoreFile
 import androidx.room.Room
+import androidx.work.WorkManager
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import com.julianczaja.esp_monitoring_app.BuildConfig
 import com.julianczaja.esp_monitoring_app.common.Constants
@@ -32,6 +33,7 @@ import com.julianczaja.esp_monitoring_app.domain.repository.DeviceInfoRepository
 import com.julianczaja.esp_monitoring_app.domain.repository.DeviceRepository
 import com.julianczaja.esp_monitoring_app.domain.repository.PhotoRepository
 import com.julianczaja.esp_monitoring_app.domain.repository.TimelapseRepository
+import com.julianczaja.esp_monitoring_app.domain.usecase.GetDevicesWithLastPhotoUseCase
 import com.julianczaja.esp_monitoring_app.domain.usecase.SelectOrDeselectAllPhotosByDateUseCase
 import dagger.Module
 import dagger.Provides
@@ -166,4 +168,16 @@ object AppModule {
     @Provides
     @Singleton
     fun provideSelectOrDeselectAllPhotosByDateUseCase() = SelectOrDeselectAllPhotosByDateUseCase()
+
+    @Provides
+    @Singleton
+    fun provideGetDevicesWithLastPhotoUseCase(
+        deviceRepository: DeviceRepository,
+        photoRepository: PhotoRepository
+    ) = GetDevicesWithLastPhotoUseCase(deviceRepository, photoRepository)
+
+    @Provides
+    fun provideWorkManager(
+        @ApplicationContext context: Context
+    ) = WorkManager.getInstance(context)
 }

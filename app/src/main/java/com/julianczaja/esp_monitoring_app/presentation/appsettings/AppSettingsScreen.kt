@@ -68,7 +68,8 @@ fun AppSettingsScreen(
         onBaseUrlUpdate = viewModel::setBaseUrl,
         onBaseUrlApply = viewModel::applyBaseUrl,
         onBaseUrlRestoreDefault = viewModel::onBaseUrlRestoreDefault,
-        onDynamicColorChanged = viewModel::setDynamicColor
+        onDynamicColorChanged = viewModel::setDynamicColor,
+        onRefreshWidgetsClicked = viewModel::onRefreshWidgetsClicked,
     )
 }
 
@@ -80,6 +81,7 @@ private fun AppSettingsScreenContent(
     onBaseUrlApply: () -> Unit,
     onBaseUrlRestoreDefault: () -> Unit,
     onDynamicColorChanged: (Boolean) -> Unit,
+    onRefreshWidgetsClicked: () -> Unit,
 ) {
     when (uiState) {
         UiState.Loading -> LoadingScreen(modifier)
@@ -89,7 +91,8 @@ private fun AppSettingsScreenContent(
             onBaseUrlUpdate = onBaseUrlUpdate,
             onBaseUrlApply = onBaseUrlApply,
             onBaseUrlRestoreDefault = onBaseUrlRestoreDefault,
-            onDynamicColorChanged = onDynamicColorChanged
+            onDynamicColorChanged = onDynamicColorChanged,
+            onRefreshWidgetsClicked = onRefreshWidgetsClicked,
         )
     }
 }
@@ -110,6 +113,7 @@ private fun SuccessScreen(
     onBaseUrlApply: () -> Unit,
     onBaseUrlRestoreDefault: () -> Unit,
     onDynamicColorChanged: (Boolean) -> Unit,
+    onRefreshWidgetsClicked: () -> Unit,
 ) {
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
@@ -170,6 +174,10 @@ private fun SuccessScreen(
         ) {
             Text(text = stringResource(R.string.clear_photos_cache_label))
         }
+
+        Button(onClick = onRefreshWidgetsClicked) {
+            Text(stringResource(R.string.refresh_widgets_label))
+        }
     }
 }
 
@@ -195,7 +203,8 @@ private fun SuccessScreenNoBaseUrlErrorPreview() {
             onBaseUrlUpdate = {},
             onBaseUrlApply = {},
             onBaseUrlRestoreDefault = {},
-            onDynamicColorChanged = {}
+            onDynamicColorChanged = {},
+            onRefreshWidgetsClicked = {},
         )
     }
 }
@@ -213,7 +222,8 @@ private fun SuccessScreenBaseUrlErrorPreview() {
             onBaseUrlUpdate = {},
             onBaseUrlApply = {},
             onBaseUrlRestoreDefault = {},
-            onDynamicColorChanged = {}
+            onDynamicColorChanged = {},
+            onRefreshWidgetsClicked = {},
         )
     }
 }

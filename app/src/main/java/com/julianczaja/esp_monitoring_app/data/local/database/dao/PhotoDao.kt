@@ -11,7 +11,7 @@ abstract class PhotoDao : EntityDao<PhotoEntity>() {
     @Query("SELECT * FROM photo where deviceId = :deviceId")
     abstract fun getAll(deviceId: Long): Flow<List<PhotoEntity>>
 
-    @Query("SELECT * FROM photo where deviceId = :deviceId ORDER BY ID LIMIT 1")
+    @Query("SELECT * FROM photo where deviceId = :deviceId ORDER BY dateTime DESC LIMIT 1")
     abstract fun getLast(deviceId: Long): Flow<PhotoEntity?>
 
     @Query("SELECT * FROM photo where fileName = :fileName")
@@ -22,4 +22,7 @@ abstract class PhotoDao : EntityDao<PhotoEntity>() {
 
     @Query("DELETE FROM photo where fileName = :fileName")
     abstract fun deleteByFileName(fileName: String)
+
+    @Query("SELECT COUNT(*) FROM photo WHERE filename = :filename")
+    abstract fun countByFilename(filename: String): Int
 }

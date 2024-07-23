@@ -66,12 +66,16 @@ class PhotoRepositoryImpl @Inject constructor(
 
     override suspend fun removePhotoByFileNameRemote(fileName: String) = api.removePhoto(fileName)
 
-    override suspend fun updateAllPhotosRemote(deviceId: Long): Result<Unit> {
-        var result = Result.success(Unit)
-        api.getDevicePhotos(deviceId)
-            .onFailure { result = Result.failure(it) }
-            .onSuccess { refreshPhotosCache(deviceId, it) }
-        return result
+    override suspend fun updateAllPhotosRemote(deviceId: Long, limit: Int?): Result<Unit> {
+        api.getDevicePhotos(deviceId, limit)
+            .onFailure { return Result.failure(it) }
+            .onSuccess { photos ->
+                when {
+                    limit == null -> refreshPhotosCache(deviceId, photos)
+                    else -> insertIfNotExist(photos)
+                }
+            }
+        return Result.success(Unit)
     }
 
     override suspend fun downloadPhotoAndSaveToExternalStorage(photo: Photo): Result<Unit> {
@@ -203,5 +207,16 @@ class PhotoRepositoryImpl @Inject constructor(
     private suspend fun refreshPhotosCache(deviceId: Long, photos: List<Photo>) = photoDao.withTransaction {
         photoDao.deleteAll(deviceId)
         photoDao.insertAll(photos.map(Photo::toPhotoEntity))
+    }
+
+
+    private suspend fun insertIfNotExist(photos: List<Photo>) = photoDao.withTransaction {
+        photoDao.withTransaction {
+            photos.forEach { photo ->
+                if (photoDao.countByFilename(photo.fileName) == 0) {
+                    photoDao.insert(photo.toPhotoEntity())
+                }
+            }
+        }
     }
 }

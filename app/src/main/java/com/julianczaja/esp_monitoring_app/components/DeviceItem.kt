@@ -58,13 +58,13 @@ fun DeviceItem(
     lastPhotoUri: String? = null,
     minHeight: Dp = DEVICE_ITEM_MIN_HEIGHT_DP.dp,
     minWidth: Dp = DEVICE_ITEM_MIN_WIDTH_DP.dp,
-    onClicked: (Long) -> Unit,
-    onRemoveClicked: (Long) -> Unit,
-    onEditClicked: (Device) -> Unit,
+    onClicked: (Device) -> Unit,
+    onRemoveClicked: ((Long) -> Unit)? = null,
+    onEditClicked: ((Device) -> Unit)? = null,
 ) {
     Card(
         modifier = modifier
-            .clickable(onClick = { onClicked(device.id) })
+            .clickable(onClick = { onClicked(device) })
             .defaultMinSize(minWidth, minHeight)
             .testTag("DeviceItemCard"),
     ) {
@@ -86,12 +86,14 @@ fun DeviceItem(
             if (lastPhotoUri != null) {
                 LastPhoto(lastPhotoUri)
             }
-            MoreMenuButton(
-                device = device,
-                addIconBackground = lastPhotoUri != null,
-                onRemoveClicked = onRemoveClicked,
-                onEditClicked = onEditClicked
-            )
+            if (onRemoveClicked != null && onEditClicked != null) {
+                MoreMenuButton(
+                    device = device,
+                    addIconBackground = lastPhotoUri != null,
+                    onRemoveClicked = onRemoveClicked,
+                    onEditClicked = onEditClicked
+                )
+            }
         }
     }
 }
@@ -219,6 +221,20 @@ private fun DeviceItemLongNamePreview() {
             onClicked = {},
             onRemoveClicked = {},
             onEditClicked = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun DeviceItemNoMoreMenuButtonPreview() {
+    AppBackground(Modifier.height((DEVICE_ITEM_MIN_HEIGHT_DP).dp)) {
+        DeviceItem(
+            modifier = Modifier.padding(MaterialTheme.spacing.medium),
+            device = Device(123L, "Device name"),
+            onClicked = {},
+            onRemoveClicked = null,
+            onEditClicked = null
         )
     }
 }

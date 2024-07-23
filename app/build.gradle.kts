@@ -93,6 +93,8 @@ dependencies {
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.dagger.hilt.android)
     ksp(libs.dagger.hilt.compiler)
+    implementation(libs.androidx.hilt.work)
+    ksp(libs.androidx.hilt.compiler)
 
     // Retrofit
     implementation(libs.retrofit)
@@ -116,6 +118,9 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.room.ktx)
+
+    // Work Manager
+    implementation(libs.androidx.work.runtime.ktx)
 
     // Kable
     implementation(libs.kable.core)

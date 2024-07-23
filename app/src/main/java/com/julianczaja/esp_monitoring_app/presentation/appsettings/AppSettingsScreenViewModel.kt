@@ -2,11 +2,15 @@ package com.julianczaja.esp_monitoring_app.presentation.appsettings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.common.Constants
 import com.julianczaja.esp_monitoring_app.di.IoDispatcher
 import com.julianczaja.esp_monitoring_app.domain.model.FieldState
 import com.julianczaja.esp_monitoring_app.domain.repository.AppSettingsRepository
+import com.julianczaja.esp_monitoring_app.presentation.widget.PhotoWidgetUpdateWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.toImmutableSet
@@ -24,6 +28,7 @@ import javax.inject.Inject
 @HiltViewModel
 class AppSettingsScreenViewModel @Inject constructor(
     private val appSettingsRepository: AppSettingsRepository,
+    private val workManager: WorkManager,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
 
@@ -80,6 +85,12 @@ class AppSettingsScreenViewModel @Inject constructor(
     fun setDynamicColor(dynamicColor: Boolean) = viewModelScope.launch(ioDispatcher) {
         appSettingsRepository.setDynamicColor(dynamicColor)
     }
+
+    fun onRefreshWidgetsClicked() = workManager.enqueueUniqueWork(
+        Constants.UPDATE_PHOTO_WIDGETS_SINGLE_WORK_NAME,
+        ExistingWorkPolicy.KEEP,
+        OneTimeWorkRequestBuilder<PhotoWidgetUpdateWorker>().build()
+    )
 
     sealed class Event {
         data object BaseUrlSaved : Event()

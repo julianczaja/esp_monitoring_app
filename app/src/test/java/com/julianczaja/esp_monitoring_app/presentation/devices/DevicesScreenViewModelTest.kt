@@ -8,6 +8,7 @@ import com.julianczaja.esp_monitoring_app.data.repository.FakeDeviceRepositoryIm
 import com.julianczaja.esp_monitoring_app.data.repository.FakePhotoRepositoryImpl
 import com.julianczaja.esp_monitoring_app.domain.model.Device
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
+import com.julianczaja.esp_monitoring_app.domain.usecase.GetDevicesWithLastPhotoUseCase
 import com.julianczaja.esp_monitoring_app.presentation.devices.DevicesScreenViewModel.UiState
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
@@ -29,7 +30,10 @@ class DevicesScreenViewModelTest {
     fun setup() {
         deviceRepository = FakeDeviceRepositoryImpl()
         photoRepository = FakePhotoRepositoryImpl()
-        viewModel = DevicesScreenViewModel(deviceRepository, photoRepository, dispatcherRule.testDispatcher)
+        viewModel = DevicesScreenViewModel(
+            getDevicesWithLastPhotoUseCase = GetDevicesWithLastPhotoUseCase(deviceRepository, photoRepository),
+            ioDispatcher = dispatcherRule.testDispatcher
+        )
     }
 
     @Test
@@ -43,8 +47,10 @@ class DevicesScreenViewModelTest {
     @Test
     fun `UI State error when device repository thrown exception`() = runTest {
         deviceRepository.getAllDevicesThrowsError = true
-        viewModel = DevicesScreenViewModel(deviceRepository, photoRepository, dispatcherRule.testDispatcher)
-
+        viewModel = DevicesScreenViewModel(
+            getDevicesWithLastPhotoUseCase = GetDevicesWithLastPhotoUseCase(deviceRepository, photoRepository),
+            ioDispatcher = dispatcherRule.testDispatcher
+        )
         viewModel.uiState.test {
             val uiState = awaitItem()
             assertThat(uiState).isInstanceOf(UiState.Error::class.java)
@@ -56,7 +62,10 @@ class DevicesScreenViewModelTest {
     fun `UI State error when devices are not empty and photo repository thrown exception`() = runTest {
         deviceRepository.emitAllDevicesData(listOf(Device(1L, "name")))
         photoRepository.getLastPhotoLocalThrowsError = true
-        viewModel = DevicesScreenViewModel(deviceRepository, photoRepository, dispatcherRule.testDispatcher)
+        viewModel = DevicesScreenViewModel(
+            getDevicesWithLastPhotoUseCase = GetDevicesWithLastPhotoUseCase(deviceRepository, photoRepository),
+            ioDispatcher = dispatcherRule.testDispatcher
+        )
 
         viewModel.uiState.test {
             val uiState = awaitItem()
