@@ -13,15 +13,16 @@
         android:scaleType="centerCrop"
         tools:src="@mipmap/ic_launcher_round" />
 
-    <!--    <ImageButton-->
-    <!--        android:id="@+id/refresh_btn"-->
-    <!--        android:layout_width="wrap_content"-->
-    <!--        android:layout_height="wrap_content"-->
-    <!--        android:layout_alignParentTop="true"-->
-    <!--        android:layout_alignParentEnd="true"-->
-    <!--        android:background="@android:color/transparent"-->
-    <!--        android:padding="8dp"-->
-    <!--        android:src="@drawable/ic_refresh" />-->
+    <ImageButton
+        android:id="@+id/refresh_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:background="@android:color/transparent"
+        android:importantForAccessibility="no"
+        android:padding="8dp"
+        android:src="@drawable/ic_refresh" />
 
     <TextView
         android:id="@+id/error_tv"

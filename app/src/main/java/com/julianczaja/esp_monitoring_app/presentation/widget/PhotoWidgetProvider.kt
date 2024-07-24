@@ -127,6 +127,7 @@ class PhotoWidgetProvider : AppWidgetProvider() {
         views.setViewVisibility(R.id.error_tv, View.VISIBLE)
         views.setViewVisibility(R.id.photo_time_tv, View.GONE)
         views.setViewVisibility(R.id.last_update_tv, View.GONE)
+        views.setViewVisibility(R.id.refresh_btn, View.GONE)
         views.setTextViewText(R.id.device_tv, widgetInfo.deviceName)
     }
 
@@ -137,55 +138,68 @@ class PhotoWidgetProvider : AppWidgetProvider() {
         widgetInfo: PhotoWidgetInfo
     ) {
         // Intent to open app
-        val pendingIntent: PendingIntent = PendingIntent.getActivity(
-            /* context = */ context,
-            /* requestCode = */  appWidgetId,
-            /* intent = */ Intent(context, MainActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_SINGLE_TOP },
-            /* flags = */ PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-        views.setOnClickPendingIntent(R.id.photo_iv, pendingIntent)
-
-        // TODO: Intent to refresh widget
-        // val intentSync = Intent(context, PhotoWidgetProvider::class.java)
-        // intentSync.setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE)
-        // intentSync.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, intArrayOf(appWidgetId))
-        // val pendingSync = PendingIntent.getBroadcast(
-        //     /* context = */ context,
-        //     /* requestCode = */ appWidgetId,
-        //     /* intent = */ intentSync,
-        //     /* flags = */ PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        // )
-        // views.setOnClickPendingIntent(R.id.refresh_btn, pendingSync)
-
-        val directory = File(context.filesDir, widgetInfo.deviceId.toString())
-        val file = File(directory, WIDGET_LAST_PHOTO_FILENAME)
-        if (file.exists()) {
-            BitmapFactory.decodeFile(file.path).let {
-                views.setImageViewBitmap(R.id.photo_iv, it)
-            }
-        } else {
-            Timber.e("Last photo doesn't exist. Starting work...")
-            workManager.enqueueUniqueWork(
-                Constants.UPDATE_PHOTO_WIDGETS_SINGLE_WORK_NAME,
-                ExistingWorkPolicy.KEEP,
-                OneTimeWorkRequestBuilder<PhotoWidgetUpdateWorker>().build()
-            )
+        val openAppIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
+        views.setOnClickPendingIntent(
+            R.id.photo_iv,
+            PendingIntent.getActivity(
+                /* context = */ context,
+                /* requestCode = */  appWidgetId,
+                /* intent = */ openAppIntent,
+                /* flags = */ PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+        )
+
+        // Intent to refresh widget
+        val updateIntent = Intent(context, WidgetUpdateBroadcastReceiver::class.java).apply {
+            action = Constants.ACTION_UPDATE_PHOTO_WIDGETS
+        }
+        views.setOnClickPendingIntent(
+            R.id.refresh_btn,
+            PendingIntent.getBroadcast(
+                /* context = */ context,
+                /* requestCode = */ 0,
+                /* intent = */updateIntent,
+                /* flags = */PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+        )
 
         views.setViewVisibility(R.id.error_tv, View.GONE)
+        views.setViewVisibility(R.id.refresh_btn, View.VISIBLE)
+        views.setViewVisibility(R.id.last_update_tv, View.VISIBLE)
 
+        loadLastPhoto(context, widgetInfo, views)
+
+        views.setTextViewText(R.id.device_tv, widgetInfo.deviceName)
         views.setTextViewText(
             R.id.last_update_tv,
             context.getString(R.string.last_widget_update, widgetInfo.lastUpdate)
         )
-
-        views.setTextViewText(R.id.device_tv, widgetInfo.deviceName)
-
         if (widgetInfo.photoDate != null) {
             views.setTextViewText(R.id.photo_time_tv, widgetInfo.photoDate)
             views.setViewVisibility(R.id.photo_time_tv, View.VISIBLE)
         } else {
             views.setViewVisibility(R.id.photo_time_tv, View.GONE)
+        }
+    }
+
+    private fun loadLastPhoto(context: Context, widgetInfo: PhotoWidgetInfo, views: RemoteViews) {
+        val directory = File(context.filesDir, widgetInfo.deviceId.toString())
+        val file = File(directory, WIDGET_LAST_PHOTO_FILENAME)
+        when {
+            file.exists() -> {
+                val bitmap = BitmapFactory.decodeFile(file.path)
+                views.setImageViewBitmap(R.id.photo_iv, bitmap)
+            }
+            else -> {
+                Timber.e("Last photo doesn't exist. Starting work...")
+                workManager.enqueueUniqueWork(
+                    Constants.UPDATE_PHOTO_WIDGETS_SINGLE_WORK_NAME,
+                    ExistingWorkPolicy.KEEP,
+                    OneTimeWorkRequestBuilder<PhotoWidgetUpdateWorker>().build()
+                )
+            }
         }
     }
 }

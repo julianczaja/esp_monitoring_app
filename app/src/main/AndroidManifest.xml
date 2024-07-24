@@ -93,6 +93,14 @@
                 android:resource="@xml/app_widget_provider_info" />
         </receiver>
 
+        <receiver
+            android:name=".presentation.widget.WidgetUpdateBroadcastReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.julianczaja.esp_monitoring_app.ACTION_START_UPDATE_PHOTO_WIDGETS_WORK" />
+            </intent-filter>
+        </receiver>
+
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"

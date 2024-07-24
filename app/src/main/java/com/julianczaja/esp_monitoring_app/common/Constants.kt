@@ -16,6 +16,8 @@ object Constants {
     const val UPDATE_PHOTO_WIDGETS_SINGLE_WORK_NAME = "update_photo_widgets_work"
     const val WIDGET_LAST_PHOTO_FILENAME = "last.jpeg"
 
+    const val ACTION_UPDATE_PHOTO_WIDGETS = "com.julianczaja.esp_monitoring_app.ACTION_START_UPDATE_PHOTO_WIDGETS_WORK"
+
     const val BASE_URL_HISTORY_LIMIT = 10
     const val DEFAULT_IS_DYNAMIC_COLOR = false
 
