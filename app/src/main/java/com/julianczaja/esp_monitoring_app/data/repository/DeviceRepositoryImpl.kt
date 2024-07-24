@@ -9,7 +9,6 @@ import com.julianczaja.esp_monitoring_app.domain.model.toDeviceEntity
 import com.julianczaja.esp_monitoring_app.domain.repository.DeviceRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapNotNull
 import javax.inject.Inject
 
 class DeviceRepositoryImpl @Inject constructor(
@@ -19,7 +18,7 @@ class DeviceRepositoryImpl @Inject constructor(
     override fun getAllDevices(): Flow<List<Device>> =
         deviceDao.getAll().map { devices -> devices.map { it.toDevice() } }
 
-    override fun getDeviceById(id: Long): Flow<Device?> = deviceDao.getById(id).mapNotNull { it?.toDevice() }
+    override fun getDeviceById(id: Long): Flow<Device?> = deviceDao.getById(id).map { it?.toDevice() }
 
     override suspend fun doesDeviceWithGivenIdAlreadyExist(deviceId: Long) = deviceDao.hasDeviceWithId(deviceId)
 

@@ -172,6 +172,7 @@
     <string name="white_balance_home">Home</string>
     <string name="white_balance_office">Office</string>
     <string name="white_balance_sunny">Sunny</string>
+    <string name="widget_error_configure_message">An error occurred. Please click to configure widget.</string>
     <string name="widget_preview_device_name">My device</string>
     <string name="widget_preview_last_update">Last update: 17:45</string>
     <string name="widget_preview_photo_time">Photo time: 7:15</string>

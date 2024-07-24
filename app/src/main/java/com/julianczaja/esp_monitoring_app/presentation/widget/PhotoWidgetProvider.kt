@@ -21,6 +21,7 @@ import com.julianczaja.esp_monitoring_app.common.Constants.UPDATE_PHOTO_WIDGETS_
 import com.julianczaja.esp_monitoring_app.common.Constants.WIDGET_LAST_PHOTO_FILENAME
 import com.julianczaja.esp_monitoring_app.domain.model.PhotoWidgetInfo
 import com.julianczaja.esp_monitoring_app.domain.repository.WidgetsRepository
+import com.julianczaja.esp_monitoring_app.navigation.DeviceIdArgs
 import com.julianczaja.esp_monitoring_app.presentation.MainActivity
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.first
@@ -94,6 +95,47 @@ class PhotoWidgetProvider : AppWidgetProvider() {
         Timber.d("PhotoWidgetProvider.updateWidget (appWidgetId=$appWidgetId, widgetInfo=$widgetInfo)")
         val views = RemoteViews(context.packageName, R.layout.photo_widget)
 
+        when (widgetInfo.deviceId) {
+            DeviceIdArgs.NO_VALUE -> setUpError(context, appWidgetId, views, widgetInfo)
+            else -> setUpNotEmpty(context, appWidgetId, views, widgetInfo)
+        }
+
+        appWidgetManager.updateAppWidget(appWidgetId, views)
+    }
+
+    private fun setUpError(
+        context: Context,
+        appWidgetId: Int,
+        views: RemoteViews,
+        widgetInfo: PhotoWidgetInfo
+    ) {
+        // Intent to open configuration
+        val configIntent = Intent(context, PhotoWidgetConfigurationActivity::class.java)
+            .apply {
+                flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
+                putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+            }
+
+        val configPendingIntent = PendingIntent.getActivity(
+            /* context = */ context,
+            /* requestCode = */ appWidgetId,
+            /* intent = */ configIntent,
+            /* flags = */ PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        views.setOnClickPendingIntent(R.id.photo_iv, configPendingIntent)
+
+        views.setViewVisibility(R.id.error_tv, View.VISIBLE)
+        views.setViewVisibility(R.id.photo_time_tv, View.GONE)
+        views.setViewVisibility(R.id.last_update_tv, View.GONE)
+        views.setTextViewText(R.id.device_tv, widgetInfo.deviceName)
+    }
+
+    private fun setUpNotEmpty(
+        context: Context,
+        appWidgetId: Int,
+        views: RemoteViews,
+        widgetInfo: PhotoWidgetInfo
+    ) {
         // Intent to open app
         val pendingIntent: PendingIntent = PendingIntent.getActivity(
             /* context = */ context,
@@ -130,6 +172,8 @@ class PhotoWidgetProvider : AppWidgetProvider() {
             )
         }
 
+        views.setViewVisibility(R.id.error_tv, View.GONE)
+
         views.setTextViewText(
             R.id.last_update_tv,
             context.getString(R.string.last_widget_update, widgetInfo.lastUpdate)
@@ -143,7 +187,5 @@ class PhotoWidgetProvider : AppWidgetProvider() {
         } else {
             views.setViewVisibility(R.id.photo_time_tv, View.GONE)
         }
-
-        appWidgetManager.updateAppWidget(appWidgetId, views)
     }
 }

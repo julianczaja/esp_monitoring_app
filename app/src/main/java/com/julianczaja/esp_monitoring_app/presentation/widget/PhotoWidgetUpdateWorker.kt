@@ -7,7 +7,6 @@ import android.graphics.Bitmap
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.common.Constants.WIDGET_LAST_PHOTO_FILENAME
 import com.julianczaja.esp_monitoring_app.data.utils.toPrettyString
 import com.julianczaja.esp_monitoring_app.di.IoDispatcher
@@ -17,10 +16,12 @@ import com.julianczaja.esp_monitoring_app.domain.model.PhotoWidgetInfo
 import com.julianczaja.esp_monitoring_app.domain.repository.DeviceRepository
 import com.julianczaja.esp_monitoring_app.domain.repository.PhotoRepository
 import com.julianczaja.esp_monitoring_app.domain.repository.WidgetsRepository
+import com.julianczaja.esp_monitoring_app.navigation.DeviceIdArgs
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.io.File
@@ -49,22 +50,36 @@ class PhotoWidgetUpdateWorker @AssistedInject constructor(
             .groupBy { it.deviceId }
             .forEach { (deviceId, widgetsInfoList) ->
                 try {
-                    val photo = downloadLastPhoto(deviceId)
-
                     widgetsInfoList.forEach { widgetInfo ->
-                        val deviceName = deviceRepository.getDeviceById(widgetInfo.deviceId).first()
-                            ?.name
-                            ?: appContext.getString(R.string.device_id_label_with_format, widgetInfo.deviceId)
+                        val device = deviceRepository.getDeviceById(widgetInfo.deviceId).firstOrNull()
 
-                        widgetsRepository.addOrUpdatePhotoWidget(
-                            PhotoWidgetInfo(
-                                widgetId = widgetInfo.widgetId,
-                                deviceId = widgetInfo.deviceId,
-                                deviceName = deviceName,
-                                lastUpdate = LocalTime.now().toPrettyString(),
-                                photoDate = photo.dateTime.toPrettyString()
-                            )
-                        )
+                        when {
+                            device == null -> { // may be deleted
+                                widgetsRepository.addOrUpdatePhotoWidget(
+                                    PhotoWidgetInfo(
+                                        widgetId = widgetInfo.widgetId,
+                                        deviceId = DeviceIdArgs.NO_VALUE,
+                                        deviceName = "Unknown",
+                                        lastUpdate = LocalTime.now().toPrettyString(),
+                                        photoDate = null
+                                    )
+                                )
+                            }
+
+                            else -> {
+                                val lastPhoto = downloadLastPhoto(deviceId)
+
+                                widgetsRepository.addOrUpdatePhotoWidget(
+                                    PhotoWidgetInfo(
+                                        widgetId = widgetInfo.widgetId,
+                                        deviceId = widgetInfo.deviceId,
+                                        deviceName = device.name,
+                                        lastUpdate = LocalTime.now().toPrettyString(),
+                                        photoDate = lastPhoto.dateTime.toPrettyString()
+                                    )
+                                )
+                            }
+                        }
                     }
                     val widgetIds = widgetsInfoList.map { it.widgetId }.toIntArray()
                     updateWidgets(widgetIds)
