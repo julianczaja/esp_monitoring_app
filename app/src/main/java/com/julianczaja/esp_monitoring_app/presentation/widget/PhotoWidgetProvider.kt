@@ -18,6 +18,7 @@ import androidx.work.WorkManager
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.common.Constants
 import com.julianczaja.esp_monitoring_app.common.Constants.UPDATE_PHOTO_WIDGETS_PERIODIC_WORK_NAME
+import com.julianczaja.esp_monitoring_app.common.Constants.WIDGET_LAST_PHOTO_FILENAME
 import com.julianczaja.esp_monitoring_app.domain.model.PhotoWidgetInfo
 import com.julianczaja.esp_monitoring_app.domain.repository.WidgetsRepository
 import com.julianczaja.esp_monitoring_app.presentation.MainActivity
@@ -115,7 +116,7 @@ class PhotoWidgetProvider : AppWidgetProvider() {
         // views.setOnClickPendingIntent(R.id.refresh_btn, pendingSync)
 
         val directory = File(context.filesDir, widgetInfo.deviceId.toString())
-        val file = File(directory, "last.jpeg")
+        val file = File(directory, WIDGET_LAST_PHOTO_FILENAME)
         if (file.exists()) {
             BitmapFactory.decodeFile(file.path).let {
                 views.setImageViewBitmap(R.id.photo_iv, it)

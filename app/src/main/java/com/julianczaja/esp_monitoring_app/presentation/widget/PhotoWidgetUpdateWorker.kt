@@ -8,6 +8,7 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.julianczaja.esp_monitoring_app.R
+import com.julianczaja.esp_monitoring_app.common.Constants.WIDGET_LAST_PHOTO_FILENAME
 import com.julianczaja.esp_monitoring_app.data.utils.toPrettyString
 import com.julianczaja.esp_monitoring_app.di.IoDispatcher
 import com.julianczaja.esp_monitoring_app.domain.BitmapDownloader
@@ -44,50 +45,49 @@ class PhotoWidgetUpdateWorker @AssistedInject constructor(
             return Result.success()
         }
 
-        val photos = mutableMapOf<Long, Photo>()
-
         widgetsInfo
-            .map { it.deviceId }
-            .distinct()
-            .forEach { deviceId ->
+            .groupBy { it.deviceId }
+            .forEach { (deviceId, widgetsInfoList) ->
                 try {
-                    photos[deviceId] = downloadLastPhoto(deviceId)
+                    val photo = downloadLastPhoto(deviceId)
+
+                    widgetsInfoList.forEach { widgetInfo ->
+                        val deviceName = deviceRepository.getDeviceById(widgetInfo.deviceId).first()
+                            ?.name
+                            ?: appContext.getString(R.string.device_id_label_with_format, widgetInfo.deviceId)
+
+                        widgetsRepository.addOrUpdatePhotoWidget(
+                            PhotoWidgetInfo(
+                                widgetId = widgetInfo.widgetId,
+                                deviceId = widgetInfo.deviceId,
+                                deviceName = deviceName,
+                                lastUpdate = LocalTime.now().toPrettyString(),
+                                photoDate = photo.dateTime.toPrettyString()
+                            )
+                        )
+                    }
+                    val widgetIds = widgetsInfoList.map { it.widgetId }.toIntArray()
+                    updateWidgets(widgetIds)
                 } catch (e: Exception) {
                     Timber.e("PhotoWidgetUpdateWorker error: $e")
                     return Result.failure()
                 }
             }
 
-        widgetsInfo.forEach { widgetInfo ->
-            val deviceName = deviceRepository.getDeviceById(widgetInfo.deviceId).first()?.name
-                ?: appContext.getString(
-                    R.string.device_id_label_with_format,
-                    widgetInfo.deviceId
-                )
+        return Result.success()
+    }
 
-            widgetsRepository.addOrUpdatePhotoWidget(
-                PhotoWidgetInfo(
-                    widgetId = widgetInfo.widgetId,
-                    deviceId = widgetInfo.deviceId,
-                    deviceName = deviceName,
-                    lastUpdate = LocalTime.now().toPrettyString(),
-                    photoDate = photos[widgetInfo.deviceId]?.dateTime?.toPrettyString()
-                )
-            )
-        }
-
+    private fun updateWidgets(widgetIds: IntArray) {
         val intent = Intent(
             /* action = */ AppWidgetManager.ACTION_APPWIDGET_UPDATE,
             /* uri = */ null,
             /* packageContext = */ appContext,
             /* cls = */ PhotoWidgetProvider::class.java
         ).apply {
-            val widgetIds = widgetsInfo.map { it.widgetId }
-            putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, widgetIds.toIntArray())
+            putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, widgetIds)
         }
 
         appContext.sendBroadcast(intent)
-        return Result.success()
     }
 
     private suspend fun downloadLastPhoto(deviceId: Long): Photo = withContext(ioDispatcher) {
@@ -101,7 +101,7 @@ class PhotoWidgetUpdateWorker @AssistedInject constructor(
             directory.mkdirs()
         }
 
-        val file = File(directory, "last.jpeg")
+        val file = File(directory, WIDGET_LAST_PHOTO_FILENAME)
         file.outputStream().use { bitmap.compress(Bitmap.CompressFormat.JPEG, 100, it) }
 
         return@withContext lastPhoto

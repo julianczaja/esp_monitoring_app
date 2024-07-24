@@ -14,6 +14,7 @@ object Constants {
 
     const val UPDATE_PHOTO_WIDGETS_PERIODIC_WORK_NAME = "update_photo_widgets_periodic_work"
     const val UPDATE_PHOTO_WIDGETS_SINGLE_WORK_NAME = "update_photo_widgets_work"
+    const val WIDGET_LAST_PHOTO_FILENAME = "last.jpeg"
 
     const val BASE_URL_HISTORY_LIMIT = 10
     const val DEFAULT_IS_DYNAMIC_COLOR = false
