@@ -1,5 +1,6 @@
 package com.julianczaja.esp_monitoring_app.data.repository
 
+import com.julianczaja.esp_monitoring_app.domain.model.Day
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.domain.repository.PhotoRepository
 import kotlinx.coroutines.delay
@@ -14,7 +15,7 @@ class FakePhotoRepositoryImpl : PhotoRepository {
     private val _allSavedPhotosFlow = MutableSharedFlow<Result<List<Photo>>>(replay = 1, extraBufferCapacity = 1)
 
     var getLastPhotoLocalThrowsError = false
-    var updateAllPhotosReturnsException = false
+    var updateAllPhotosByDayRemote = false
     var removePhotoByFileNameLocalReturnsException = false
     var removePhotoByFileNameRemoteReturnsException = false
 
@@ -25,7 +26,11 @@ class FakePhotoRepositoryImpl : PhotoRepository {
     suspend fun emitAllSavedPhotosData(data: Result<List<Photo>>) = _allSavedPhotosFlow.emit(data)
     fun tryEmitAllSavedPhotosData(data: Result<List<Photo>>) = _allSavedPhotosFlow.tryEmit(data)
 
-    override fun getAllPhotosLocal(deviceId: Long) = _allPhotosLocalFlow
+    override fun getAllPhotosByDayLocal(day: Day) = _allPhotosLocalFlow.map { photos ->
+        photos
+            .filter { photo -> photo.dateTime.toLocalDate() == day.date }
+            .sortedByDescending { it.dateTime }
+    }
 
     override fun getAllSavedPhotosFromExternalStorageFlow(deviceId: Long) = _allSavedPhotosFlow
 
@@ -37,9 +42,9 @@ class FakePhotoRepositoryImpl : PhotoRepository {
     override fun getPhotoByFileNameLocal(fileName: String) =
         _allPhotosLocalFlow.map { photos -> photos.firstOrNull { it.fileName == fileName } }
 
-    override suspend fun updateAllPhotosRemote(deviceId: Long, limit: Int?): Result<Unit> {
+    override suspend fun updateAllPhotosByDayRemote(day: Day): Result<Unit> {
         delay(1000)
-        return if (updateAllPhotosReturnsException) {
+        return if (updateAllPhotosByDayRemote) {
             Result.failure(Exception("error"))
         } else {
             emitAllPhotosLocalData(remotePhotos)
@@ -59,8 +64,12 @@ class FakePhotoRepositoryImpl : PhotoRepository {
             false -> Result.success(Unit)
         }
 
+    override suspend fun updateLastPhotoRemote(deviceId: Long): Result<Unit> {
+        return Result.success(Unit)
+    }
+
     override suspend fun downloadPhotoAndSaveToExternalStorage(photo: Photo): Result<Unit> {
-        TODO("Not yet implemented")
+        return Result.success(Unit)
     }
 
     override suspend fun removeSavedPhotoFromExternalStorage(photo: Photo): Result<Unit> {

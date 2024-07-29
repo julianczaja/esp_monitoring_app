@@ -1,12 +1,13 @@
 package com.julianczaja.esp_monitoring_app.domain.repository
 
+import com.julianczaja.esp_monitoring_app.domain.model.Day
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import kotlinx.coroutines.flow.Flow
 
 
 interface PhotoRepository {
 
-    fun getAllPhotosLocal(deviceId: Long): Flow<List<Photo>>
+    fun getAllPhotosByDayLocal(day: Day): Flow<List<Photo>>
 
     fun getLastPhotoLocal(deviceId: Long): Flow<Photo?>
 
@@ -16,7 +17,9 @@ interface PhotoRepository {
 
     suspend fun removePhotoByFileNameRemote(fileName: String): Result<Unit>
 
-    suspend fun updateAllPhotosRemote(deviceId: Long, limit: Int? = null): Result<Unit>
+    suspend fun updateAllPhotosByDayRemote(day: Day): Result<Unit>
+
+    suspend fun updateLastPhotoRemote(deviceId: Long): Result<Unit>
 
     suspend fun downloadPhotoAndSaveToExternalStorage(photo: Photo): Result<Unit>
 

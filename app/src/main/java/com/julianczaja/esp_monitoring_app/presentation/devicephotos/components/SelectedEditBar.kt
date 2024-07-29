@@ -1,4 +1,5 @@
-package com.julianczaja.esp_monitoring_app.components
+package com.julianczaja.esp_monitoring_app.presentation.devicephotos.components
+
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -24,6 +26,7 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.julianczaja.esp_monitoring_app.R
+import com.julianczaja.esp_monitoring_app.components.AppBackground
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 
 
@@ -34,12 +37,13 @@ fun SelectedEditBar(
     createTimelapseFromSelectedPhotos: () -> Unit,
     removeSelectedPhotos: () -> Unit,
     saveSelectedPhotos: (() -> Unit)? = null,
+    selectDeselectAllPhotos: () -> Unit,
     resetSelections: () -> Unit
 ) {
     AnimatedVisibility(
         modifier = Modifier.zIndex(0f),
         visible = isSelectionMode,
-        enter = slideInVertically(initialOffsetY = { -it/2 }),
+        enter = slideInVertically(initialOffsetY = { -it / 2 }),
         exit = slideOutVertically(targetOffsetY = { -it })
     ) {
         Column {
@@ -75,6 +79,15 @@ fun SelectedEditBar(
                             )
                         }
                     }
+                    IconButton(
+                        modifier = Modifier.size(30.dp),
+                        onClick = { selectDeselectAllPhotos() }
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_select_all),
+                            contentDescription = null
+                        )
+                    }
                     IconButton(onClick = resetSelections) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_x),
@@ -99,6 +112,7 @@ private fun SelectedEditBarPreview() {
             createTimelapseFromSelectedPhotos = {},
             removeSelectedPhotos = {},
             saveSelectedPhotos = {},
+            selectDeselectAllPhotos = {},
             resetSelections = {}
         )
     }

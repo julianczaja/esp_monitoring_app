@@ -17,8 +17,10 @@ import com.julianczaja.esp_monitoring_app.data.utils.createPhotoUri
 import com.julianczaja.esp_monitoring_app.data.utils.millisToDefaultFormatLocalDateTime
 import com.julianczaja.esp_monitoring_app.data.utils.observe
 import com.julianczaja.esp_monitoring_app.data.utils.scanPhotoUri
+import com.julianczaja.esp_monitoring_app.data.utils.toDefaultString
 import com.julianczaja.esp_monitoring_app.data.utils.toExifString
 import com.julianczaja.esp_monitoring_app.domain.BitmapDownloader
+import com.julianczaja.esp_monitoring_app.domain.model.Day
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.domain.model.PhotoAlreadyExistsException
 import com.julianczaja.esp_monitoring_app.domain.model.toPhotoEntity
@@ -48,8 +50,8 @@ class PhotoRepositoryImpl @Inject constructor(
         MediaStore.Images.Media._ID,
     )
 
-    override fun getAllPhotosLocal(deviceId: Long): Flow<List<Photo>> =
-        photoDao.getAll(deviceId).map { photos -> photos.map { it.toPhoto() } }
+    override fun getAllPhotosByDayLocal(day: Day): Flow<List<Photo>> =
+        photoDao.getAllByDate(day.deviceId, day.date.toDefaultString()).map { photos -> photos.map { it.toPhoto() } }
 
     override fun getLastPhotoLocal(deviceId: Long): Flow<Photo?> =
         photoDao.getLast(deviceId).map { it?.toPhoto() }
@@ -66,15 +68,19 @@ class PhotoRepositoryImpl @Inject constructor(
 
     override suspend fun removePhotoByFileNameRemote(fileName: String) = api.removePhoto(fileName)
 
-    override suspend fun updateAllPhotosRemote(deviceId: Long, limit: Int?): Result<Unit> {
-        api.getDevicePhotos(deviceId, limit)
+    override suspend fun updateAllPhotosByDayRemote(day: Day): Result<Unit> {
+        val date = day.date.toDefaultString()
+
+        api.getDevicePhotosByDate(day.deviceId, date)
             .onFailure { return Result.failure(it) }
-            .onSuccess { photos ->
-                when {
-                    limit == null -> refreshPhotosCache(deviceId, photos)
-                    else -> insertIfNotExist(photos)
-                }
-            }
+            .onSuccess { photos -> refreshPhotosCache(day.deviceId, date, photos) }
+        return Result.success(Unit)
+    }
+
+    override suspend fun updateLastPhotoRemote(deviceId: Long): Result<Unit> {
+        api.getDeviceLastPhoto(deviceId)
+            .onFailure { return Result.failure(it) }
+            .onSuccess { photo -> insertIfNotExist(photo) }
         return Result.success(Unit)
     }
 
@@ -204,18 +210,16 @@ class PhotoRepositoryImpl @Inject constructor(
         context.contentResolver.notifyChange(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, null)
     }
 
-    private suspend fun refreshPhotosCache(deviceId: Long, photos: List<Photo>) = photoDao.withTransaction {
-        photoDao.deleteAll(deviceId)
-        photoDao.insertAll(photos.map(Photo::toPhotoEntity))
-    }
-
-
-    private suspend fun insertIfNotExist(photos: List<Photo>) = photoDao.withTransaction {
+    private suspend fun refreshPhotosCache(deviceId: Long, date: String, photos: List<Photo>) =
         photoDao.withTransaction {
-            photos.forEach { photo ->
-                if (photoDao.countByFilename(photo.fileName) == 0) {
-                    photoDao.insert(photo.toPhotoEntity())
-                }
+            photoDao.deleteAllByDate(deviceId, date)
+            photoDao.insertAll(photos.map(Photo::toPhotoEntity))
+        }
+
+    private suspend fun insertIfNotExist(photo: Photo) = photoDao.withTransaction {
+        photoDao.withTransaction {
+            if (photoDao.countByFilename(photo.fileName) == 0) {
+                photoDao.insert(photo.toPhotoEntity())
             }
         }
     }

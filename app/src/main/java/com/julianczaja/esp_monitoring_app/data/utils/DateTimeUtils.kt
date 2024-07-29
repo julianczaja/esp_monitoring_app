@@ -16,6 +16,7 @@ import java.time.temporal.ChronoField
 
 const val EXIF_UTC_OFFSET = "+00:00"
 
+// LocalDateTime
 private val localDateTimeExifFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss")
 private val localDateTimePrettyFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd, HH:mm:ss")
 private val localDateTimeDefaultFormatter: DateTimeFormatter = DateTimeFormatterBuilder()
@@ -27,8 +28,6 @@ private val localDateTimeDefaultFormatter: DateTimeFormatter = DateTimeFormatter
     .appendValue(ChronoField.SECOND_OF_MINUTE, 2)
     .appendValue(ChronoField.MILLI_OF_SECOND, 3)
     .toFormatter()
-
-private val localTimePrettyFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
 
 fun LocalDateTime.toEpochMillis(): Long = toInstant(ZoneOffset.UTC).toEpochMilli()
 
@@ -43,16 +42,28 @@ fun LocalDateTime.toPrettyString(): String = this.format(localDateTimePrettyForm
 
 fun LocalDateTime.toExifString(): String = this.format(localDateTimeExifFormatter)
 
-fun LocalTime.toPrettyString(): String = this.format(localTimePrettyFormatter)
-
-fun LocalDate.toMonthDayString(): String = this.format(DateTimeFormatter.ofPattern("MMM, d"))
-
 fun LocalDateTime.toDayMonthYearString(): String = this.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))
-
-fun String.toLocalDate(): LocalDate = LocalDate.parse(this, localDateTimeDefaultFormatter)
 
 object LocalDateTimeAsStringSerializer : KSerializer<LocalDateTime> {
     override val descriptor = PrimitiveSerialDescriptor("LocalDateTimeAsStringSerializer", PrimitiveKind.STRING)
     override fun serialize(encoder: Encoder, value: LocalDateTime) = encoder.encodeString(value.toDefaultFormatString())
     override fun deserialize(decoder: Decoder): LocalDateTime = decoder.decodeString().toDefaultFormatLocalDateTime()
 }
+
+// LocalTime
+private val localTimePrettyFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
+
+fun LocalTime.toPrettyString(): String = this.format(localTimePrettyFormatter)
+
+// LocalDate
+private val localDateDefaultFormatter: DateTimeFormatter = DateTimeFormatterBuilder()
+    .appendValue(ChronoField.YEAR_OF_ERA, 4)
+    .appendValue(ChronoField.MONTH_OF_YEAR, 2)
+    .appendValue(ChronoField.DAY_OF_MONTH, 2)
+    .toFormatter()
+
+fun LocalDate.toMonthDayString(): String = this.format(DateTimeFormatter.ofPattern("MMM, d"))
+
+fun LocalDate.toDefaultString(): String = this.format(localDateDefaultFormatter)
+
+fun String.toLocalDate(): LocalDate = LocalDate.parse(this, localDateDefaultFormatter)

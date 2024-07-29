@@ -2,7 +2,6 @@ package com.julianczaja.esp_monitoring_app.presentation.devicephotos.components
 
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -14,10 +13,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
@@ -30,19 +26,15 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -51,7 +43,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
@@ -73,11 +64,9 @@ import com.julianczaja.esp_monitoring_app.domain.model.Selectable
 import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DEFAULT_PHOTO_WIDTH
 import com.julianczaja.esp_monitoring_app.presentation.theme.shape
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
-import kotlinx.collections.immutable.ImmutableMap
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.coroutines.launch
-import java.time.LocalDate
 import java.time.LocalDateTime
 
 private const val NUMBER_OF_ITEMS_TO_SCROLL_TO_SHOW_SCROLL_TO_TOP_BUTTON = 20
@@ -85,14 +74,13 @@ private const val NUMBER_OF_ITEMS_TO_SCROLL_TO_SHOW_SCROLL_TO_TOP_BUTTON = 20
 @Composable
 fun SelectablePhotosLazyGrid(
     modifier: Modifier = Modifier,
-    dateGroupedSelectablePhotos: ImmutableMap<LocalDate, List<Selectable<Photo>>>,
+    selectablePhotos: ImmutableList<Selectable<Photo>>,
     isSelectionMode: Boolean,
     minSize: Dp = DEFAULT_PHOTO_WIDTH.dp,
     state: LazyGridState = rememberLazyGridState(),
     noticeContent: (@Composable () -> Unit)? = null,
     onPhotoClick: (Selectable<Photo>) -> Unit,
     onPhotoLongClick: (Selectable<Photo>) -> Unit,
-    onSelectDeselectAllClick: (LocalDate) -> Unit,
 ) {
     val coroutineScope = rememberCoroutineScope()
     val lastVisibleItemIndex by remember {
@@ -105,13 +93,10 @@ fun SelectablePhotosLazyGrid(
             lastVisibleItemIndex > NUMBER_OF_ITEMS_TO_SCROLL_TO_SHOW_SCROLL_TO_TOP_BUTTON
         }
     }
-    val scrollProgress by remember(dateGroupedSelectablePhotos) {
+    val scrollProgress by remember(selectablePhotos) {
         derivedStateOf {
-            lastVisibleItemIndex / dateGroupedSelectablePhotos.values.flatten().size.toFloat()
+            lastVisibleItemIndex / selectablePhotos.size.toFloat()
         }
-    }
-    val hiddenDates = remember(dateGroupedSelectablePhotos.size) {
-        mutableStateMapOf(*dateGroupedSelectablePhotos.keys.map { it to false }.toTypedArray())
     }
 
     Box(modifier) {
@@ -126,30 +111,17 @@ fun SelectablePhotosLazyGrid(
             noticeContent?.let {
                 header { it.invoke() }
             }
-            dateGroupedSelectablePhotos.onEachIndexed { index, (localDate, photos) ->
-                header(key = localDate) {
-                    PhotoDateHeader(localDate, photos, hiddenDates, onSelectDeselectAllClick)
-                }
-                if (hiddenDates[localDate] == false) {
-                    items(
-                        items = photos,
-                        key = { it.item.dateTime.toDefaultFormatString() + "|${it.item.isSaved}" }) { selectablePhoto ->
-                        SelectableDevicePhoto(
-                            selectablePhoto = selectablePhoto,
-                            isSelectionMode = isSelectionMode,
-                            minSize = minSize,
-                            onClick = onPhotoClick,
-                            onLongClick = onPhotoLongClick
-                        )
-                    }
-                    header {
-                        if (index <= photos.size) {
-                            HorizontalDivider(
-                                modifier = Modifier
-                            )
-                        }
-                    }
-                }
+            items(
+                items = selectablePhotos,
+                key = { it.item.dateTime.toDefaultFormatString() + "|${it.item.isSaved}" }
+            ) { selectablePhoto ->
+                SelectableDevicePhoto(
+                    selectablePhoto = selectablePhoto,
+                    isSelectionMode = isSelectionMode,
+                    minSize = minSize,
+                    onClick = onPhotoClick,
+                    onLongClick = onPhotoLongClick
+                )
             }
         }
         ScrollToTopButton(
@@ -157,59 +129,6 @@ fun SelectablePhotosLazyGrid(
             scrollProgress = scrollProgress,
             onClicked = { coroutineScope.launch { state.animateScrollToItem(0) } }
         )
-    }
-}
-
-@Composable
-private fun PhotoDateHeader(
-    localDate: LocalDate,
-    photos: List<Selectable<Photo>>,
-    hiddenDates: SnapshotStateMap<LocalDate, Boolean>,
-    onSelectDeselectAllClick: (LocalDate) -> Unit,
-) {
-    val allPhotosWithDateAreSelected = remember(photos) {
-        photos
-            .filter { it.item.dateTime.toLocalDate() == localDate }
-            .all { it.isSelected }
-    }
-    val selectDeselectIcon = remember(allPhotosWithDateAreSelected) {
-        when (allPhotosWithDateAreSelected) {
-            true -> R.drawable.ic_deselect_all
-            false -> R.drawable.ic_select_all
-        }
-    }
-    val isHidden = hiddenDates[localDate] ?: false
-    val rotationAngle by animateFloatAsState(targetValue = if (isHidden) 0f else 180f, label = "rotate")
-
-    Column(Modifier) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = localDate.toString(),
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Row(horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small)) {
-                IconButton(
-                    modifier = Modifier.size(24.dp),
-                    onClick = { onSelectDeselectAllClick(localDate) }
-                ) {
-                    Icon(painterResource(id = selectDeselectIcon), null)
-                }
-                IconButton(
-                    modifier = Modifier.size(24.dp),
-                    onClick = { hiddenDates[localDate] = !isHidden }
-                ) {
-                    Icon(
-                        modifier = Modifier.graphicsLayer(rotationZ = rotationAngle),
-                        painter = painterResource(id = R.drawable.ic_caret_down),
-                        contentDescription = null
-                    )
-                }
-            }
-        }
     }
 }
 
@@ -336,40 +255,27 @@ private fun BoxScope.SavedIcon() {
 @Preview(device = "spec: width = 411dp, height = 891dp, orientation = landscape, dpi = 420", showSystemUi = true)
 @Composable
 fun SelectableDevicePhotosPreview() {
-    val dateGroupedSelectablePhotos = persistentMapOf(
-        LocalDate.of(2023, 1, 1) to listOf(
-            Selectable(
-                item = Photo.mock(dateTime = LocalDateTime.of(2023, 1, 1, 10, 10)),
-                isSelected = true
-            ),
-            Selectable(
-                item = Photo.mock(dateTime = LocalDateTime.of(2023, 1, 1, 10, 11)),
-                isSelected = true
-            ),
-            Selectable(
-                item = Photo.mock(dateTime = LocalDateTime.of(2023, 1, 1, 10, 12)),
-                isSelected = true
-            ),
+    val selectablePhotos = persistentListOf(
+        Selectable(
+            item = Photo.mock(dateTime = LocalDateTime.of(2023, 1, 1, 10, 10)),
+            isSelected = false
         ),
-        LocalDate.of(2023, 1, 2) to listOf(
-            Selectable(
-                item = Photo.mock(dateTime = LocalDateTime.of(2023, 1, 1, 10, 13)),
-                isSelected = true
-            ),
-            Selectable(
-                item = Photo.mock(dateTime = LocalDateTime.of(2023, 1, 1, 10, 14)),
-                isSelected = true
-            ),
+        Selectable(
+            item = Photo.mock(dateTime = LocalDateTime.of(2023, 1, 1, 10, 11)),
+            isSelected = true
+        ),
+        Selectable(
+            item = Photo.mock(dateTime = LocalDateTime.of(2023, 1, 1, 10, 12)),
+            isSelected = false
         )
     )
 
     AppBackground {
         SelectablePhotosLazyGrid(
-            dateGroupedSelectablePhotos = dateGroupedSelectablePhotos,
+            selectablePhotos = selectablePhotos,
             isSelectionMode = true,
             onPhotoClick = {},
             onPhotoLongClick = {},
-            onSelectDeselectAllClick = {}
         )
     }
 }
@@ -378,43 +284,30 @@ fun SelectableDevicePhotosPreview() {
 @Preview(device = "spec: width = 411dp, height = 891dp, orientation = landscape, dpi = 420", showSystemUi = true)
 @Composable
 fun SelectableDevicePhotosWithNoticePreview() {
-    val dateGroupedSelectablePhotos = persistentMapOf(
-        LocalDate.of(2023, 1, 1) to listOf(
-            Selectable(
-                item = Photo.mock(dateTime = LocalDateTime.of(2023, 1, 1, 10, 10)),
-                isSelected = true
-            ),
-            Selectable(
-                item = Photo.mock(dateTime = LocalDateTime.of(2023, 1, 1, 10, 11)),
-                isSelected = true
-            ),
-            Selectable(
-                item = Photo.mock(dateTime = LocalDateTime.of(2023, 1, 1, 10, 12)),
-                isSelected = true
-            ),
+    val selectablePhotos = persistentListOf(
+        Selectable(
+            item = Photo.mock(dateTime = LocalDateTime.of(2023, 1, 1, 10, 10)),
+            isSelected = false
         ),
-        LocalDate.of(2023, 1, 2) to listOf(
-            Selectable(
-                item = Photo.mock(dateTime = LocalDateTime.of(2023, 1, 1, 10, 13)),
-                isSelected = true
-            ),
-            Selectable(
-                item = Photo.mock(dateTime = LocalDateTime.of(2023, 1, 1, 10, 14)),
-                isSelected = true
-            ),
+        Selectable(
+            item = Photo.mock(dateTime = LocalDateTime.of(2023, 1, 1, 10, 11)),
+            isSelected = true
+        ),
+        Selectable(
+            item = Photo.mock(dateTime = LocalDateTime.of(2023, 1, 1, 10, 12)),
+            isSelected = false
         )
     )
 
     AppBackground {
         SelectablePhotosLazyGrid(
-            dateGroupedSelectablePhotos = dateGroupedSelectablePhotos,
+            selectablePhotos = selectablePhotos,
             noticeContent = {
                 Notice(text = "Some text", actionText = "Action", onIgnoreClicked = { }, onActionClicked = {})
             },
             isSelectionMode = true,
             onPhotoClick = {},
             onPhotoLongClick = {},
-            onSelectDeselectAllClick = {}
         )
     }
 }

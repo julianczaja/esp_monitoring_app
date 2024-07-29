@@ -106,7 +106,7 @@ class PhotoWidgetUpdateWorker @AssistedInject constructor(
     }
 
     private suspend fun downloadLastPhoto(deviceId: Long): Photo = withContext(ioDispatcher) {
-        photoRepository.updateAllPhotosRemote(deviceId, limit = 1).getOrThrow()
+        photoRepository.updateLastPhotoRemote(deviceId).getOrThrow()
 
         val lastPhoto = photoRepository.getLastPhotoLocal(deviceId).first() ?: throw Exception("Last photo is null")
         val bitmap = bitmapDownloader.downloadBitmap(lastPhoto.url).getOrThrow()

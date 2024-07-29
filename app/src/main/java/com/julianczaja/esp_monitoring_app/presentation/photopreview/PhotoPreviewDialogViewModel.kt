@@ -42,10 +42,12 @@ class PhotoPreviewDialogViewModel @Inject constructor(
 
                 else -> {
                     val photos = parentViewModelState
-                        .dateGroupedSelectablePhotos.values
+                        .dayGroupedSelectablePhotos.values
                         .flatten()
                         .map { it.item }
+                        .sortedByDescending { it.dateTime }
                         .toImmutableList()
+
                     _uiState.update { UiState.Success(photos, initialIndex) }
                 }
             }

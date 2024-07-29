@@ -11,6 +11,9 @@ abstract class PhotoDao : EntityDao<PhotoEntity>() {
     @Query("SELECT * FROM photo where deviceId = :deviceId")
     abstract fun getAll(deviceId: Long): Flow<List<PhotoEntity>>
 
+    @Query("SELECT * FROM photo where deviceId = :deviceId and substr(dateTime, 1, 8) = :date")
+    abstract fun getAllByDate(deviceId: Long, date: String): Flow<List<PhotoEntity>>
+
     @Query("SELECT * FROM photo where deviceId = :deviceId ORDER BY dateTime DESC LIMIT 1")
     abstract fun getLast(deviceId: Long): Flow<PhotoEntity?>
 
@@ -19,6 +22,9 @@ abstract class PhotoDao : EntityDao<PhotoEntity>() {
 
     @Query("DELETE FROM photo where deviceId = :deviceId")
     abstract fun deleteAll(deviceId: Long)
+
+    @Query("DELETE FROM photo where deviceId = :deviceId and substr(dateTime, 1, 8) = :date")
+    abstract fun deleteAllByDate(deviceId: Long, date: String)
 
     @Query("DELETE FROM photo where fileName = :fileName")
     abstract fun deleteByFileName(fileName: String)

@@ -5,15 +5,24 @@ import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Path
-import retrofit2.http.Query
 
 interface RetrofitEspMonitoringApi {
 
-    @GET(value = "/photos/{deviceId}")
-    suspend fun getDevicePhotos(
+    @GET(value = "/dates/{deviceId}")
+    suspend fun getDeviceDates(
+        @Path("deviceId") deviceId: Long
+    ): Result<List<String>>
+
+    @GET(value = "/photos/{deviceId}/{date}")
+    suspend fun getDevicePhotosByDate(
         @Path("deviceId") deviceId: Long,
-        @Query("limit") limit: Int?
+        @Path("date") date: String
     ): Result<List<Photo>>
+
+    @GET(value = "/last_photo/{deviceId}")
+    suspend fun getDeviceLastPhoto(
+        @Path("deviceId") deviceId: Long
+    ): Result<Photo>
 
     @DELETE(value = "/photos/{fileName}")
     suspend fun removePhoto(

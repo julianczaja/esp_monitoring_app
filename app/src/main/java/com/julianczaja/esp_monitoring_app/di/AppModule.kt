@@ -16,11 +16,13 @@ import com.julianczaja.esp_monitoring_app.data.CoilBitmapDownloader
 import com.julianczaja.esp_monitoring_app.data.LocalTimelapseCreator
 import com.julianczaja.esp_monitoring_app.data.NetworkManager
 import com.julianczaja.esp_monitoring_app.data.local.database.EspMonitoringDatabase
+import com.julianczaja.esp_monitoring_app.data.local.database.dao.DayDao
 import com.julianczaja.esp_monitoring_app.data.local.database.dao.DeviceDao
 import com.julianczaja.esp_monitoring_app.data.local.database.dao.DeviceInfoDao
 import com.julianczaja.esp_monitoring_app.data.local.database.dao.PhotoDao
 import com.julianczaja.esp_monitoring_app.data.remote.HostSelectionInterceptor
 import com.julianczaja.esp_monitoring_app.data.remote.RetrofitEspMonitoringApi
+import com.julianczaja.esp_monitoring_app.data.repository.DayRepositoryImpl
 import com.julianczaja.esp_monitoring_app.data.repository.DeviceInfoRepositoryImpl
 import com.julianczaja.esp_monitoring_app.data.repository.DeviceRepositoryImpl
 import com.julianczaja.esp_monitoring_app.data.repository.PhotoRepositoryImpl
@@ -29,6 +31,7 @@ import com.julianczaja.esp_monitoring_app.domain.BitmapDownloader
 import com.julianczaja.esp_monitoring_app.domain.TimelapseCreator
 import com.julianczaja.esp_monitoring_app.domain.model.ResultCallAdapterFactory
 import com.julianczaja.esp_monitoring_app.domain.repository.AppSettingsRepository
+import com.julianczaja.esp_monitoring_app.domain.repository.DayRepository
 import com.julianczaja.esp_monitoring_app.domain.repository.DeviceInfoRepository
 import com.julianczaja.esp_monitoring_app.domain.repository.DeviceRepository
 import com.julianczaja.esp_monitoring_app.domain.repository.PhotoRepository
@@ -72,7 +75,7 @@ object AppModule {
                 .addInterceptor(HostSelectionInterceptor(appSettingsRepository))
                 .apply {
                     if (BuildConfig.DEBUG)
-                        addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
+                        addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BASIC))
                 }
                 .connectTimeout(Duration.ofSeconds(Constants.CONNECT_TIMEOUT_SECONDS))
                 .readTimeout(Duration.ofSeconds(Constants.READ_TIMEOUT_SECONDS))
@@ -117,6 +120,10 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideDayDao(espMonitoringDatabase: EspMonitoringDatabase) = espMonitoringDatabase.dayDao()
+
+    @Provides
+    @Singleton
     fun provideBitmapDownloader(
         @ApplicationContext context: Context,
         @IoDispatcher ioDispatcher: CoroutineDispatcher
@@ -149,6 +156,13 @@ object AppModule {
         deviceInfoDao: DeviceInfoDao,
         api: RetrofitEspMonitoringApi
     ): DeviceInfoRepository = DeviceInfoRepositoryImpl(api, deviceInfoDao)
+
+    @Provides
+    @Singleton
+    fun provideDayRepository(
+        dayDao: DayDao,
+        api: RetrofitEspMonitoringApi
+    ): DayRepository = DayRepositoryImpl(api, dayDao)
 
     @Provides
     @Singleton

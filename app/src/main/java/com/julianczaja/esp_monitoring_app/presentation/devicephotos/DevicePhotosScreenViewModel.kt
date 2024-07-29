@@ -9,21 +9,21 @@ import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.data.NetworkManager
 import com.julianczaja.esp_monitoring_app.di.IoDispatcher
 import com.julianczaja.esp_monitoring_app.domain.TimelapseCreator
+import com.julianczaja.esp_monitoring_app.domain.model.Day
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.domain.model.PhotosFilterMode
 import com.julianczaja.esp_monitoring_app.domain.model.Selectable
 import com.julianczaja.esp_monitoring_app.domain.model.getErrorMessageId
+import com.julianczaja.esp_monitoring_app.domain.repository.DayRepository
 import com.julianczaja.esp_monitoring_app.domain.repository.PhotoRepository
 import com.julianczaja.esp_monitoring_app.domain.usecase.SelectOrDeselectAllPhotosByDateUseCase
 import com.julianczaja.esp_monitoring_app.navigation.DeviceScreen
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableMap
-import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
-import kotlinx.collections.immutable.toImmutableList
-import kotlinx.collections.immutable.toPersistentMap
+import kotlinx.collections.immutable.toImmutableMap
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,13 +32,17 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
-import java.time.LocalDate
 import javax.inject.Inject
 
 @HiltViewModel
@@ -46,6 +50,7 @@ class DevicePhotosScreenViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     networkManager: NetworkManager,
     private val photoRepository: PhotoRepository,
+    private val dayRepository: DayRepository,
     private val timelapseCreator: TimelapseCreator,
     private val selectOrDeselectAllPhotosByDateUseCase: SelectOrDeselectAllPhotosByDateUseCase,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
@@ -55,44 +60,63 @@ class DevicePhotosScreenViewModel @Inject constructor(
 
     private val _selectedPhotos = MutableStateFlow<List<Photo>>(emptyList())
 
-    private val _selectedFilterDates = MutableStateFlow<List<Selectable<LocalDate>>>(emptyList())
+    private val _selectedDay = MutableStateFlow<Day?>(null)
 
     private val _filterMode = MutableStateFlow(PhotosFilterMode.ALL)
 
     private val _isRefreshing = MutableStateFlow(false)
 
-    private val _isRefreshed = MutableStateFlow(false)
+    private val _isInitiated = MutableStateFlow(false)
 
     private val _isOnline = networkManager.isOnline
 
-    private val serverPhotosFlow = photoRepository.getAllPhotosLocal(deviceId).distinctUntilChanged()
+    private val _daysFetched = mutableSetOf<Day>()
 
-    private val savedPhotosFlow = photoRepository.getAllSavedPhotosFromExternalStorageFlow(deviceId)
-        .map {
-            it.exceptionOrNull()?.let { e ->
-                Timber.e("Error while reading saved photos: $e")
-                eventFlow.emit(Event.ShowError(R.string.saved_photos_read_error_message))
+    private val _daysFetchedMutex = Mutex()
+
+    private val _daysFlow = dayRepository.getDeviceDaysLocal(deviceId).distinctUntilChanged()
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val _serverPhotosFlow = _daysFlow.flatMapLatest { days ->
+        combine(
+            days.map { day ->
+                photoRepository.getAllPhotosByDayLocal(day).map { photos -> day to photos }
             }
-            return@map it.getOrNull() ?: emptyList()
+        ) { dayToPhotos ->
+            dayToPhotos.toMap()
         }
-        .distinctUntilChanged()
+    }.distinctUntilChanged()
+
+    private val _savedPhotosFlow = photoRepository.getAllSavedPhotosFromExternalStorageFlow(deviceId)
+        .map { result ->
+            result
+                .onFailure { e ->
+                    Timber.e("Error while reading saved photos: $e")
+                    eventFlow.emit(Event.ShowError(R.string.saved_photos_read_error_message))
+                }
+                .onSuccess { photos ->
+                    return@map photos
+                        .sortedByDescending { it.dateTime }
+                        .groupBy { Day(deviceId, it.dateTime.toLocalDate()) }
+                }
+            return@map emptyMap<Day, List<Photo>>()
+        }.distinctUntilChanged()
 
     val eventFlow = MutableSharedFlow<Event>()
 
     val devicePhotosUiState: StateFlow<UiState> = combine(
-        filteredGroupedSelectablePhotosFlow(),
+        dayGroupedSelectablePhotosFlow(),
         _isRefreshing,
         _isOnline,
-        _isRefreshed
-    ) { (selectableFilterDates, dateGroupedSelectablePhotos), isLoading, isOnline, isRefreshed ->
+        _isInitiated
+    ) { dayGroupedSelectablePhotos, isLoading, isOnline, isRefreshed ->
         UiState(
-            dateGroupedSelectablePhotos = dateGroupedSelectablePhotos.toPersistentMap(),
-            selectableFilterDates = selectableFilterDates.toImmutableList(),
+            dayGroupedSelectablePhotos = dayGroupedSelectablePhotos.toImmutableMap(),
             filterMode = _filterMode.value,
             isLoading = isLoading,
             isOnline = isOnline,
             isSelectionMode = _selectedPhotos.value.isNotEmpty(),
-            isRefreshed = isRefreshed,
+            isInitiated = isRefreshed,
             selectedCount = _selectedPhotos.value.size
         )
     }
@@ -105,70 +129,64 @@ class DevicePhotosScreenViewModel @Inject constructor(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = UiState(
-                dateGroupedSelectablePhotos = persistentMapOf(),
-                selectableFilterDates = persistentListOf(),
+                dayGroupedSelectablePhotos = persistentMapOf(),
                 filterMode = PhotosFilterMode.ALL,
                 isLoading = false,
                 isOnline = true,
                 isSelectionMode = false,
-                isRefreshed = false,
+                isInitiated = false,
                 selectedCount = 0
             )
         )
 
-    private fun filteredGroupedSelectablePhotosFlow(): Flow<Pair<List<Selectable<LocalDate>>, Map<LocalDate, List<Selectable<Photo>>>>> =
+    private fun dayGroupedSelectablePhotosFlow(): Flow<Map<Day, List<Selectable<Photo>>>> =
         combine(
-            serverPhotosFlow,
-            savedPhotosFlow,
+            _serverPhotosFlow,
+            _savedPhotosFlow,
             _selectedPhotos,
-            _selectedFilterDates,
             _filterMode,
-        ) { serverPhotos, savedPhotos, selectedPhotos, selectedFilterDates, filterMode ->
-
-            val allPhotos = when (filterMode) {
+        ) { serverPhotos, savedPhotos, selectedPhotos, filterMode ->
+            when (filterMode) {
                 PhotosFilterMode.SAVED_ONLY -> savedPhotos
                 PhotosFilterMode.SERVER_ONLY -> serverPhotos
-                PhotosFilterMode.ALL -> savedPhotos + serverPhotos
-            }
-
-            // Map photos to SelectablePhoto
-            val groupedSelectablePhotos = allPhotos
-                .sortedByDescending { it.dateTime }
-                .map { photo -> Selectable(item = photo, isSelected = selectedPhotos.contains(photo)) }
-                .groupBy { it.item.dateTime.toLocalDate() }
-
-            // Calculate new filter dates
-            val oldDates = selectedFilterDates
-            val newDates = groupedSelectablePhotos.keys
-            val newSelectedFilterDates = newDates.map { newDate ->
-                oldDates.find { it.item == newDate } ?: Selectable<LocalDate>(newDate, false)
-            }
-            _selectedFilterDates.update { newSelectedFilterDates }
-
-            // Filter selectable photos
-            val selectedDates = selectedFilterDates.filter { it.isSelected }
-            val filteredPhotos = groupedSelectablePhotos.filter { photo ->
-                when (selectedDates.isEmpty()) {
-                    true -> true
-                    false -> selectedDates.any { it.item == photo.key }
+                PhotosFilterMode.ALL -> combineDaysToPhotosMaps(savedPhotos, serverPhotos)
+            }.mapValues { entry ->
+                entry.value.map { photo ->
+                    Selectable(item = photo, isSelected = selectedPhotos.contains(photo))
                 }
             }
-            return@combine (newSelectedFilterDates to filteredPhotos)
         }
 
-    fun updatePhotos() = viewModelScope.launch(ioDispatcher) {
+    fun init() = viewModelScope.launch(ioDispatcher) {
         _isRefreshing.update { true }
-        photoRepository.updateAllPhotosRemote(deviceId)
-            .onFailure {
-                Timber.e(it)
-                eventFlow.emit(Event.ShowError(it.getErrorMessageId()))
+        updateDays(
+            onSuccess = { days ->
+                days.firstOrNull()?.let { day ->
+                    updatePhotosForDay(day)
+                    _selectedDay.update { day }
+                }
             }
+        )
+        _isInitiated.update { true }
         _isRefreshing.update { false }
-        _isRefreshed.update { true }
     }
 
-    fun updateSavedPhotos() {
-        photoRepository.forceRefreshSavedPhotosContent()
+    fun refreshData() = viewModelScope.launch(ioDispatcher) {
+        _isRefreshing.update { true }
+        updateDays(
+            onSuccess = { days ->
+                days.firstOrNull()?.let { day ->
+                    _daysFetchedMutex.withLock { _daysFetched.remove(day) }
+                    updatePhotosForDay(day)
+                }
+            }
+        )
+        _isRefreshing.update { false }
+    }
+
+    fun onPermissionsGranted() {
+        refreshData()
+        updateSavedPhotos()
     }
 
     fun onPhotoClick(selectablePhoto: Selectable<Photo>) {
@@ -190,12 +208,9 @@ class DevicePhotosScreenViewModel @Inject constructor(
         }
     }
 
-    fun onFilterDateClicked(selectableLocalDate: Selectable<LocalDate>) {
-        _selectedFilterDates.update { dates ->
-            dates.map {
-                if (it.item == selectableLocalDate.item) it.copy(isSelected = !it.isSelected) else it
-            }
-        }
+    fun onDayChanged(day: Day) = viewModelScope.launch(ioDispatcher) {
+        updatePhotosForDay(day)
+        _selectedDay.update { day }
     }
 
     fun onFilterModeClicked() {
@@ -209,11 +224,12 @@ class DevicePhotosScreenViewModel @Inject constructor(
         }
     }
 
-    fun onSelectDeselectAllClicked(localDate: LocalDate) {
-        val updatedSelectedPhotos = selectOrDeselectAllPhotosByDateUseCase.invoke(
-            allSelectablePhotosWithDate = devicePhotosUiState.value.dateGroupedSelectablePhotos[localDate].orEmpty(),
+    fun selectDeselectAllPhotos() {
+        val day = _selectedDay.value ?: return
+        val updatedSelectedPhotos = selectOrDeselectAllPhotosByDateUseCase(
+            allSelectablePhotosWithDate = devicePhotosUiState.value.dayGroupedSelectablePhotos[day].orEmpty(),
             allSelectedPhotos = _selectedPhotos.value,
-            date = localDate
+            date = day.date
         )
         _selectedPhotos.update { updatedSelectedPhotos }
     }
@@ -244,12 +260,69 @@ class DevicePhotosScreenViewModel @Inject constructor(
         }
     }
 
+    private suspend fun updateDays(onSuccess: suspend (days: List<Day>) -> Unit) {
+        dayRepository.updateDeviceDaysRemote(deviceId)
+            .onSuccess {
+                val days = _daysFlow.firstOrNull() ?: emptyList()
+                onSuccess(days)
+            }
+            .onFailure { e ->
+                Timber.e("updateDays error: $e")
+                eventFlow.emit(Event.ShowError(e.getErrorMessageId()))
+            }
+    }
+
+    private fun combineDaysToPhotosMaps(
+        map1: Map<Day, List<Photo>>,
+        map2: Map<Day, List<Photo>>
+    ): Map<Day, List<Photo>> {
+        val combinedMap = mutableMapOf<Day, MutableList<Photo>>()
+
+        for ((day, photos) in map1) {
+            combinedMap.getOrPut(day) { mutableListOf() }.addAll(photos)
+        }
+
+        for ((day, photos) in map2) {
+            combinedMap.getOrPut(day) { mutableListOf() }.addAll(photos)
+        }
+
+        return combinedMap
+            .toSortedMap(compareByDescending { it.date })
+            .mapValues { entry ->
+                entry.value.sortedByDescending { it.dateTime }
+            }
+    }
+
+    private suspend fun updatePhotosForDay(day: Day) {
+        val shouldUpdate = _daysFetchedMutex.withLock { !_daysFetched.contains(day) }
+
+        if (shouldUpdate) {
+            _isRefreshing.update { true }
+            photoRepository.updateAllPhotosByDayRemote(day)
+                .onSuccess { _daysFetchedMutex.withLock { _daysFetched.add(day) } }
+                .onFailure { e ->
+                    Timber.e("updatePhotosForDay error: $e")
+                    eventFlow.emit(Event.ShowError(e.getErrorMessageId()))
+                }
+            _isRefreshing.update { false }
+        }
+    }
+
+    private fun updateSavedPhotos() {
+        photoRepository.forceRefreshSavedPhotosContent()
+    }
+
     private fun openPhotoPreview(selectedPhoto: Photo) = viewModelScope.launch(ioDispatcher) {
-        val photos = devicePhotosUiState.value.dateGroupedSelectablePhotos.values
+        // FIXME: pass selected day and selected photo as nav args (for now not possible because
+        //        of this: https://issuetracker.google.com/issues/341319151)
+        devicePhotosUiState.value.dayGroupedSelectablePhotos.values
             .flatten()
             .map { it.item }
-
-        eventFlow.emit(Event.NavigateToPhotoPreview(photos.indexOf(selectedPhoto)))
+            .sortedByDescending { it.dateTime }
+            .let { photos ->
+                val index = photos.indexOf(selectedPhoto)
+                eventFlow.emit(Event.NavigateToPhotoPreview(index))
+            }
     }
 
     sealed class Event {
@@ -264,13 +337,12 @@ class DevicePhotosScreenViewModel @Inject constructor(
 
     @Immutable
     data class UiState(
-        val dateGroupedSelectablePhotos: ImmutableMap<LocalDate, List<Selectable<Photo>>>,
-        val selectableFilterDates: ImmutableList<Selectable<LocalDate>>,
+        val dayGroupedSelectablePhotos: ImmutableMap<Day, List<Selectable<Photo>>>,
         val filterMode: PhotosFilterMode,
         val isLoading: Boolean,
         val isOnline: Boolean,
         val isSelectionMode: Boolean,
-        val isRefreshed: Boolean,
+        val isInitiated: Boolean,
         val selectedCount: Int
     )
 }

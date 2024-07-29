@@ -13,7 +13,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -25,34 +27,35 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.lerp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.components.AppBackground
 import com.julianczaja.esp_monitoring_app.components.Notice
 import com.julianczaja.esp_monitoring_app.components.PermissionRationaleDialog
-import com.julianczaja.esp_monitoring_app.components.SelectedEditBar
 import com.julianczaja.esp_monitoring_app.components.StateBar
 import com.julianczaja.esp_monitoring_app.data.utils.getActivity
 import com.julianczaja.esp_monitoring_app.data.utils.getPermissionState
 import com.julianczaja.esp_monitoring_app.data.utils.getReadExternalStorageImagesPermissionName
 import com.julianczaja.esp_monitoring_app.data.utils.openAppSettings
-import com.julianczaja.esp_monitoring_app.data.utils.toLocalDate
+import com.julianczaja.esp_monitoring_app.domain.model.Day
 import com.julianczaja.esp_monitoring_app.domain.model.PermissionState
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.domain.model.PhotosFilterMode
@@ -61,12 +64,14 @@ import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DevicePhotos
 import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DevicePhotosScreenViewModel.UiState
 import com.julianczaja.esp_monitoring_app.presentation.devicephotos.components.FilterBar
 import com.julianczaja.esp_monitoring_app.presentation.devicephotos.components.SelectablePhotosLazyGrid
+import com.julianczaja.esp_monitoring_app.presentation.devicephotos.components.SelectedEditBar
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
-import kotlinx.coroutines.delay
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import kotlin.math.absoluteValue
 
 
 const val DEFAULT_PHOTO_WIDTH = 150
@@ -82,7 +87,6 @@ fun DevicePhotosScreen(
 ) {
     val uiState by viewModel.devicePhotosUiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    var updatePhotosCalled by rememberSaveable { mutableStateOf(false) }
 
     val storagePermissionName = getReadExternalStorageImagesPermissionName()
     var storagePermissionState by rememberSaveable {
@@ -101,8 +105,7 @@ fun DevicePhotosScreen(
                     storagePermissionState = PermissionState.GRANTED
                     shouldShowPermissionRationaleDialog = false
                     shouldShowPermissionMissingNotice = false
-                    viewModel.updatePhotos()
-                    viewModel.updateSavedPhotos()
+                    viewModel.onPermissionsGranted()
                 }
 
                 false -> {
@@ -119,9 +122,8 @@ fun DevicePhotosScreen(
     )
 
     LaunchedEffect(true) {
-        if (!updatePhotosCalled) {
-            viewModel.updatePhotos()
-            updatePhotosCalled = true
+        if (!uiState.isInitiated) {
+            viewModel.init()
         }
         viewModel.eventFlow.collect { event ->
             when (event) {
@@ -156,10 +158,9 @@ fun DevicePhotosScreen(
             bodyDenied = R.string.storage_permission_denied_body,
             permissionState = storagePermissionState,
             onRequestPermission = {
-                if (storagePermissionState == PermissionState.RATIONALE_NEEDED) {
-                    readExternalStoragePermissionLauncher.launch(storagePermissionName)
-                } else {
-                    context.getActivity().openAppSettings()
+                when (storagePermissionState == PermissionState.RATIONALE_NEEDED) {
+                    true -> readExternalStoragePermissionLauncher.launch(storagePermissionName)
+                    false -> context.getActivity().openAppSettings()
                 }
             },
             onDismiss = { shouldShowPermissionRationaleDialog = false }
@@ -169,15 +170,15 @@ fun DevicePhotosScreen(
     DevicePhotosScreenContent(
         uiState = uiState,
         shouldShowPermissionMissingNotice = shouldShowPermissionMissingNotice,
-        updatePhotos = viewModel::updatePhotos,
+        refreshData = viewModel::refreshData,
         resetSelections = viewModel::resetSelectedPhotos,
         saveSelectedPhotos = viewModel::saveSelectedPhotos,
         createTimelapseFromSelectedPhotos = viewModel::createTimelapseFromSelectedPhotos,
         removeSelectedPhotos = viewModel::removeSelectedPhotos,
         onPhotoClick = viewModel::onPhotoClick,
         onPhotoLongClick = viewModel::onPhotoLongClick,
-        onFilterDateClicked = viewModel::onFilterDateClicked,
-        onSelectDeselectAllClick = viewModel::onSelectDeselectAllClicked,
+        onDayChanged = viewModel::onDayChanged,
+        selectDeselectAllPhotos = viewModel::selectDeselectAllPhotos,
         onFilterModeClicked = viewModel::onFilterModeClicked,
         onPermissionNoticeActionClicked = { readExternalStoragePermissionLauncher.launch(storagePermissionName) },
         onPermissionNoticeIgnoreClicked = { shouldShowPermissionMissingNotice = false }
@@ -189,15 +190,15 @@ fun DevicePhotosScreen(
 private fun DevicePhotosScreenContent(
     uiState: UiState,
     shouldShowPermissionMissingNotice: Boolean,
-    updatePhotos: () -> Unit,
+    refreshData: () -> Unit,
     resetSelections: () -> Unit,
+    selectDeselectAllPhotos: () -> Unit,
     saveSelectedPhotos: () -> Unit,
     createTimelapseFromSelectedPhotos: () -> Unit,
     removeSelectedPhotos: () -> Unit,
     onPhotoClick: (Selectable<Photo>) -> Unit,
     onPhotoLongClick: (Selectable<Photo>) -> Unit,
-    onFilterDateClicked: (Selectable<LocalDate>) -> Unit,
-    onSelectDeselectAllClick: (LocalDate) -> Unit,
+    onDayChanged: (Day) -> Unit,
     onFilterModeClicked: () -> Unit,
     onPermissionNoticeActionClicked: () -> Unit,
     onPermissionNoticeIgnoreClicked: () -> Unit,
@@ -212,16 +213,17 @@ private fun DevicePhotosScreenContent(
             createTimelapseFromSelectedPhotos = createTimelapseFromSelectedPhotos,
             removeSelectedPhotos = removeSelectedPhotos,
             saveSelectedPhotos = saveSelectedPhotos,
+            selectDeselectAllPhotos = selectDeselectAllPhotos,
             resetSelections = resetSelections
         )
         PullToRefreshBox(
             modifier = Modifier.fillMaxSize(),
             isRefreshing = uiState.isLoading,
-            onRefresh = updatePhotos
+            onRefresh = refreshData
         ) {
-            when (uiState.dateGroupedSelectablePhotos.isEmpty()) {
+            when (uiState.dayGroupedSelectablePhotos.isEmpty()) {
                 true -> DevicePhotosEmptyScreen(
-                    isRefreshed = uiState.isRefreshed,
+                    isInitiated = uiState.isInitiated,
                     filterMode = uiState.filterMode,
                     shouldShowPermissionMissingNotice = shouldShowPermissionMissingNotice,
                     onPermissionNoticeActionClicked = onPermissionNoticeActionClicked,
@@ -235,8 +237,7 @@ private fun DevicePhotosScreenContent(
                     shouldShowPermissionMissingNotice = shouldShowPermissionMissingNotice,
                     onPhotoClick = onPhotoClick,
                     onPhotoLongClick = onPhotoLongClick,
-                    onFilterDateClicked = onFilterDateClicked,
-                    onSelectDeselectAllClick = onSelectDeselectAllClick,
+                    onDayChanged = onDayChanged,
                     onFilterModeClicked = onFilterModeClicked,
                     onPermissionNoticeActionClicked = onPermissionNoticeActionClicked,
                     onPermissionNoticeIgnoreClicked = onPermissionNoticeIgnoreClicked
@@ -253,78 +254,83 @@ private fun DevicePhotosNotEmptyScreen(
     shouldShowPermissionMissingNotice: Boolean,
     onPhotoClick: (Selectable<Photo>) -> Unit,
     onPhotoLongClick: (Selectable<Photo>) -> Unit,
-    onFilterDateClicked: (Selectable<LocalDate>) -> Unit,
+    onDayChanged: (Day) -> Unit,
     onFilterModeClicked: () -> Unit,
-    onSelectDeselectAllClick: (LocalDate) -> Unit,
     onPermissionNoticeActionClicked: () -> Unit,
     onPermissionNoticeIgnoreClicked: () -> Unit,
 ) {
     val coroutineScope = rememberCoroutineScope()
-    val lazyGridState = rememberLazyGridState()
-    val visibleItemKey by remember {
-        derivedStateOf {
-            val layoutInfo = lazyGridState.layoutInfo
-            val visibleItemsInfo = layoutInfo.visibleItemsInfo
 
-            if (layoutInfo.totalItemsCount == 0) return@derivedStateOf null
+    val days by remember(uiState.dayGroupedSelectablePhotos) {
+        mutableStateOf(
+            uiState.dayGroupedSelectablePhotos.keys.toImmutableList()
+        )
+    }
+    val photos by remember(uiState.dayGroupedSelectablePhotos) {
+        mutableStateOf(
+            uiState.dayGroupedSelectablePhotos.values
+                .map { it.toImmutableList() }
+                .toImmutableList()
+        )
+    }
+    val pagerState = rememberPagerState(pageCount = { days.size })
 
-            val visibleKey = if (visibleItemsInfo.last().index == layoutInfo.totalItemsCount - 1) {
-                visibleItemsInfo.last()
-            } else {
-                visibleItemsInfo.first()
-            }
-            return@derivedStateOf try {
-                visibleKey.key.toString()
-                    .split("|")
-                    .first()
-                    .toLocalDate()
-            } catch (e: Exception) {
-                null
-            }
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.currentPage }.collect { page ->
+            onDayChanged(days[page])
         }
     }
 
     Column(modifier) {
         FilterBar(
             modifier = Modifier.fillMaxWidth(),
-            dates = uiState.selectableFilterDates,
-            highlightedDate = visibleItemKey,
+            currentDayIndex = pagerState.currentPage,
+            days = days,
             filterMode = uiState.filterMode,
             onFilterModeClicked = onFilterModeClicked,
-            onDateClicked = {
-                onFilterDateClicked(it)
+            onDayClicked = {
                 coroutineScope.launch {
-                    delay(100) // fixme: wait until filtering is finished
-                    lazyGridState.scrollToItem(0)
+                    pagerState.animateScrollToPage(days.indexOf(it))
                 }
             }
         )
-        SelectablePhotosLazyGrid(
+        HorizontalPager(
             modifier = Modifier.fillMaxSize(),
-            dateGroupedSelectablePhotos = uiState.dateGroupedSelectablePhotos,
-            isSelectionMode = uiState.isSelectionMode,
-            state = lazyGridState,
-            noticeContent = if (shouldShowPermissionMissingNotice) {
-                {
-                    Notice(
-                        modifier = Modifier.fillMaxWidth(),
-                        text = stringResource(id = R.string.storage_photos_permission_notice),
-                        actionText = stringResource(id = R.string.grant_permission_button_label),
-                        onActionClicked = onPermissionNoticeActionClicked,
-                        onIgnoreClicked = onPermissionNoticeIgnoreClicked
-                    )
-                }
-            } else null,
-            onPhotoClick = onPhotoClick,
-            onPhotoLongClick = onPhotoLongClick,
-            onSelectDeselectAllClick = onSelectDeselectAllClick
-        )
+            state = pagerState,
+            beyondViewportPageCount = 1,
+            reverseLayout = true,
+        ) { page ->
+            SelectablePhotosLazyGrid(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .pagerScaleTransition(page, pagerState),
+                selectablePhotos = photos[page],
+                isSelectionMode = uiState.isSelectionMode,
+                noticeContent = when {
+                    shouldShowPermissionMissingNotice -> {
+                        {
+                            Notice(
+                                modifier = Modifier.fillMaxWidth(),
+                                text = stringResource(id = R.string.storage_photos_permission_notice),
+                                actionText = stringResource(id = R.string.grant_permission_button_label),
+                                onActionClicked = onPermissionNoticeActionClicked,
+                                onIgnoreClicked = onPermissionNoticeIgnoreClicked
+                            )
+                        }
+                    }
+
+                    else -> null
+                },
+                onPhotoClick = onPhotoClick,
+                onPhotoLongClick = onPhotoLongClick,
+            )
+        }
     }
 }
 
 @Composable
 private fun DevicePhotosEmptyScreen(
-    isRefreshed: Boolean,
+    isInitiated: Boolean,
     filterMode: PhotosFilterMode,
     shouldShowPermissionMissingNotice: Boolean,
     onPermissionNoticeActionClicked: () -> Unit,
@@ -336,10 +342,10 @@ private fun DevicePhotosEmptyScreen(
     ) {
         FilterBar(
             modifier = Modifier.fillMaxWidth(),
-            dates = persistentListOf(),
+            days = persistentListOf(),
             filterMode = filterMode,
             onFilterModeClicked = onFilterModeClicked,
-            onDateClicked = { }
+            onDayClicked = { }
         )
         AnimatedVisibility(
             visible = shouldShowPermissionMissingNotice,
@@ -356,7 +362,7 @@ private fun DevicePhotosEmptyScreen(
             )
         }
         AnimatedVisibility(
-            visible = isRefreshed,
+            visible = isInitiated,
             enter = fadeIn()
         ) {
             Column(
@@ -381,35 +387,49 @@ private fun DevicePhotosEmptyScreen(
     }
 }
 
+private fun PagerState.calculateCurrentOffsetForPage(page: Int): Float {
+    return (currentPage - page) + currentPageOffsetFraction
+}
+
+private fun Modifier.pagerScaleTransition(page: Int, pagerState: PagerState) =
+    graphicsLayer {
+        val pageOffset = pagerState.calculateCurrentOffsetForPage(page).absoluteValue.coerceIn(0f, 1f)
+
+        lerp(
+            start = 0.9f,
+            stop = 1f,
+            fraction = 1f - pageOffset
+        ).let {
+            scaleX = it
+            scaleY = it
+        }
+    }
+
 //region Preview
 @PreviewLightDark
 @Composable
 private fun DevicePhotosStateItemsPreview() {
-    val date1 = LocalDate.of(2023, 1, 10)
-    val date2 = LocalDate.of(2023, 1, 11)
+    val day1 = Day(1, LocalDate.of(2023, 1, 10))
+    val day2 = Day(1, LocalDate.of(2023, 1, 11))
     val dateGroupedSelectablePhotos = persistentMapOf(
-        date1 to listOf(
-            Selectable(Photo.mock(dateTime = date1.atTime(10, 10)), false),
-            Selectable(Photo.mock(dateTime = date1.atTime(10, 11)), false),
-            Selectable(Photo.mock(dateTime = date1.atTime(10, 12)), false),
+        day1 to listOf(
+            Selectable(Photo.mock(dateTime = day1.date.atTime(10, 10)), false),
+            Selectable(Photo.mock(dateTime = day1.date.atTime(10, 11)), false),
+            Selectable(Photo.mock(dateTime = day1.date.atTime(10, 12)), false),
         ),
-        date2 to listOf(
-            Selectable(Photo.mock(dateTime = date1.atTime(10, 13)), false),
-            Selectable(Photo.mock(dateTime = date1.atTime(10, 14)), false),
+        day2 to listOf(
+            Selectable(Photo.mock(dateTime = day1.date.atTime(10, 13)), false),
+            Selectable(Photo.mock(dateTime = day1.date.atTime(10, 14)), false),
         )
     )
     AppBackground {
         DevicePhotosScreenContent(
             uiState = UiState(
-                dateGroupedSelectablePhotos = dateGroupedSelectablePhotos,
+                dayGroupedSelectablePhotos = dateGroupedSelectablePhotos,
                 isLoading = false,
                 isOnline = false,
                 isSelectionMode = false,
-                selectableFilterDates = persistentListOf(
-                    Selectable(date2, false),
-                    Selectable(date1, false),
-                ),
-                isRefreshed = true,
+                isInitiated = true,
                 selectedCount = 0,
                 filterMode = PhotosFilterMode.ALL,
             ),
@@ -423,31 +443,27 @@ private fun DevicePhotosStateItemsPreview() {
 @PreviewLightDark
 @Composable
 private fun DevicePhotosStateSelectedItemsPreview() {
-    val date1 = LocalDate.of(2023, 1, 10)
-    val date2 = LocalDate.of(2023, 1, 11)
+    val day1 = Day(1, LocalDate.of(2023, 1, 10))
+    val day2 = Day(1, LocalDate.of(2023, 1, 11))
     val dateGroupedSelectablePhotos = persistentMapOf(
-        date1 to listOf(
-            Selectable(Photo.mock(dateTime = date1.atTime(10, 10)), true),
-            Selectable(Photo.mock(dateTime = date1.atTime(10, 11)), true),
-            Selectable(Photo.mock(dateTime = date1.atTime(10, 12)), false),
+        day1 to listOf(
+            Selectable(Photo.mock(dateTime = day1.date.atTime(10, 10)), true),
+            Selectable(Photo.mock(dateTime = day1.date.atTime(10, 11)), true),
+            Selectable(Photo.mock(dateTime = day1.date.atTime(10, 12)), false),
         ),
-        date2 to listOf(
-            Selectable(Photo.mock(dateTime = date1.atTime(10, 13)), false),
-            Selectable(Photo.mock(dateTime = date1.atTime(10, 14)), false),
+        day2 to listOf(
+            Selectable(Photo.mock(dateTime = day2.date.atTime(10, 13)), false),
+            Selectable(Photo.mock(dateTime = day2.date.atTime(10, 14)), false),
         )
     )
     AppBackground {
         DevicePhotosScreenContent(
             uiState = UiState(
-                dateGroupedSelectablePhotos = dateGroupedSelectablePhotos,
+                dayGroupedSelectablePhotos = dateGroupedSelectablePhotos,
                 isLoading = false,
                 isOnline = true,
                 isSelectionMode = true,
-                selectableFilterDates = persistentListOf(
-                    Selectable(date2, false),
-                    Selectable(date1, false),
-                ),
-                isRefreshed = true,
+                isInitiated = true,
                 selectedCount = 2,
                 filterMode = PhotosFilterMode.ALL,
             ),
@@ -463,12 +479,11 @@ private fun DevicePhotosStateSuccessNoItemsPreview() {
     AppBackground {
         DevicePhotosScreenContent(
             UiState(
-                dateGroupedSelectablePhotos = persistentMapOf(),
+                dayGroupedSelectablePhotos = persistentMapOf(),
                 isLoading = false,
                 isOnline = true,
                 isSelectionMode = false,
-                selectableFilterDates = persistentListOf(),
-                isRefreshed = true,
+                isInitiated = true,
                 selectedCount = 0,
                 filterMode = PhotosFilterMode.ALL,
             ),
@@ -484,12 +499,11 @@ private fun DevicePhotosStateSuccessNoItemsWithNoticePreview() {
     AppBackground {
         DevicePhotosScreenContent(
             UiState(
-                dateGroupedSelectablePhotos = persistentMapOf(),
+                dayGroupedSelectablePhotos = persistentMapOf(),
                 isLoading = false,
                 isOnline = true,
                 isSelectionMode = false,
-                selectableFilterDates = persistentListOf(),
-                isRefreshed = true,
+                isInitiated = true,
                 selectedCount = 0,
                 filterMode = PhotosFilterMode.ALL,
             ),
