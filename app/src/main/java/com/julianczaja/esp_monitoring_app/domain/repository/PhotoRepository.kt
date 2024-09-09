@@ -21,6 +21,8 @@ interface PhotoRepository {
 
     suspend fun updateLastPhotoRemote(deviceId: Long): Result<Unit>
 
+    suspend fun getPhotosZipRemote(fileNames: List<String>, isHighQuality: Boolean): Result<ByteArray>
+
     suspend fun downloadPhotoAndSaveToExternalStorage(photo: Photo): Result<Unit>
 
     fun getAllSavedPhotosFromExternalStorageFlow(deviceId: Long): Flow<Result<List<Photo>>>

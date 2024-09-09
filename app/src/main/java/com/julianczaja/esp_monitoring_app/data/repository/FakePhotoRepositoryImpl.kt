@@ -68,6 +68,10 @@ class FakePhotoRepositoryImpl : PhotoRepository {
         return Result.success(Unit)
     }
 
+    override suspend fun getPhotosZipRemote(fileNames: List<String>, isHighQuality: Boolean): Result<ByteArray> {
+        TODO("Not yet implemented")
+    }
+
     override suspend fun downloadPhotoAndSaveToExternalStorage(photo: Photo): Result<Unit> {
         return Result.success(Unit)
     }

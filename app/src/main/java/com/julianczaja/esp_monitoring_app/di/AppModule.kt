@@ -134,8 +134,9 @@ object AppModule {
     fun provideTimelapseCreator(
         @ApplicationContext context: Context,
         bitmapDownloader: BitmapDownloader,
+        photoRepository: PhotoRepository,
         @IoDispatcher ioDispatcher: CoroutineDispatcher
-    ): TimelapseCreator = LocalTimelapseCreator(context, bitmapDownloader, ioDispatcher)
+    ): TimelapseCreator = LocalTimelapseCreator(context, bitmapDownloader, photoRepository, ioDispatcher)
 
     @Provides
     @Singleton

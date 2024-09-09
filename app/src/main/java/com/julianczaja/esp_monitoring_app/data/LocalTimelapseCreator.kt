@@ -14,6 +14,7 @@ import com.julianczaja.esp_monitoring_app.domain.TimelapseCreator
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.domain.model.TimelapseCancelledException
 import com.julianczaja.esp_monitoring_app.domain.model.TimelapseData
+import com.julianczaja.esp_monitoring_app.domain.repository.PhotoRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
@@ -21,13 +22,17 @@ import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.io.File
 import java.io.FileInputStream
+import java.io.FileOutputStream
 import java.io.IOException
+import java.util.zip.ZipEntry
+import java.util.zip.ZipInputStream
 import javax.inject.Inject
 
 
 class LocalTimelapseCreator @Inject constructor(
     private val context: Context,
     private val bitmapDownloader: BitmapDownloader,
+    private val photoRepository: PhotoRepository,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : TimelapseCreator {
 
@@ -163,12 +168,20 @@ class LocalTimelapseCreator @Inject constructor(
         photos: List<Photo>,
         isHighQuality: Boolean,
     ) {
-        photos.forEachIndexed { index, photo ->
-            val photoPrefix = when (isHighQuality) {
-                true -> HIGH_QUALITY_PHOTO_PREFIX
-                false -> LOW_QUALITY_PHOTO_PREFIX
-            }
-            val photoFile = File(cacheDir, "$photoPrefix%04d.jpeg".format(index))
+        val (savedPhotos, remotePhotos) = photos
+            .distinctBy { it.fileName }
+            .partition { it.isSaved }
+
+        val photoPrefix = when (isHighQuality) {
+            true -> HIGH_QUALITY_PHOTO_PREFIX
+            false -> LOW_QUALITY_PHOTO_PREFIX
+        }
+
+        var progress = 0
+
+        // saved photos
+        savedPhotos.forEach { photo ->
+            val photoFile = File(cacheDir, photo.fileName)
 
             if (photoFile.exists() && photoFile.length() == 0L) {
                 photoFile.delete()
@@ -185,8 +198,44 @@ class LocalTimelapseCreator @Inject constructor(
                     bitmap.compress(Bitmap.CompressFormat.JPEG, 80, fos)
                 }
             }
-            downloadProgress.update { ((index + 1) / photos.size.toFloat()) }
+            downloadProgress.update { ((progress++) / photos.size.toFloat()) }
         }
+
+        // remote
+        val remoteFileNames = remotePhotos.map { it.fileName }
+        if (remoteFileNames.isNotEmpty()) {
+            val zipByteArray = photoRepository.getPhotosZipRemote(remoteFileNames, isHighQuality).getOrThrow()
+
+            ZipInputStream(zipByteArray.inputStream()).use { zipIn ->
+                var entry: ZipEntry? = zipIn.nextEntry
+
+                while (entry != null) {
+                    val photoFile = File(cacheDir, entry.name)
+                    if (photoFile.exists() && photoFile.length() == 0L) {
+                        photoFile.delete()
+                    }
+                    if (!photoFile.exists()) {
+                        photoFile.createNewFile()
+                        FileOutputStream(photoFile).use { outputStream ->
+                            zipIn.copyTo(outputStream)
+                        }
+                    }
+                    zipIn.closeEntry()
+                    entry = zipIn.nextEntry
+
+                    downloadProgress.update { ((progress++) / photos.size.toFloat()) }
+                }
+            }
+        }
+
+        // rename
+        var index = 0
+        cacheDir.listFiles()
+            ?.filter { it.isFile }
+            ?.sortedByDescending { it.name }
+            ?.forEach {
+                it.renameTo(File(cacheDir, "$photoPrefix%04d.jpeg".format(index++)))
+            }
     }
 
     @SuppressLint("DefaultLocale")

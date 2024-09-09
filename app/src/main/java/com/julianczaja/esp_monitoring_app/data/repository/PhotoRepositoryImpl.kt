@@ -9,6 +9,7 @@ import android.provider.MediaStore
 import androidx.exifinterface.media.ExifInterface
 import com.julianczaja.esp_monitoring_app.data.local.database.dao.PhotoDao
 import com.julianczaja.esp_monitoring_app.data.local.database.entity.toPhoto
+import com.julianczaja.esp_monitoring_app.data.model.GetPhotosZipParams
 import com.julianczaja.esp_monitoring_app.data.remote.RetrofitEspMonitoringApi
 import com.julianczaja.esp_monitoring_app.data.utils.EXIF_UTC_OFFSET
 import com.julianczaja.esp_monitoring_app.data.utils.PHOTOS_DIR_PATH_FORMAT
@@ -82,6 +83,11 @@ class PhotoRepositoryImpl @Inject constructor(
             .onFailure { return Result.failure(it) }
             .onSuccess { photo -> insertIfNotExist(photo) }
         return Result.success(Unit)
+    }
+
+    override suspend fun getPhotosZipRemote(fileNames: List<String>, isHighQuality: Boolean): Result<ByteArray> {
+        val zip = api.getPhotosZip(GetPhotosZipParams(fileNames, isHighQuality)).getOrElse { return Result.failure(it) }
+        return Result.success(zip.bytes())
     }
 
     override suspend fun downloadPhotoAndSaveToExternalStorage(photo: Photo): Result<Unit> {
