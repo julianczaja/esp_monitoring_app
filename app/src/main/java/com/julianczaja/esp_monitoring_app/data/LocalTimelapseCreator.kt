@@ -58,6 +58,7 @@ class LocalTimelapseCreator @Inject constructor(
     override suspend fun createTimelapse(
         photos: List<Photo>,
         isHighQuality: Boolean,
+        isReversed: Boolean,
         frameRate: Int,
         compressionRate: Int,
     ): Result<TimelapseData> = withContext(ioDispatcher) {
@@ -68,7 +69,7 @@ class LocalTimelapseCreator @Inject constructor(
             cacheDir.mkdirs()
         }
 
-        downloadAndSavePhotos(photos, isHighQuality)
+        downloadAndSavePhotos(photos, isHighQuality, isReversed)
 
         val photoPrefix = when (isHighQuality) {
             true -> HIGH_QUALITY_PHOTO_PREFIX
@@ -167,6 +168,7 @@ class LocalTimelapseCreator @Inject constructor(
     private suspend fun downloadAndSavePhotos(
         photos: List<Photo>,
         isHighQuality: Boolean,
+        isReversed: Boolean
     ) {
         val (savedPhotos, remotePhotos) = photos
             .distinctBy { it.fileName }
@@ -232,7 +234,7 @@ class LocalTimelapseCreator @Inject constructor(
         var index = 0
         cacheDir.listFiles()
             ?.filter { it.isFile }
-            ?.sortedByDescending { it.name }
+            ?.run { if (isReversed) sortedByDescending { it.name } else sortedBy { it.name } }
             ?.forEach {
                 it.renameTo(File(cacheDir, "$photoPrefix%04d.jpeg".format(index++)))
             }

@@ -17,6 +17,7 @@ interface TimelapseCreator {
     suspend fun createTimelapse(
         photos: List<Photo>,
         isHighQuality: Boolean = false,
+        isReversed: Boolean = false,
         frameRate: Int = 60,
         compressionRate: Int,
     ): Result<TimelapseData>

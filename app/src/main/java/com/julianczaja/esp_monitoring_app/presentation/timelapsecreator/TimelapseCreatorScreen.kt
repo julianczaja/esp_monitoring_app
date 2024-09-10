@@ -91,6 +91,7 @@ fun TimelapseCreatorScreen(
         onFrameRateChanged = viewModel::updateFrameRate,
         onCompressionRateChanged = viewModel::updateCompressionRate,
         onIsHighQualityChanged = viewModel::updateIsHighQuality,
+        onIsReversedChanged = viewModel::updateIsReversed,
         onStartClicked = viewModel::start,
         onSaveTimelapseClicked = viewModel::saveTimelapse
     )
@@ -103,6 +104,7 @@ private fun TimelapseCreatorScreenContent(
     onFrameRateChanged: (Int) -> Unit,
     onCompressionRateChanged: (Int) -> Unit,
     onIsHighQualityChanged: (Boolean) -> Unit,
+    onIsReversedChanged: (Boolean) -> Unit,
     onStartClicked: () -> Unit,
     onSaveTimelapseClicked: () -> Unit,
 ) {
@@ -113,6 +115,7 @@ private fun TimelapseCreatorScreenContent(
             onFrameRateChanged = onFrameRateChanged,
             onCompressionRateChanged = onCompressionRateChanged,
             onIsHighQualityChanged = onIsHighQualityChanged,
+            onIsReversedChanged = onIsReversedChanged,
             onStartClicked = onStartClicked
         )
 
@@ -136,6 +139,7 @@ private fun TimelapseCreatorConfigureScreen(
     onFrameRateChanged: (Int) -> Unit,
     onCompressionRateChanged: (Int) -> Unit,
     onIsHighQualityChanged: (Boolean) -> Unit,
+    onIsReversedChanged: (Boolean) -> Unit,
     onStartClicked: () -> Unit
 ) {
     Column(
@@ -189,6 +193,12 @@ private fun TimelapseCreatorConfigureScreen(
                 isChecked = uiState.isHighQuality,
                 enabled = true,
                 onCheckedChange = onIsHighQualityChanged
+            )
+            SwitchWithLabel(
+                label = stringResource(R.string.reverse_order_label),
+                isChecked = uiState.isReversed,
+                enabled = true,
+                onCheckedChange = onIsReversedChanged
             )
             HorizontalDivider(modifier = Modifier.padding(vertical = MaterialTheme.spacing.medium))
             Row(
@@ -326,11 +336,13 @@ private fun TimelapseCreatorConfigureDialogPreview() {
                 frameRate = 30,
                 compressionRate = 3,
                 isHighQuality = true,
+                isReversed = true,
                 estimatedTime = 10.2f
             ),
             onFrameRateChanged = {},
             onCompressionRateChanged = {},
             onIsHighQualityChanged = {},
+            onIsReversedChanged = {},
             onStartClicked = {},
             onSaveTimelapseClicked = {}
         )
@@ -347,6 +359,7 @@ private fun TimelapseCreatorProcessDialogPreview() {
             onFrameRateChanged = {},
             onCompressionRateChanged = {},
             onIsHighQualityChanged = {},
+            onIsReversedChanged = {},
             onStartClicked = {},
             onSaveTimelapseClicked = {}
         )

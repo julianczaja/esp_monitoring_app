@@ -46,6 +46,7 @@ class TimelapseCreatorScreenViewModel @Inject constructor(
     private var lastFrameRate = DEFAULT_FRAME_RATE
     private var lastCompressionRate = DEFAULT_COMPRESSION_RATE
     private var lastIsHighQuality = false
+    private var lastIsReversed = false
 
     private var processTimelapseJob: Job? = null
     private var createTimelapseJob: Job? = null
@@ -59,7 +60,15 @@ class TimelapseCreatorScreenViewModel @Inject constructor(
                 timelapseCreator.cancel()
                 processTimelapseJob?.cancel()
                 createTimelapseJob?.cancel()
-                _uiState.update { UiState.initial(photos, lastFrameRate, lastCompressionRate, lastIsHighQuality) }
+                _uiState.update {
+                    UiState.initial(
+                        photos = photos,
+                        frameRate = lastFrameRate,
+                        compressionRate = lastCompressionRate,
+                        isHighQuality = lastIsHighQuality,
+                        isReversed = lastIsReversed
+                    )
+                }
             }
         }
     }
@@ -90,6 +99,13 @@ class TimelapseCreatorScreenViewModel @Inject constructor(
         }
     }
 
+    fun updateIsReversed(newIsReversed: Boolean) {
+        (_uiState.value as? UiState.Configure)?.let { uiState ->
+            lastIsReversed = newIsReversed
+            _uiState.update { uiState.copy(isReversed = newIsReversed) }
+        }
+    }
+
     fun start() {
         (_uiState.value as? UiState.Configure)?.let { uiState ->
 
@@ -109,6 +125,7 @@ class TimelapseCreatorScreenViewModel @Inject constructor(
                     timelapseCreator.createTimelapse(
                         photos = photos,
                         isHighQuality = uiState.isHighQuality,
+                        isReversed = uiState.isReversed,
                         frameRate = uiState.frameRate,
                         compressionRate = uiState.compressionRate
                     ).onSuccess { timelapseData ->
@@ -143,7 +160,15 @@ class TimelapseCreatorScreenViewModel @Inject constructor(
 
     private fun onError(throwable: Throwable) = viewModelScope.launch {
         Timber.e(throwable)
-        _uiState.update { UiState.initial(photos, lastFrameRate, lastCompressionRate, lastIsHighQuality) }
+        _uiState.update {
+            UiState.initial(
+                photos = photos,
+                frameRate = lastFrameRate,
+                compressionRate = lastCompressionRate,
+                isHighQuality = lastIsHighQuality,
+                isReversed = lastIsReversed
+            )
+        }
         eventFlow.emit(Event.ShowError(throwable.getErrorMessageId()))
     }
 
@@ -166,7 +191,8 @@ class TimelapseCreatorScreenViewModel @Inject constructor(
             val estimatedTime: Float,
             val frameRate: Int,
             val compressionRate: Int,
-            val isHighQuality: Boolean
+            val isHighQuality: Boolean,
+            val isReversed: Boolean
         ) : UiState()
 
         data class Process(
@@ -185,7 +211,8 @@ class TimelapseCreatorScreenViewModel @Inject constructor(
                 photos: List<Photo>,
                 frameRate: Int = DEFAULT_FRAME_RATE,
                 compressionRate: Int = DEFAULT_COMPRESSION_RATE,
-                isHighQuality: Boolean = false
+                isHighQuality: Boolean = false,
+                isReversed: Boolean = false
             ) = Configure(
                 photosCount = photos.size,
                 oldestPhotoDateTime = photos.first().dateTime,
@@ -193,7 +220,8 @@ class TimelapseCreatorScreenViewModel @Inject constructor(
                 estimatedTime = photos.size.toFloat() / DEFAULT_FRAME_RATE,
                 frameRate = frameRate,
                 compressionRate = compressionRate,
-                isHighQuality = isHighQuality
+                isHighQuality = isHighQuality,
+                isReversed = isReversed
             )
         }
     }

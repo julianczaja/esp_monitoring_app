@@ -117,6 +117,7 @@
     <string name="removing_photos_label">Removing photos…</string>
     <string name="restore_default_label">Restore default</string>
     <string name="results_label">Results</string>
+    <string name="reverse_order_label">Reverse order</string>
     <string name="rssi_dbm">RSSI: %1$s dBm</string>
     <string name="save_action">Save</string>
     <string name="save_photo_cancelled">Cancelled</string>
