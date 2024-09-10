@@ -1,32 +1,22 @@
 package com.julianczaja.esp_monitoring_app.presentation.removephotos
 
-import androidx.lifecycle.SavedStateHandle
-import androidx.navigation.testing.invoke
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
 import com.julianczaja.esp_monitoring_app.MainDispatcherRule
 import com.julianczaja.esp_monitoring_app.data.repository.FakePhotoRepositoryImpl
+import com.julianczaja.esp_monitoring_app.domain.model.Day
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
+import com.julianczaja.esp_monitoring_app.domain.model.PhotosFilterMode
+import com.julianczaja.esp_monitoring_app.domain.model.Selectable
 import com.julianczaja.esp_monitoring_app.domain.repository.PhotoRepository
-import com.julianczaja.esp_monitoring_app.navigation.RemovePhotosDialog
-import com.julianczaja.esp_monitoring_app.navigation.parcelableCollectionType
+import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DevicePhotosScreenViewModel
 import io.mockk.coVerify
 import io.mockk.spyk
+import kotlinx.collections.immutable.toImmutableMap
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import kotlin.reflect.typeOf
 
-/**
- * These tests use Robolectric because the subject under test (the ViewModel) uses
- * `SavedStateHandle.toRoute` which has a dependency on `android.os.Bundle`.
- *
- * TODO: Remove Robolectric if/when AndroidX Navigation API is updated to remove Android dependency.
- *  See b/340966212.
- */
-@RunWith(RobolectricTestRunner::class)
 class RemovePhotosDialogViewModelTest {
 
     @get:Rule
@@ -36,13 +26,27 @@ class RemovePhotosDialogViewModelTest {
         photos: List<Photo>,
         photoRepository: PhotoRepository? = null
     ) = RemovePhotosDialogViewModel(
-        savedStateHandle = SavedStateHandle(
-            route = RemovePhotosDialog(photos),
-            typeMap = mapOf(typeOf<List<Photo>>() to parcelableCollectionType<Photo>())
-        ),
         photoRepository = photoRepository ?: FakePhotoRepositoryImpl(),
         ioDispatcher = dispatcherRule.testDispatcher
-    )
+    ).apply {
+        val deviceId = photos.first().deviceId
+        val dayGroupedSelectablePhotos = photos
+            .groupBy { it.dateTime.toLocalDate() }
+            .map { entry -> Day(deviceId, entry.key) to entry.value.map { Selectable(it, true) } }
+            .toMap().toImmutableMap()
+
+        init(
+            DevicePhotosScreenViewModel.UiState(
+                dayGroupedSelectablePhotos = dayGroupedSelectablePhotos,
+                filterMode = PhotosFilterMode.ALL,
+                isLoading = false,
+                isOnline = true,
+                isInitiated = true,
+                isSelectionMode = true,
+                selectedCount = 0
+            )
+        )
+    }
 
     @Test
     fun `UI state is Confirm on start`() = runTest {
@@ -117,7 +121,7 @@ class RemovePhotosDialogViewModelTest {
             assertThat((awaitItem() as RemovePhotosDialogViewModel.UiState.Removing).progress).isEqualTo(0.0f)
             assertThat((awaitItem() as RemovePhotosDialogViewModel.UiState.Removing).progress).isEqualTo(0.5f)
         }
-        coVerify(exactly = 2) { photoRepository.removePhotoByFileNameRemote(any()) }
+        coVerify(exactly = 1) { photoRepository.removePhotosByFileNamesRemote(any()) }
         coVerify(exactly = 2) { photoRepository.removePhotoByFileNameLocal(any()) }
     }
 
@@ -133,7 +137,6 @@ class RemovePhotosDialogViewModelTest {
             assertThat(awaitItem()).isInstanceOf(RemovePhotosDialogViewModel.UiState.Confirm::class.java)
             viewModel.removePhotos()
             assertThat((awaitItem() as RemovePhotosDialogViewModel.UiState.Removing).progress).isEqualTo(0.0f)
-            assertThat((awaitItem() as RemovePhotosDialogViewModel.UiState.Removing).progress).isEqualTo(0.5f)
             assertThat((awaitItem() as RemovePhotosDialogViewModel.UiState.Error).results).hasSize(2)
         }
     }
@@ -148,7 +151,7 @@ class RemovePhotosDialogViewModelTest {
 
         viewModel.removePhotos()
 
-        coVerify(exactly = 2) { photoRepository.removePhotoByFileNameRemote(any()) }
+        coVerify(exactly = 1) { photoRepository.removePhotosByFileNamesRemote(any()) }
         coVerify(exactly = 0) { photoRepository.removePhotoByFileNameLocal(any()) }
     }
 
@@ -159,14 +162,14 @@ class RemovePhotosDialogViewModelTest {
             Photo.mock(fileName = "fileName2", isSaved = true),
             Photo.mock(fileName = "fileName3", isSaved = false)
         )
-        val photoRepository = spyk(FakePhotoRepositoryImpl()        )
+        val photoRepository = spyk(FakePhotoRepositoryImpl())
         val viewModel = getViewModel(photos, photoRepository)
 
         viewModel.onRemoveSavedChanged(false)
         viewModel.removePhotos()
 
         coVerify(exactly = 0) { photoRepository.removeSavedPhotoFromExternalStorage(any()) }
-        coVerify(exactly = 1) { photoRepository.removePhotoByFileNameRemote(any()) }
+        coVerify(exactly = 1) { photoRepository.removePhotosByFileNamesRemote(any()) }
         coVerify(exactly = 1) { photoRepository.removePhotoByFileNameLocal(any()) }
     }
 
@@ -177,14 +180,14 @@ class RemovePhotosDialogViewModelTest {
             Photo.mock(fileName = "fileName2", isSaved = true),
             Photo.mock(fileName = "fileName3", isSaved = false)
         )
-        val photoRepository = spyk(FakePhotoRepositoryImpl()        )
+        val photoRepository = spyk(FakePhotoRepositoryImpl())
         val viewModel = getViewModel(photos, photoRepository)
 
         viewModel.onRemoveSavedChanged(true)
         viewModel.removePhotos()
 
         coVerify(exactly = 2) { photoRepository.removeSavedPhotoFromExternalStorage(any()) }
-        coVerify(exactly = 1) { photoRepository.removePhotoByFileNameRemote(any()) }
+        coVerify(exactly = 1) { photoRepository.removePhotosByFileNamesRemote(any()) }
         coVerify(exactly = 1) { photoRepository.removePhotoByFileNameLocal(any()) }
     }
 

@@ -17,6 +17,8 @@ interface PhotoRepository {
 
     suspend fun removePhotoByFileNameRemote(fileName: String): Result<Unit>
 
+    suspend fun removePhotosByFileNamesRemote(fileNames: List<String>): Result<Unit>
+
     suspend fun updateAllPhotosByDayRemote(day: Day): Result<Unit>
 
     suspend fun updateLastPhotoRemote(deviceId: Long): Result<Unit>

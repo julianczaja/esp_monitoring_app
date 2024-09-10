@@ -36,7 +36,6 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -244,8 +243,7 @@ class DevicePhotosScreenViewModel @Inject constructor(
     }
 
     fun removeSelectedPhotos() = viewModelScope.launch {
-        eventFlow.emit(Event.NavigateToRemovePhotosDialog(_selectedPhotos.value))
-        resetSelectedPhotos()
+        eventFlow.emit(Event.NavigateToRemovePhotosDialog)
     }
 
     fun createTimelapseFromSelectedPhotos() = viewModelScope.launch {
@@ -327,7 +325,7 @@ class DevicePhotosScreenViewModel @Inject constructor(
 
     sealed class Event {
         data class NavigateToPhotoPreview(val initialIndex: Int) : Event()
-        data class NavigateToRemovePhotosDialog(val photos: List<Photo>) : Event()
+        data object NavigateToRemovePhotosDialog : Event()
         data class NavigateToSavePhotosDialog(val photos: List<Photo>) : Event()
         data object NavigateToTimelapseCreatorScreen : Event()
         data class ShowSavedInfo(val totalCount: Int, val savedCount: Int) : Event()

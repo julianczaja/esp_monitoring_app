@@ -33,7 +33,7 @@ fun DeviceScreen(
     onSetAppBarTitle: (Int) -> Unit,
     snackbarHostState: SnackbarHostState,
     navigateToPhotoPreview: (Int) -> Unit,
-    navigateToRemovePhotosDialog: (List<Photo>) -> Unit,
+    navigateToRemovePhotosDialog: () -> Unit,
     navigateToSavePhotosDialog: (List<Photo>) -> Unit,
     navigateToTimelapseCreatorScreen: () -> Unit,
 ) {

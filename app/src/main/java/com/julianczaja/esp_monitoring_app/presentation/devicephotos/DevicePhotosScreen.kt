@@ -81,7 +81,7 @@ fun DevicePhotosScreen(
     snackbarHostState: SnackbarHostState,
     navigateToPhotoPreview: (Int) -> Unit,
     navigateToTimelapseCreatorScreen: () -> Unit,
-    navigateToRemovePhotosDialog: (List<Photo>) -> Unit,
+    navigateToRemovePhotosDialog: () -> Unit,
     navigateToSavePhotosDialog: (List<Photo>) -> Unit,
     viewModel: DevicePhotosScreenViewModel = hiltViewModel(),
 ) {
@@ -144,7 +144,7 @@ fun DevicePhotosScreen(
                 )
 
                 is Event.NavigateToPhotoPreview -> navigateToPhotoPreview(event.initialIndex)
-                is Event.NavigateToRemovePhotosDialog -> navigateToRemovePhotosDialog(event.photos)
+                is Event.NavigateToRemovePhotosDialog -> navigateToRemovePhotosDialog()
                 is Event.NavigateToSavePhotosDialog -> navigateToSavePhotosDialog(event.photos)
                 is Event.NavigateToTimelapseCreatorScreen -> navigateToTimelapseCreatorScreen()
             }

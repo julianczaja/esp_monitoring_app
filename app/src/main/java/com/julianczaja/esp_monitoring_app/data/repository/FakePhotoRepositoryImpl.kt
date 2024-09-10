@@ -64,6 +64,12 @@ class FakePhotoRepositoryImpl : PhotoRepository {
             false -> Result.success(Unit)
         }
 
+    override suspend fun removePhotosByFileNamesRemote(fileNames: List<String>): Result<Unit> =
+        when (removePhotoByFileNameRemoteReturnsException) {
+            true -> Result.failure(Exception())
+            false -> Result.success(Unit)
+        }
+
     override suspend fun updateLastPhotoRemote(deviceId: Long): Result<Unit> {
         return Result.success(Unit)
     }

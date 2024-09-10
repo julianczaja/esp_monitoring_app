@@ -21,7 +21,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -39,12 +42,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.components.AppBackground
 import com.julianczaja.esp_monitoring_app.components.DefaultDialog
+import com.julianczaja.esp_monitoring_app.components.DefaultProgressIndicator
 import com.julianczaja.esp_monitoring_app.components.DialogOneButton
 import com.julianczaja.esp_monitoring_app.components.DialogTwoButtons
+import com.julianczaja.esp_monitoring_app.components.PhotoResultItem
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
+import com.julianczaja.esp_monitoring_app.presentation.devicephotos.DevicePhotosScreenViewModel
 import com.julianczaja.esp_monitoring_app.presentation.removephotos.RemovePhotosDialogViewModel.Event
 import com.julianczaja.esp_monitoring_app.presentation.removephotos.RemovePhotosDialogViewModel.UiState
-import com.julianczaja.esp_monitoring_app.components.PhotoResultItem
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 import kotlin.collections.component1
 import kotlin.collections.component2
@@ -53,14 +58,26 @@ import kotlin.collections.component2
 @Composable
 fun RemovePhotosDialog(
     onDismiss: () -> Unit,
+    parentViewModel: DevicePhotosScreenViewModel,
     viewModel: RemovePhotosDialogViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    var viewModelInitiated by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        if (!viewModelInitiated) {
+            viewModel.init(parentViewModel.devicePhotosUiState.value)
+            viewModelInitiated = true
+        }
+    }
 
     LaunchedEffect(true) {
         viewModel.eventFlow.collect { event ->
             when (event) {
-                Event.PHOTOS_REMOVED -> onDismiss()
+                Event.PHOTOS_REMOVED -> {
+                    parentViewModel.resetSelectedPhotos()
+                    onDismiss()
+                }
             }
         }
     }
@@ -86,6 +103,10 @@ private fun RemovePhotosDialogContent(
 ) {
     DefaultDialog(onDismiss) {
         when (uiState) {
+            UiState.Init -> Box(modifier) {
+                DefaultProgressIndicator(Modifier.align(Alignment.Center))
+            }
+
             is UiState.Confirm -> ConfirmScreen(
                 modifier = modifier,
                 uiState = uiState,
@@ -286,6 +307,21 @@ private fun convertExplanationStringToStyledText(explanationText: String, spanSt
 
 
 //region Preview
+@PreviewLightDark
+@Composable
+fun InitScreenSinglePhotoPreview() {
+    AppBackground {
+        RemovePhotosDialogContent(
+            modifier = Modifier.fillMaxSize(),
+            onDismiss = {},
+            uiState = UiState.Init,
+            onRemoveSavedChanged = {},
+            onRemoveClicked = {},
+            onCancelClicked = {}
+        )
+    }
+}
+
 @PreviewLightDark
 @Composable
 fun ConfirmScreenSinglePhotoPreview() {

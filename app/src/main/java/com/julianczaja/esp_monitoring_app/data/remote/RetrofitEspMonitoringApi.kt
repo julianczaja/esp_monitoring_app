@@ -33,6 +33,11 @@ interface RetrofitEspMonitoringApi {
         @Path("fileName") fileName: String,
     ): Result<Unit>
 
+    @POST(value = "/photos/remove")
+    suspend fun removePhotos(
+        @Body params: List<String>
+    ): Result<Unit>
+
     @GET(value = "/device/{deviceId}")
     suspend fun updateDeviceInfo(
         @Path("deviceId") deviceId: Long

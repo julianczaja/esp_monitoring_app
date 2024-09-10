@@ -100,8 +100,10 @@ fun EspMonitoringNavHost(
         dialog<RemovePhotosDialog>(
             typeMap = mapOf(typeOf<List<Photo>>() to parcelableCollectionType<Photo>())
         ) {
+            val parentBackStackEntry = remember { navController.getBackStackEntry<DeviceScreen>() }
             RemovePhotosDialog(
-                onDismiss = onBackClick
+                onDismiss = onBackClick,
+                parentViewModel = hiltViewModel(parentBackStackEntry)
             )
         }
         dialog<SavePhotosDialog>(

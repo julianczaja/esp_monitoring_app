@@ -69,6 +69,8 @@ class PhotoRepositoryImpl @Inject constructor(
 
     override suspend fun removePhotoByFileNameRemote(fileName: String) = api.removePhoto(fileName)
 
+    override suspend fun removePhotosByFileNamesRemote(fileNames: List<String>) = api.removePhotos(fileNames)
+
     override suspend fun updateAllPhotosByDayRemote(day: Day): Result<Unit> {
         val date = day.date.toDefaultString()
 
