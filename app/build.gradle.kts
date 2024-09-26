@@ -19,6 +19,12 @@ android {
         versionCode = 1
         versionName = "1.0"
 
+        val apkName = "esp_monitoring_app.apk"
+        buildOutputs.all {
+            val variantOutputImpl = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
+            variantOutputImpl.outputFileName = apkName
+        }
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         vectorDrawables.useSupportLibrary = true
@@ -52,7 +58,6 @@ android {
     }
 
     composeCompiler {
-        enableStrongSkippingMode = true
         includeSourceInformation = true
     }
 

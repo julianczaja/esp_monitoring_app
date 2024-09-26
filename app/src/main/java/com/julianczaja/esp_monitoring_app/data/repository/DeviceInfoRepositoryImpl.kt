@@ -18,9 +18,9 @@ class DeviceInfoRepositoryImpl @Inject constructor(
 
     override fun getDeviceInfo(id: Long): Flow<DeviceInfo> = deviceInfoDao.getById(id).mapNotNull { it?.toDeviceInfo() }
 
-    override suspend fun updateDeviceInfoRemote(id: Long): Result<Unit> {
+    override suspend fun refreshDeviceInfoRemote(id: Long): Result<Unit> {
         var result = Result.success(Unit)
-        api.updateDeviceInfo(id)
+        api.getDeviceInfo(id)
             .onFailure { result = Result.failure(it) }
             .onSuccess { refreshDeviceInfoCache(id, it.toDeviceInfoEntity()) }
         return result

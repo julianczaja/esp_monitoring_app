@@ -4,11 +4,10 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
-import com.julianczaja.esp_monitoring_app.data.utils.toLocalDate
-import com.julianczaja.esp_monitoring_app.domain.model.Day
+import com.julianczaja.esp_monitoring_app.domain.model.DeviceServerSettings
 
 @Entity(
-    tableName = "day",
+    tableName = "device_server_settings",
     foreignKeys = [
         ForeignKey(
             entity = DeviceEntity::class,
@@ -19,11 +18,13 @@ import com.julianczaja.esp_monitoring_app.domain.model.Day
         )
     ]
 )
-data class DayEntity(
+class DeviceServerSettingsEntity(
     @PrimaryKey(autoGenerate = true)
     override val id: Long = 0,
     @ColumnInfo(index = true) val deviceId: Long,
-    val date: String,
+    val detectMostlyBlackPhotos: Boolean = false,
 ) : BaseEntity
 
-fun DayEntity.toDay() = Day(deviceId, date.toLocalDate())
+fun DeviceServerSettingsEntity.toDeviceServerSettings() = DeviceServerSettings(
+    detectMostlyBlackPhotos = detectMostlyBlackPhotos
+)

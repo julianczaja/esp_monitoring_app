@@ -19,12 +19,14 @@ import com.julianczaja.esp_monitoring_app.data.local.database.EspMonitoringDatab
 import com.julianczaja.esp_monitoring_app.data.local.database.dao.DayDao
 import com.julianczaja.esp_monitoring_app.data.local.database.dao.DeviceDao
 import com.julianczaja.esp_monitoring_app.data.local.database.dao.DeviceInfoDao
+import com.julianczaja.esp_monitoring_app.data.local.database.dao.DeviceServerSettingsDao
 import com.julianczaja.esp_monitoring_app.data.local.database.dao.PhotoDao
 import com.julianczaja.esp_monitoring_app.data.remote.HostSelectionInterceptor
 import com.julianczaja.esp_monitoring_app.data.remote.RetrofitEspMonitoringApi
 import com.julianczaja.esp_monitoring_app.data.repository.DayRepositoryImpl
 import com.julianczaja.esp_monitoring_app.data.repository.DeviceInfoRepositoryImpl
 import com.julianczaja.esp_monitoring_app.data.repository.DeviceRepositoryImpl
+import com.julianczaja.esp_monitoring_app.data.repository.DeviceServerSettingsRepositoryImpl
 import com.julianczaja.esp_monitoring_app.data.repository.PhotoRepositoryImpl
 import com.julianczaja.esp_monitoring_app.data.repository.TimelapseRepositoryImpl
 import com.julianczaja.esp_monitoring_app.domain.BitmapDownloader
@@ -34,6 +36,7 @@ import com.julianczaja.esp_monitoring_app.domain.repository.AppSettingsRepositor
 import com.julianczaja.esp_monitoring_app.domain.repository.DayRepository
 import com.julianczaja.esp_monitoring_app.domain.repository.DeviceInfoRepository
 import com.julianczaja.esp_monitoring_app.domain.repository.DeviceRepository
+import com.julianczaja.esp_monitoring_app.domain.repository.DeviceServerSettingsRepository
 import com.julianczaja.esp_monitoring_app.domain.repository.PhotoRepository
 import com.julianczaja.esp_monitoring_app.domain.repository.TimelapseRepository
 import com.julianczaja.esp_monitoring_app.domain.usecase.GetDevicesWithLastPhotoUseCase
@@ -120,6 +123,11 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideDeviceServerSettingsDao(espMonitoringDatabase: EspMonitoringDatabase) =
+        espMonitoringDatabase.deviceServerSettingsDao()
+
+    @Provides
+    @Singleton
     fun provideDayDao(espMonitoringDatabase: EspMonitoringDatabase) = espMonitoringDatabase.dayDao()
 
     @Provides
@@ -154,9 +162,16 @@ object AppModule {
     @Provides
     @Singleton
     fun provideDeviceInfoRepository(
-        deviceInfoDao: DeviceInfoDao,
-        api: RetrofitEspMonitoringApi
+        api: RetrofitEspMonitoringApi,
+        deviceInfoDao: DeviceInfoDao
     ): DeviceInfoRepository = DeviceInfoRepositoryImpl(api, deviceInfoDao)
+
+    @Provides
+    @Singleton
+    fun provideDeviceServerSettingsRepository(
+        api: RetrofitEspMonitoringApi,
+        deviceServerSettingsDao: DeviceServerSettingsDao
+    ): DeviceServerSettingsRepository = DeviceServerSettingsRepositoryImpl(api, deviceServerSettingsDao)
 
     @Provides
     @Singleton

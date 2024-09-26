@@ -7,5 +7,5 @@ interface DeviceInfoRepository {
 
     fun getDeviceInfo(id: Long): Flow<DeviceInfo>
 
-    suspend fun updateDeviceInfoRemote(id: Long): Result<Unit>
+    suspend fun refreshDeviceInfoRemote(id: Long): Result<Unit>
 }

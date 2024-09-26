@@ -2,6 +2,7 @@ package com.julianczaja.esp_monitoring_app.data.remote
 
 import com.julianczaja.esp_monitoring_app.data.model.GetPhotosZipParams
 import com.julianczaja.esp_monitoring_app.domain.model.DeviceInfo
+import com.julianczaja.esp_monitoring_app.domain.model.DeviceServerSettings
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import okhttp3.ResponseBody
 import retrofit2.http.Body
@@ -39,9 +40,20 @@ interface RetrofitEspMonitoringApi {
     ): Result<Unit>
 
     @GET(value = "/device/{deviceId}")
-    suspend fun updateDeviceInfo(
+    suspend fun getDeviceInfo(
         @Path("deviceId") deviceId: Long
     ): Result<DeviceInfo>
+
+    @GET(value = "/device/{deviceId}/settings")
+    suspend fun getDeviceServerSettings(
+        @Path("deviceId") deviceId: Long
+    ): Result<DeviceServerSettings>
+
+    @POST(value = "/device/{deviceId}/settings")
+    suspend fun updateDeviceServerSettings(
+        @Path("deviceId") deviceId: Long,
+        @Body settings: DeviceServerSettings
+    ): Result<DeviceServerSettings>
 
     @POST(value = "/photos")
     suspend fun getPhotosZip(

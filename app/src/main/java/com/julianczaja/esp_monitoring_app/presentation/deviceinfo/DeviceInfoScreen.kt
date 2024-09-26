@@ -34,10 +34,12 @@ import com.julianczaja.esp_monitoring_app.R
 import com.julianczaja.esp_monitoring_app.components.AppBackground
 import com.julianczaja.esp_monitoring_app.components.StateBar
 import com.julianczaja.esp_monitoring_app.components.StrokePieChart
+import com.julianczaja.esp_monitoring_app.components.SwitchWithLabel
 import com.julianczaja.esp_monitoring_app.data.utils.getClampedPercent
 import com.julianczaja.esp_monitoring_app.data.utils.millisToDefaultFormatLocalDateTime
 import com.julianczaja.esp_monitoring_app.data.utils.toPrettyString
 import com.julianczaja.esp_monitoring_app.domain.model.DeviceInfo
+import com.julianczaja.esp_monitoring_app.domain.model.DeviceServerSettings
 import com.julianczaja.esp_monitoring_app.presentation.theme.spacing
 
 @Composable
@@ -47,12 +49,12 @@ fun DeviceInfoScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    var updateDeviceInfoCalled by rememberSaveable { mutableStateOf(false) }
+    var refreshDataCalled by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(true) {
-        if (!updateDeviceInfoCalled) {
-            viewModel.updateDeviceInfo()
-            updateDeviceInfoCalled = true
+        if (!refreshDataCalled) {
+            viewModel.refreshData()
+            refreshDataCalled = true
         }
         viewModel.eventFlow.collect { event ->
             when (event) {
@@ -66,7 +68,8 @@ fun DeviceInfoScreen(
 
     DeviceInfoScreenContent(
         uiState = uiState,
-        updateDeviceInfo = viewModel::updateDeviceInfo
+        updateDeviceInfo = viewModel::refreshData,
+        onDetectMostlyBlackPhotosChange = viewModel::onDetectMostlyBlackPhotosChange
     )
 }
 
@@ -75,7 +78,8 @@ fun DeviceInfoScreen(
 private fun DeviceInfoScreenContent(
     modifier: Modifier = Modifier,
     uiState: DeviceInfoScreenViewModel.UiState,
-    updateDeviceInfo: () -> Unit
+    updateDeviceInfo: () -> Unit,
+    onDetectMostlyBlackPhotosChange: (Boolean) -> Unit
 ) {
     PullToRefreshBox(
         modifier = modifier.fillMaxSize(),
@@ -95,6 +99,15 @@ private fun DeviceInfoScreenContent(
                     deviceInfo = it
                 )
             }
+            uiState.deviceServerSettings?.let {
+                HorizontalDivider(Modifier.padding(vertical = MaterialTheme.spacing.medium))
+                DeviceServerSettingsContent(
+                    modifier = Modifier.padding(MaterialTheme.spacing.large),
+                    deviceServerSettings = it,
+                    isLoading = uiState.isLoading,
+                    onDetectMostlyBlackPhotosChange = onDetectMostlyBlackPhotosChange
+                )
+            }
         }
     }
 }
@@ -108,8 +121,10 @@ private fun DeviceInfoContent(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = stringResource(R.string.device_info_id_format, deviceInfo.deviceId))
-        HorizontalDivider(Modifier.padding(vertical = MaterialTheme.spacing.medium))
+        Text(
+            text = stringResource(R.string.device_info_id_format, deviceInfo.deviceId),
+            style = MaterialTheme.typography.headlineSmall
+        )
 
         StrokePieChart(
             modifier = Modifier
@@ -159,6 +174,31 @@ private fun DeviceInfoContent(
 }
 
 @Composable
+private fun DeviceServerSettingsContent(
+    modifier: Modifier = Modifier,
+    deviceServerSettings: DeviceServerSettings,
+    isLoading: Boolean,
+    onDetectMostlyBlackPhotosChange: (Boolean) -> Unit
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "Settings",
+            style = MaterialTheme.typography.headlineSmall
+        )
+        SwitchWithLabel(
+            modifier = Modifier.padding(top = MaterialTheme.spacing.medium),
+            label = "Detect mostly black photos",
+            isChecked = deviceServerSettings.detectMostlyBlackPhotos,
+            enabled = !isLoading,
+            onCheckedChange = onDetectMostlyBlackPhotosChange
+        )
+    }
+}
+
+@Composable
 private fun SpacedTextRow(
     title: String,
     value: String
@@ -191,10 +231,14 @@ private fun DeviceInfoScreenContentPreview() {
                     newestPhotoTimestamp = 1717590096488L,
                     oldestPhotoTimestamp = 1712250092422L
                 ),
-                isLoading = true,
-                isOnline = false
+                deviceServerSettings = DeviceServerSettings(
+                    detectMostlyBlackPhotos = true
+                ),
+                isLoading = false,
+                isOnline = true
             ),
-            updateDeviceInfo = {}
+            updateDeviceInfo = {},
+            onDetectMostlyBlackPhotosChange = {}
         )
     }
 }
