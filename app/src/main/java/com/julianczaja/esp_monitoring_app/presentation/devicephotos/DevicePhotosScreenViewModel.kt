@@ -208,7 +208,9 @@ class DevicePhotosScreenViewModel @Inject constructor(
     }
 
     fun onDayChanged(day: Day) = viewModelScope.launch(ioDispatcher) {
-        updatePhotosForDay(day)
+        if (_isInitiated.value){
+            updatePhotosForDay(day)
+        }
         _selectedDay.update { day }
     }
 
