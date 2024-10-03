@@ -109,14 +109,15 @@ class TimelapseCreatorScreenViewModel @Inject constructor(
     fun start() {
         (_uiState.value as? UiState.Configure)?.let { uiState ->
 
-            _uiState.update { UiState.Process(0f, 0f) }
+            _uiState.update { UiState.Process(0f, 0f, 0f) }
 
             processTimelapseJob = viewModelScope.launch(ioDispatcher) {
                 combine(
                     timelapseCreator.downloadProgress,
+                    timelapseCreator.unZipProgress,
                     timelapseCreator.processProgress,
-                ) { downloadProgress, processProgress ->
-                    _uiState.update { UiState.Process(downloadProgress, processProgress) }
+                ) { downloadProgress, unZipProgress, processProgress ->
+                    _uiState.update { UiState.Process(downloadProgress, unZipProgress, processProgress) }
                 }.collect()
             }
 
@@ -197,6 +198,7 @@ class TimelapseCreatorScreenViewModel @Inject constructor(
 
         data class Process(
             val downloadProgress: Float,
+            val unZipProgress: Float,
             val processProgress: Float
         ) : UiState()
 

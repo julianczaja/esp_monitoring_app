@@ -153,6 +153,7 @@
     <string name="success_label">Success</string>
     <string name="timelapse_cancelled">Timelapse cancelled</string>
     <string name="timelapse_creator_screen_title">Timelapse creator</string>
+    <string name="timelapse_unzipping_label">Unzipping photos…</string>
     <string name="timelapse_downloading_label">Downloading photos…</string>
     <string name="timelapse_duration_label">"Duration: "</string>
     <string name="timelapse_estimated_time_label">"Estimated time: "</string>

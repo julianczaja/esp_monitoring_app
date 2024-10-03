@@ -44,6 +44,7 @@ class LocalTimelapseCreator @Inject constructor(
 
     override val isBusy = MutableStateFlow(false)
     override val downloadProgress = MutableStateFlow(0f)
+    override val unZipProgress = MutableStateFlow(0f)
     override val processProgress = MutableStateFlow(0f)
 
     private val cacheDir = File(context.cacheDir, VIDEO_CACHE_FOLDER_NAME)
@@ -63,6 +64,7 @@ class LocalTimelapseCreator @Inject constructor(
         compressionRate: Int,
     ): Result<TimelapseData> = withContext(ioDispatcher) {
         downloadProgress.update { 0f }
+        unZipProgress.update { 0f }
         processProgress.update { 0f }
 
         if (!cacheDir.exists()) {
@@ -179,7 +181,7 @@ class LocalTimelapseCreator @Inject constructor(
             false -> LOW_QUALITY_PHOTO_PREFIX
         }
 
-        var progress = 0
+        var progress = 1
 
         // saved photos
         savedPhotos.forEach { photo ->
@@ -203,12 +205,19 @@ class LocalTimelapseCreator @Inject constructor(
             downloadProgress.update { ((progress++) / photos.size.toFloat()) }
         }
 
+        if (savedPhotos.isEmpty()) {
+            downloadProgress.update { .3f }
+        }
+
         // remote
         val remoteFileNames = remotePhotos.map { it.fileName }
         if (remoteFileNames.isNotEmpty()) {
+            // TODO: Implement download progress
             val zipByteArray = photoRepository.getPhotosZipRemote(remoteFileNames, isHighQuality).getOrThrow()
+            downloadProgress.update { 1f }
 
             ZipInputStream(zipByteArray.inputStream()).use { zipIn ->
+                progress = 1
                 var entry: ZipEntry? = zipIn.nextEntry
 
                 while (entry != null) {
@@ -225,9 +234,11 @@ class LocalTimelapseCreator @Inject constructor(
                     zipIn.closeEntry()
                     entry = zipIn.nextEntry
 
-                    downloadProgress.update { ((progress++) / photos.size.toFloat()) }
+                    unZipProgress.update { ((progress++) / remoteFileNames.size.toFloat()) }
                 }
             }
+        } else {
+            downloadProgress.update { 1f }
         }
 
         // rename
@@ -273,5 +284,4 @@ class LocalTimelapseCreator @Inject constructor(
 
         return ratiosCount.maxBy { it.value }.key
     }
-
 }

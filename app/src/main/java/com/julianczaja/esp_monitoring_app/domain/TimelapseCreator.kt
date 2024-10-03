@@ -8,6 +8,7 @@ interface TimelapseCreator {
 
     val isBusy: MutableStateFlow<Boolean>
     val downloadProgress: MutableStateFlow<Float>
+    val unZipProgress: MutableStateFlow<Float>
     val processProgress: MutableStateFlow<Float>
 
     var photos: List<Photo>
