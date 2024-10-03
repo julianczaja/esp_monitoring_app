@@ -39,5 +39,8 @@ class DeviceServerSettingsRepositoryImpl @Inject constructor(
 
     private suspend fun refreshDeviceServerSettingsCache(
         deviceServerSettingsEntity: DeviceServerSettingsEntity
-    ) = deviceServerSettingsDao.insertOrUpdate(deviceServerSettingsEntity)
+    ) = deviceServerSettingsDao.withTransaction {
+        deviceServerSettingsDao.deleteAllWithDeviceId(deviceServerSettingsEntity.deviceId)
+        deviceServerSettingsDao.insertAll(deviceServerSettingsEntity)
+    }
 }
