@@ -14,12 +14,17 @@ import com.julianczaja.esp_monitoring_app.domain.TimelapseCreator
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.domain.model.TimelapseCancelledException
 import com.julianczaja.esp_monitoring_app.domain.model.TimelapseData
+import com.julianczaja.esp_monitoring_app.domain.model.ZipDownloadStatus.*
 import com.julianczaja.esp_monitoring_app.domain.repository.PhotoRepository
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
 import timber.log.Timber
+import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -79,7 +84,7 @@ class LocalTimelapseCreator @Inject constructor(
         }
 
         FFmpegKitConfig.enableStatisticsCallback { statistics ->
-            processProgress.update { (statistics.videoFrameNumber / photos.size.toFloat()) }
+            processProgress.update { statistics.videoFrameNumber / photos.size.toFloat() }
         }
 
         FFmpegKitConfig.enableLogCallback { log ->
@@ -202,40 +207,25 @@ class LocalTimelapseCreator @Inject constructor(
                     bitmap.compress(Bitmap.CompressFormat.JPEG, 80, fos)
                 }
             }
-            downloadProgress.update { ((progress++) / photos.size.toFloat()) }
-        }
-
-        if (savedPhotos.isEmpty()) {
-            downloadProgress.update { .3f }
+            downloadProgress.update { progress++ / photos.size.toFloat() }
         }
 
         // remote
         val remoteFileNames = remotePhotos.map { it.fileName }
         if (remoteFileNames.isNotEmpty()) {
-            // TODO: Implement download progress
-            val zipByteArray = photoRepository.getPhotosZipRemote(remoteFileNames, isHighQuality).getOrThrow()
-            downloadProgress.update { 1f }
-
-            ZipInputStream(zipByteArray.inputStream()).use { zipIn ->
-                progress = 1
-                var entry: ZipEntry? = zipIn.nextEntry
-
-                while (entry != null) {
-                    val photoFile = File(cacheDir, entry.name)
-                    if (photoFile.exists() && photoFile.length() == 0L) {
-                        photoFile.delete()
-                    }
-                    if (!photoFile.exists()) {
-                        photoFile.createNewFile()
-                        FileOutputStream(photoFile).use { outputStream ->
-                            zipIn.copyTo(outputStream)
-                        }
-                    }
-                    zipIn.closeEntry()
-                    entry = zipIn.nextEntry
-
-                    unZipProgress.update { ((progress++) / remoteFileNames.size.toFloat()) }
+            photoRepository.getPhotosZipRemote(
+                fileNames = remoteFileNames,
+                isHighQuality = isHighQuality
+            ).flowOn(ioDispatcher).collectLatest { downloadStatus ->
+                when (downloadStatus) {
+                    is Progress -> downloadProgress.update { downloadStatus.progress }
+                    is Error -> throw downloadStatus.exception
+                    is Complete -> unZipFile(
+                        inputStream = downloadStatus.data.inputStream(),
+                        totalPhotos = remoteFileNames.size
+                    )
                 }
+                delay(100)
             }
         } else {
             downloadProgress.update { 1f }
@@ -249,6 +239,33 @@ class LocalTimelapseCreator @Inject constructor(
             ?.forEach {
                 it.renameTo(File(cacheDir, "$photoPrefix%04d.jpeg".format(index++)))
             }
+    }
+
+    private fun unZipFile(
+        inputStream: ByteArrayInputStream,
+        totalPhotos: Int
+    ) {
+        ZipInputStream(inputStream).use { zipIn ->
+            var progress = 1
+            var entry: ZipEntry? = zipIn.nextEntry
+
+            while (entry != null) {
+                val photoFile = File(cacheDir, entry.name)
+                if (photoFile.exists() && photoFile.length() == 0L) {
+                    photoFile.delete()
+                }
+                if (!photoFile.exists()) {
+                    photoFile.createNewFile()
+                    FileOutputStream(photoFile).use { outputStream ->
+                        zipIn.copyTo(outputStream)
+                    }
+                }
+                zipIn.closeEntry()
+                entry = zipIn.nextEntry
+
+                unZipProgress.update { progress++ / totalPhotos.toFloat() }
+            }
+        }
     }
 
     @SuppressLint("DefaultLocale")

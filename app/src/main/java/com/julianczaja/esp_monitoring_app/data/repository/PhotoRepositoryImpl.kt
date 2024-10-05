@@ -24,6 +24,8 @@ import com.julianczaja.esp_monitoring_app.domain.BitmapDownloader
 import com.julianczaja.esp_monitoring_app.domain.model.Day
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
 import com.julianczaja.esp_monitoring_app.domain.model.PhotoAlreadyExistsException
+import com.julianczaja.esp_monitoring_app.domain.model.ZipDownloadStatus
+import com.julianczaja.esp_monitoring_app.domain.model.ZipDownloadStatus.*
 import com.julianczaja.esp_monitoring_app.domain.model.toPhotoEntity
 import com.julianczaja.esp_monitoring_app.domain.repository.PhotoRepository
 import kotlinx.coroutines.FlowPreview
@@ -32,6 +34,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import timber.log.Timber
+import java.io.ByteArrayOutputStream
 import java.io.IOException
 import javax.inject.Inject
 
@@ -87,9 +90,42 @@ class PhotoRepositoryImpl @Inject constructor(
         return Result.success(Unit)
     }
 
-    override suspend fun getPhotosZipRemote(fileNames: List<String>, isHighQuality: Boolean): Result<ByteArray> {
-        val zip = api.getPhotosZip(GetPhotosZipParams(fileNames, isHighQuality)).getOrElse { return Result.failure(it) }
-        return Result.success(zip.bytes())
+    override fun getPhotosZipRemote(
+        fileNames: List<String>,
+        isHighQuality: Boolean
+    ): Flow<ZipDownloadStatus> = flow {
+        try {
+            emit(Progress(0.001f))
+
+            val response = api.getPhotosZip(GetPhotosZipParams(fileNames, isHighQuality))
+            val totalBytes = response.contentLength().toInt()
+
+            if (totalBytes <= 0) throw Exception("Photos zip length <= 0!")
+
+            response.byteStream().use { inputStream ->
+                val buffer = ByteArray(8_192)
+                val outputStream = ByteArrayOutputStream()
+                var totalBytesRead: Int = 0
+
+                while (true) {
+                    val bytesRead = inputStream.read(buffer)
+
+                    if (bytesRead == -1) break
+
+                    totalBytesRead += bytesRead
+                    emit(Progress(totalBytesRead / totalBytes.toFloat()))
+
+                    outputStream.write(buffer, 0, bytesRead)
+                }
+
+                if (totalBytesRead != totalBytes) {
+                    throw Exception("Incomplete download, expected $totalBytes but got $totalBytesRead")
+                }
+                emit(Complete(outputStream.toByteArray()))
+            }
+        } catch (e: Exception) {
+            emit(Error(e))
+        }
     }
 
     override suspend fun downloadPhotoAndSaveToExternalStorage(photo: Photo): Result<Unit> {

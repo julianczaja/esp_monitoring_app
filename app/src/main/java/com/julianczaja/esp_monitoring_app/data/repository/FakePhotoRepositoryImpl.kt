@@ -2,8 +2,10 @@ package com.julianczaja.esp_monitoring_app.data.repository
 
 import com.julianczaja.esp_monitoring_app.domain.model.Day
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
+import com.julianczaja.esp_monitoring_app.domain.model.ZipDownloadStatus
 import com.julianczaja.esp_monitoring_app.domain.repository.PhotoRepository
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
@@ -74,7 +76,10 @@ class FakePhotoRepositoryImpl : PhotoRepository {
         return Result.success(Unit)
     }
 
-    override suspend fun getPhotosZipRemote(fileNames: List<String>, isHighQuality: Boolean): Result<ByteArray> {
+    override fun getPhotosZipRemote(
+        fileNames: List<String>,
+        isHighQuality: Boolean
+    ): Flow<ZipDownloadStatus> {
         TODO("Not yet implemented")
     }
 

@@ -2,6 +2,7 @@ package com.julianczaja.esp_monitoring_app.domain.repository
 
 import com.julianczaja.esp_monitoring_app.domain.model.Day
 import com.julianczaja.esp_monitoring_app.domain.model.Photo
+import com.julianczaja.esp_monitoring_app.domain.model.ZipDownloadStatus
 import kotlinx.coroutines.flow.Flow
 
 
@@ -23,7 +24,7 @@ interface PhotoRepository {
 
     suspend fun updateLastPhotoRemote(deviceId: Long): Result<Unit>
 
-    suspend fun getPhotosZipRemote(fileNames: List<String>, isHighQuality: Boolean): Result<ByteArray>
+    fun getPhotosZipRemote(fileNames: List<String>, isHighQuality: Boolean): Flow<ZipDownloadStatus>
 
     suspend fun downloadPhotoAndSaveToExternalStorage(photo: Photo): Result<Unit>
 

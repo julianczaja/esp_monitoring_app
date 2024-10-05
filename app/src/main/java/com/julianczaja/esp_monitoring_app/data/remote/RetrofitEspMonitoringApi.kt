@@ -10,6 +10,7 @@ import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
+import retrofit2.http.Streaming
 
 interface RetrofitEspMonitoringApi {
 
@@ -55,8 +56,9 @@ interface RetrofitEspMonitoringApi {
         @Body settings: DeviceServerSettings
     ): Result<DeviceServerSettings>
 
+    @Streaming
     @POST(value = "/photos")
     suspend fun getPhotosZip(
         @Body params: GetPhotosZipParams
-    ): Result<ResponseBody>
+    ): ResponseBody
 }
