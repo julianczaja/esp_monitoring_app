@@ -11,6 +11,7 @@ import com.julianczaja.esp_monitoring_app.data.local.database.dao.PhotoDao
 import com.julianczaja.esp_monitoring_app.data.local.database.entity.toPhoto
 import com.julianczaja.esp_monitoring_app.data.model.GetPhotosZipParams
 import com.julianczaja.esp_monitoring_app.data.remote.RetrofitEspMonitoringApi
+import com.julianczaja.esp_monitoring_app.data.remote.RetrofitEspMonitoringTimelapseApi
 import com.julianczaja.esp_monitoring_app.data.utils.EXIF_UTC_OFFSET
 import com.julianczaja.esp_monitoring_app.data.utils.PHOTOS_DIR_PATH_FORMAT
 import com.julianczaja.esp_monitoring_app.data.utils.checkIfPhotoExists
@@ -34,7 +35,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import timber.log.Timber
-import java.io.ByteArrayOutputStream
+import java.io.File
 import java.io.IOException
 import javax.inject.Inject
 
@@ -42,6 +43,7 @@ class PhotoRepositoryImpl @Inject constructor(
     private val context: Context,
     private val photoDao: PhotoDao,
     private val api: RetrofitEspMonitoringApi,
+    private val timelapseApi: RetrofitEspMonitoringTimelapseApi,
     private val bitmapDownloader: BitmapDownloader
 ) : PhotoRepository {
 
@@ -90,38 +92,31 @@ class PhotoRepositoryImpl @Inject constructor(
         return Result.success(Unit)
     }
 
-    override fun getPhotosZipRemote(
+    override fun getPhotosZipRemoteAndSaveToFile(
         fileNames: List<String>,
-        isHighQuality: Boolean
+        isHighQuality: Boolean,
+        file: File
     ): Flow<ZipDownloadStatus> = flow {
         try {
-            emit(Progress(0.001f))
-
-            val response = api.getPhotosZip(GetPhotosZipParams(fileNames, isHighQuality))
-            val totalBytes = response.contentLength().toInt()
-
-            if (totalBytes <= 0) throw Exception("Photos zip length <= 0!")
+            val response = timelapseApi.getPhotosZip(GetPhotosZipParams(fileNames, isHighQuality))
 
             response.byteStream().use { inputStream ->
-                val buffer = ByteArray(8_192)
-                val outputStream = ByteArrayOutputStream()
-                var totalBytesRead: Int = 0
+                val buffer = ByteArray(32_768)
+                var totalBytesRead = 0L
 
-                while (true) {
-                    val bytesRead = inputStream.read(buffer)
+                file.outputStream().use { fileOutputStream ->
+                    while (true) {
+                        val bytesRead = inputStream.read(buffer)
 
-                    if (bytesRead == -1) break
+                        if (bytesRead == -1) break
 
-                    totalBytesRead += bytesRead
-                    emit(Progress(totalBytesRead / totalBytes.toFloat()))
+                        fileOutputStream.write(buffer, 0, bytesRead)
 
-                    outputStream.write(buffer, 0, bytesRead)
+                        totalBytesRead += bytesRead
+                        emit(Progress(totalBytesRead))
+                    }
                 }
-
-                if (totalBytesRead != totalBytes) {
-                    throw Exception("Incomplete download, expected $totalBytes but got $totalBytesRead")
-                }
-                emit(Complete(outputStream.toByteArray()))
+                emit(Complete)
             }
         } catch (e: Exception) {
             emit(Error(e))

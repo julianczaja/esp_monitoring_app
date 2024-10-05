@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import java.io.File
 
 
 class FakePhotoRepositoryImpl : PhotoRepository {
@@ -76,9 +77,10 @@ class FakePhotoRepositoryImpl : PhotoRepository {
         return Result.success(Unit)
     }
 
-    override fun getPhotosZipRemote(
+    override fun getPhotosZipRemoteAndSaveToFile(
         fileNames: List<String>,
-        isHighQuality: Boolean
+        isHighQuality: Boolean,
+        file: File
     ): Flow<ZipDownloadStatus> {
         TODO("Not yet implemented")
     }

@@ -225,31 +225,36 @@ private fun TimelapseCreatorProcessScreen(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = when {
-                uiState.downloadProgress > 0f && uiState.downloadProgress < 1f -> {
-                    stringResource(R.string.timelapse_downloading_label)
-                }
-                uiState.unZipProgress > 0f && uiState.unZipProgress < 1f -> {
-                    stringResource(R.string.timelapse_unzipping_label)
-                }
-                else -> stringResource(R.string.timelapse_processing_label)
+        val progressModifier = Modifier
+            .padding(MaterialTheme.spacing.medium)
+            .height(MaterialTheme.spacing.medium)
+            .fillMaxWidth()
+        when {
+            uiState.processProgress > 0f -> {
+                Text(stringResource(R.string.timelapse_processing_label))
+                LinearProgressIndicator(
+                    progress = { uiState.processProgress },
+                    strokeCap = StrokeCap.Round,
+                    modifier = progressModifier
+                )
             }
-        )
-        LinearProgressIndicator(
-            progress = {
-                when {
-                    uiState.downloadProgress > 0f && uiState.downloadProgress < 1f -> uiState.downloadProgress
-                    uiState.unZipProgress > 0f && uiState.unZipProgress < 1f -> uiState.unZipProgress
-                    else -> uiState.processProgress
-                }
-            },
-            strokeCap = StrokeCap.Round,
-            modifier = Modifier
-                .padding(MaterialTheme.spacing.medium)
-                .height(MaterialTheme.spacing.medium)
-                .fillMaxWidth()
-        )
+            uiState.unZipProgress > 0f -> {
+                Text(stringResource(R.string.timelapse_unzipping_label))
+                LinearProgressIndicator(
+                    progress = { uiState.unZipProgress },
+                    strokeCap = StrokeCap.Round,
+                    modifier = progressModifier
+                )
+            }
+            uiState.downloadedBytes > 0L -> {
+                Text(stringResource(R.string.timelapse_downloaded_format, formatBytes(uiState.downloadedBytes)))
+                LinearProgressIndicator(
+                    strokeCap = StrokeCap.Round,
+                    modifier = progressModifier
+                )
+            }
+            else -> Text(stringResource(R.string.waiting_for_server))
+        }
     }
 }
 
@@ -366,7 +371,7 @@ private fun TimelapseCreatorProcessDialogPreview() {
     AppBackground(Modifier.height(400.dp)) {
         TimelapseCreatorScreenContent(
             modifier = Modifier.fillMaxSize(),
-            uiState = UiState.Process(1f, 1f, 0.2f),
+            uiState = UiState.Process(1L, 1f, 0.2f),
             onFrameRateChanged = {},
             onCompressionRateChanged = {},
             onIsHighQualityChanged = {},

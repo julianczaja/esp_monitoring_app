@@ -23,5 +23,7 @@ object Constants {
 
     const val SCAN_DURATION_MILLIS = 5000L
     const val CONNECT_TIMEOUT_SECONDS = 5L
+    const val CONNECT_TIMEOUT_LONG_SECONDS = 30L
     const val READ_TIMEOUT_SECONDS = 10L
+    const val READ_TIMEOUT_DISABLED = 0L
 }

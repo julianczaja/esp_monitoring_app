@@ -23,6 +23,7 @@ import com.julianczaja.esp_monitoring_app.data.local.database.dao.DeviceServerSe
 import com.julianczaja.esp_monitoring_app.data.local.database.dao.PhotoDao
 import com.julianczaja.esp_monitoring_app.data.remote.HostSelectionInterceptor
 import com.julianczaja.esp_monitoring_app.data.remote.RetrofitEspMonitoringApi
+import com.julianczaja.esp_monitoring_app.data.remote.RetrofitEspMonitoringTimelapseApi
 import com.julianczaja.esp_monitoring_app.data.repository.DayRepositoryImpl
 import com.julianczaja.esp_monitoring_app.data.repository.DeviceInfoRepositoryImpl
 import com.julianczaja.esp_monitoring_app.data.repository.DeviceRepositoryImpl
@@ -51,6 +52,7 @@ import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
+import okhttp3.logging.HttpLoggingInterceptor.Level.BASIC
 import retrofit2.Retrofit
 import java.time.Duration
 import javax.inject.Singleton
@@ -76,10 +78,7 @@ object AppModule {
         .client(
             OkHttpClient().newBuilder()
                 .addInterceptor(HostSelectionInterceptor(appSettingsRepository))
-                .apply {
-                    if (BuildConfig.DEBUG)
-                        addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BASIC))
-                }
+                .apply { if (BuildConfig.DEBUG) addInterceptor(HttpLoggingInterceptor().setLevel(BASIC)) }
                 .connectTimeout(Duration.ofSeconds(Constants.CONNECT_TIMEOUT_SECONDS))
                 .readTimeout(Duration.ofSeconds(Constants.READ_TIMEOUT_SECONDS))
                 .build()
@@ -88,6 +87,25 @@ object AppModule {
         .addConverterFactory(networkJson.asConverterFactory("application/json".toMediaType()))
         .build()
         .create(RetrofitEspMonitoringApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideRetrofitEspMonitoringTimelapseApi(
+        appSettingsRepository: AppSettingsRepository,
+        networkJson: Json
+    ): RetrofitEspMonitoringTimelapseApi = Retrofit.Builder()
+        .baseUrl(Constants.defaultBaseUrl)
+        .client(
+            OkHttpClient().newBuilder()
+                .addInterceptor(HostSelectionInterceptor(appSettingsRepository))
+                .apply { if (BuildConfig.DEBUG) addInterceptor(HttpLoggingInterceptor().setLevel(BASIC)) }
+                .connectTimeout(Duration.ofSeconds(Constants.CONNECT_TIMEOUT_LONG_SECONDS))
+                .readTimeout(Duration.ofSeconds(Constants.READ_TIMEOUT_DISABLED))
+                .build()
+        )
+        .addConverterFactory(networkJson.asConverterFactory("application/json".toMediaType()))
+        .build()
+        .create(RetrofitEspMonitoringTimelapseApi::class.java)
 
     @Provides
     @Singleton
@@ -156,8 +174,9 @@ object AppModule {
         @ApplicationContext context: Context,
         photoDao: PhotoDao,
         api: RetrofitEspMonitoringApi,
+        timelapseApi: RetrofitEspMonitoringTimelapseApi,
         bitmapDownloader: BitmapDownloader
-    ): PhotoRepository = PhotoRepositoryImpl(context, photoDao, api, bitmapDownloader)
+    ): PhotoRepository = PhotoRepositoryImpl(context, photoDao, api, timelapseApi, bitmapDownloader)
 
     @Provides
     @Singleton

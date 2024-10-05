@@ -24,7 +24,6 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
 import timber.log.Timber
-import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -48,7 +47,7 @@ class LocalTimelapseCreator @Inject constructor(
     }
 
     override val isBusy = MutableStateFlow(false)
-    override val downloadProgress = MutableStateFlow(0f)
+    override val downloadedBytes = MutableStateFlow(0L)
     override val unZipProgress = MutableStateFlow(0f)
     override val processProgress = MutableStateFlow(0f)
 
@@ -68,7 +67,7 @@ class LocalTimelapseCreator @Inject constructor(
         frameRate: Int,
         compressionRate: Int,
     ): Result<TimelapseData> = withContext(ioDispatcher) {
-        downloadProgress.update { 0f }
+        downloadedBytes.update { 0L }
         unZipProgress.update { 0f }
         processProgress.update { 0f }
 
@@ -186,8 +185,6 @@ class LocalTimelapseCreator @Inject constructor(
             false -> LOW_QUALITY_PHOTO_PREFIX
         }
 
-        var progress = 1
-
         // saved photos
         savedPhotos.forEach { photo ->
             val photoFile = File(cacheDir, photo.fileName)
@@ -207,28 +204,29 @@ class LocalTimelapseCreator @Inject constructor(
                     bitmap.compress(Bitmap.CompressFormat.JPEG, 80, fos)
                 }
             }
-            downloadProgress.update { progress++ / photos.size.toFloat() }
+            downloadedBytes.update { it + photoFile.length() }
         }
 
         // remote
         val remoteFileNames = remotePhotos.map { it.fileName }
         if (remoteFileNames.isNotEmpty()) {
-            photoRepository.getPhotosZipRemote(
-                fileNames = remoteFileNames,
-                isHighQuality = isHighQuality
-            ).flowOn(ioDispatcher).collectLatest { downloadStatus ->
-                when (downloadStatus) {
-                    is Progress -> downloadProgress.update { downloadStatus.progress }
-                    is Error -> throw downloadStatus.exception
-                    is Complete -> unZipFile(
-                        inputStream = downloadStatus.data.inputStream(),
-                        totalPhotos = remoteFileNames.size
-                    )
+            // TODO: create file based on names (first-last) and check if already exists
+            val zipFile = File(cacheDir, "photos.zip")
+            val savedBytes = downloadedBytes.value
+
+            photoRepository.getPhotosZipRemoteAndSaveToFile(remoteFileNames, isHighQuality, zipFile)
+                .flowOn(ioDispatcher)
+                .collectLatest { downloadStatus ->
+                    when (downloadStatus) {
+                        is Progress -> downloadedBytes.update { savedBytes + downloadStatus.bytesDownloaded }
+                        is Error -> throw downloadStatus.exception
+                        is Complete -> unZipFile(
+                            file = zipFile,
+                            totalPhotos = remoteFileNames.size
+                        )
+                    }
+                    delay(100) // to slow down collection
                 }
-                delay(100)
-            }
-        } else {
-            downloadProgress.update { 1f }
         }
 
         // rename
@@ -242,10 +240,10 @@ class LocalTimelapseCreator @Inject constructor(
     }
 
     private fun unZipFile(
-        inputStream: ByteArrayInputStream,
+        file: File,
         totalPhotos: Int
     ) {
-        ZipInputStream(inputStream).use { zipIn ->
+        ZipInputStream(file.inputStream()).use { zipIn ->
             var progress = 1
             var entry: ZipEntry? = zipIn.nextEntry
 
