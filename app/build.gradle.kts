@@ -6,6 +6,8 @@ plugins {
     alias(libs.plugins.dagger.hilt.android)
     alias(libs.plugins.ksp)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.google.gms.google.services)
+    alias(libs.plugins.google.firebase.crashlytics)
 }
 
 android {
@@ -86,6 +88,8 @@ dependencies {
     implementation(libs.androidx.compose.material3.windowSizeClass)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.exifinterface)
+    implementation(libs.firebase.analytics)
+    implementation(libs.firebase.crashlytics)
     debugImplementation(libs.androidx.compose.ui.tooling)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.retrofit.kotlinx.serialization.converter)

@@ -14,6 +14,9 @@ import androidx.compose.ui.Modifier
 import androidx.core.animation.doOnEnd
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.analytics.ktx.analytics
+import com.google.firebase.ktx.Firebase
 import com.julianczaja.esp_monitoring_app.common.Constants
 import com.julianczaja.esp_monitoring_app.components.AppBackground
 import com.julianczaja.esp_monitoring_app.domain.repository.AppSettingsRepository
@@ -26,9 +29,12 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var appSettingsRepository: AppSettingsRepository
 
+    private lateinit var analytics: FirebaseAnalytics
+
     override fun onCreate(savedInstanceState: Bundle?) {
         setupSplashScreen()
         super.onCreate(savedInstanceState)
+        analytics = Firebase.analytics
 
         enableEdgeToEdge()
 
